@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Test</title>
+    <script type="module">
+        import mermaid from 'http://localhost:3000/_next/static/chunks/node_modules/mermaid/dist/mermaid.esm.min.mjs';
+        
+        console.log('Mermaid loaded:', mermaid);
+        console.log('Mermaid render function:', typeof mermaid.render);
+        
+        // Test the render function
+        try {
+            const result = await mermaid.render('test-id', 'graph TD; A-->B');
+            console.log('Render result:', result);
+        } catch (error) {
+            console.error('Render error:', error);
+        }
+    </script>
+</head>
+<body>
+    <h1>Mermaid Test</h1>
+    <p>Check the browser console for Mermaid API test results.</p>
+</body>
+</html>
