@@ -13,6 +13,7 @@
     "figma:sync": "node scripts/figma-sync.js",
     "figma:test": "node scripts/test-figma.js",
     "figma:tokens": "node scripts/figma-sync.js tokens",
+    "figma:generate": "node scripts/figma-to-react.js",
     "figma:components": "node scripts/figma-sync.js components",
     "figma:content": "node scripts/figma-sync.js content",
     "figma:all": "node scripts/figma-sync.js all",
