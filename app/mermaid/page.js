@@ -1,4 +1,4 @@
-import { Mermaid } from '@/components/Mermaid'
+import Mermaid from '@/components/Mermaid'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 const flowchartCode = `
@@ -75,7 +75,16 @@ export default function MermaidPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Mermaid code={flowchartCode} />
+              <Mermaid code={`
+flowchart TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Debug]
+    D --> E[Fix Issues]
+    E --> B
+    C --> F[Deploy]
+    F --> G[End]
+`} />
             </CardContent>
           </Card>
 
@@ -87,7 +96,20 @@ export default function MermaidPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Mermaid code={sequenceCode} />
+              <Mermaid code={`
+sequenceDiagram
+    participant User
+    participant Browser
+    participant Server
+    participant Database
+    
+    User->>Browser: Enter URL
+    Browser->>Server: HTTP Request
+    Server->>Database: Query Data
+    Database-->>Server: Return Data
+    Server-->>Browser: HTTP Response
+    Browser-->>User: Display Page
+`} />
             </CardContent>
           </Card>
 
@@ -99,7 +121,30 @@ export default function MermaidPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Mermaid code={classCode} />
+              <Mermaid code={`
+classDiagram
+    class User {
+        +int id
+        +string name
+        +string email
+        +createPost()
+        +deletePost()
+    }
+    class Post {
+        +int id
+        +string title
+        +string content
+        +Date createdAt
+        +addComment()
+    }
+    class Comment {
+        +int id
+        +string text
+        +Date createdAt
+    }
+    User "1" --> "*" Post : creates
+    Post "1" --> "*" Comment : has
+`} />
             </CardContent>
           </Card>
 
@@ -111,7 +156,23 @@ export default function MermaidPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Mermaid code={gitGraphCode} />
+              <Mermaid code={`
+gitGraph
+    commit id: "Initial commit"
+    branch develop
+    checkout develop
+    commit id: "Add feature A"
+    commit id: "Add feature B"
+    checkout main
+    commit id: "Hotfix"
+    merge develop
+    commit id: "Release v1.0"
+    branch feature/new-ui
+    checkout feature/new-ui
+    commit id: "New UI design"
+    checkout develop
+    merge feature/new-ui
+`} />
             </CardContent>
           </Card>
         </div>

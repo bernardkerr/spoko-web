@@ -1,167 +1,103 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import mermaid from 'mermaid'
+import { useState, useEffect, useRef } from 'react'
 
-// Initialize Mermaid once globally
-let mermaidInitialized = false
+// Client-side detection to avoid SSR issues
+const useIsClient = () => {
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  return isClient
+}
 
-export function Mermaid({ code, className = '' }) {
+
+
+export default function Mermaid({ code, className }) {
   const ref = useRef(null)
   const [error, setError] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const isClient = useIsClient()
 
   useEffect(() => {
-    const initializeMermaid = () => {
-      if (mermaidInitialized) return
-      
-      try {
-        // Get CSS variables for theming
-        const root = document.documentElement
-        const computedStyle = getComputedStyle(root)
-        
-        const brandColor = computedStyle.getPropertyValue('--brand').trim()
-        const fgColor = computedStyle.getPropertyValue('--fg').trim()
-        const bgColor = computedStyle.getPropertyValue('--bg').trim()
-        
-        // Convert HSL to hex for Mermaid
-        const hslToHex = (hsl) => {
-          if (!hsl) return '#000000'
-          try {
-            const [h, s, l] = hsl.split(' ').map(v => parseFloat(v.replace('%', '')))
-            const hslColor = `hsl(${h}, ${s}%, ${l}%)`
-            
-            // Create a temporary element to get computed color
-            const temp = document.createElement('div')
-            temp.style.color = hslColor
-            temp.style.visibility = 'hidden'
-            document.body.appendChild(temp)
-            const rgb = getComputedStyle(temp).color
-            document.body.removeChild(temp)
-            
-            // Convert rgb to hex
-            const rgbMatch = rgb.match(/\d+/g)
-            if (rgbMatch) {
-              const [r, g, b] = rgbMatch.map(Number)
-              return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
-            }
-            return '#000000'
-          } catch {
-            return '#000000'
-          }
-        }
+    if (!isClient || !code) return
 
+    const renderDiagram = async () => {
+      try {
+        setError(null)
+        
+        // Dynamic import to avoid SSR issues
+        const mermaid = (await import('mermaid')).default
+        
+        // Initialize Mermaid with theme configuration
         mermaid.initialize({
           startOnLoad: false,
           theme: 'base',
           securityLevel: 'loose',
+          deterministicIds: true,
+          gitGraph: {
+            showBranches: true,
+            showCommitLabel: true,
+            mainBranchName: 'main',
+            rotateCommitLabel: true,
+            theme: 'base'
+          },
           themeVariables: {
-            primaryColor: hslToHex(brandColor) || '#3b82f6',
-            primaryTextColor: hslToHex(fgColor) || '#000000',
-            primaryBorderColor: hslToHex(brandColor) || '#3b82f6',
-            lineColor: hslToHex(fgColor) || '#000000',
-            sectionBkgColor: hslToHex(bgColor) || '#ffffff',
-            altSectionBkgColor: hslToHex(bgColor) || '#ffffff',
-            gridColor: hslToHex(fgColor) || '#000000',
-            secondaryColor: hslToHex(bgColor) || '#ffffff',
-            tertiaryColor: hslToHex(bgColor) || '#ffffff',
-            background: hslToHex(bgColor) || '#ffffff',
-            mainBkg: hslToHex(bgColor) || '#ffffff',
-            secondBkg: hslToHex(bgColor) || '#ffffff',
-            tertiaryBkg: hslToHex(bgColor) || '#ffffff',
-            // Class diagram specific colors
-            classText: hslToHex(fgColor) || '#000000',
-            cScale0: hslToHex(brandColor) || '#3b82f6',
-            cScale1: hslToHex(bgColor) || '#ffffff',
-            cScale2: hslToHex(brandColor) || '#3b82f6'
+            // Read CSS custom properties for theming
+            primaryColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-hex').trim() || '#3b82f6',
+            primaryTextColor: getComputedStyle(document.documentElement).getPropertyValue('--fg-hex').trim() || '#1f2937',
+            primaryBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-hex').trim() || '#3b82f6',
+            lineColor: getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground-hex').trim() || '#6b7280',
+            sectionBkgColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff',
+            altSectionBkgColor: getComputedStyle(document.documentElement).getPropertyValue('--muted-hex').trim() || '#f9fafb',
+            gridColor: getComputedStyle(document.documentElement).getPropertyValue('--border-hex').trim() || '#e5e7eb',
+            secondaryColor: getComputedStyle(document.documentElement).getPropertyValue('--muted-hex').trim() || '#f3f4f6',
+            tertiaryColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff',
+            background: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff',
+            mainBkg: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff',
+            secondBkg: getComputedStyle(document.documentElement).getPropertyValue('--muted-hex').trim() || '#f9fafb',
+            tertiaryBkg: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff'
           }
         })
         
-        mermaidInitialized = true
-      } catch (err) {
-        console.error('Failed to initialize Mermaid:', err)
-        setError('Failed to initialize diagram renderer')
-      }
-    }
-
-    const renderDiagram = async () => {
-      if (!ref.current || !code) {
-        console.log('Mermaid: No ref or code', { ref: !!ref.current, code: !!code })
-        return
-      }
-      
-      console.log('Mermaid: Starting render', { code: code.substring(0, 50) + '...' })
-      setIsLoading(true)
-      setError(null)
-      
-      try {
-        initializeMermaid()
-        
-        // Clear previous content
-        ref.current.innerHTML = ''
-        
         // Generate unique ID for this diagram
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`
-        console.log('Mermaid: Rendering with ID', id)
         
-        // Use the new Mermaid v10+ API
+        // Render the diagram
         const result = await mermaid.render(id, code)
-        console.log('Mermaid: Render result', result)
         
-        if (result && result.svg) {
+        if (ref.current && result.svg) {
           ref.current.innerHTML = result.svg
-          console.log('Mermaid: Successfully rendered')
-        } else {
-          throw new Error('No SVG returned from mermaid.render')
         }
-        
-        setIsLoading(false)
       } catch (err) {
         console.error('Mermaid rendering error:', err)
-        console.error('Diagram code:', code)
-        
-        // More specific error messages
-        let errorMessage = err.message || 'Unknown error'
-        if (errorMessage.includes('Syntax error')) {
-          errorMessage = `Syntax error in diagram code. Please check the Mermaid syntax.`
-        } else if (errorMessage.includes('Parse error')) {
-          errorMessage = `Parse error: Invalid diagram syntax detected.`
-        }
-        
-        setError(errorMessage)
-        setIsLoading(false)
-        
-        // Fallback: show the raw code
-        if (ref.current) {
-          ref.current.innerHTML = `<pre class="text-sm text-muted-foreground border rounded p-4">${code}</pre>`
-        }
+        setError(err.message)
       }
     }
 
     renderDiagram()
-  }, [code])
+  }, [code, isClient])
 
-  if (error) {
+  if (!isClient) {
     return (
-      <div className={`border border-destructive/50 rounded-lg p-4 ${className}`}>
-        <div className="text-sm text-destructive font-medium mb-2">Diagram Error</div>
-        <div className="text-sm text-muted-foreground">{error}</div>
-        <details className="mt-2">
-          <summary className="text-sm cursor-pointer text-muted-foreground hover:text-foreground">
-            Show diagram code
-          </summary>
-          <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto">{code}</pre>
-        </details>
+      <div className="flex items-center justify-center p-8 text-muted-foreground">
+        <span>Initializing...</span>
       </div>
     )
   }
 
   return (
-    <div className={`mermaid not-prose overflow-x-auto ${className}`} ref={ref}>
-      {isLoading && (
-        <div className="flex items-center justify-center p-8 text-muted-foreground">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-current"></div>
-          <span className="ml-2">Loading diagram...</span>
+    <div className="relative">
+      <div 
+        ref={ref}
+        className="mermaid-container w-full overflow-auto min-h-[200px]"
+      />
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="text-destructive text-center">
+            <span>Error rendering diagram: {error}</span>
+          </div>
         </div>
       )}
     </div>

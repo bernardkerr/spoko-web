@@ -1,6 +1,6 @@
 // Generated from Figma design tokens
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   theme: {
     extend: {
   "colors": {

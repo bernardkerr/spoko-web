@@ -65,6 +65,7 @@ export default function ThreePage() {
                 
                 <div className="h-96 w-full rounded-lg border">
                   <ThreeCanvas
+                    key={`three-${spinning}-${wireframe}-${showBackground}`}
                     spinning={spinning}
                     wireframe={wireframe}
                     showBackground={showBackground}

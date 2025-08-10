@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const dotenv = require('dotenv');
-const axios = require('axios');
+import dotenv from 'dotenv';
+import axios from 'axios';
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });

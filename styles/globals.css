@@ -29,6 +29,13 @@
     --brand: 221 83% 53%;
     --bg: 0 0% 100%;
     --fg: 222.2 84% 4.9%;
+    
+    /* Hex versions for SVG theming */
+    --brand-hex: #3b82f6;
+    --bg-hex: #ffffff;
+    --fg-hex: #1f2937;
+    --muted-foreground-hex: #6b7280;
+    --muted-hex: #f9fafb;
   }
 
   .dark {
@@ -56,6 +63,13 @@
     --brand: 221 83% 53%;
     --bg: 222.2 84% 4.9%;
     --fg: 210 40% 98%;
+    
+    /* Hex versions for dark mode SVG theming */
+    --brand-hex: #3b82f6;
+    --bg-hex: #0f172a;
+    --fg-hex: #f8fafc;
+    --muted-foreground-hex: #94a3b8;
+    --muted-hex: #334155;
   }
 }
 

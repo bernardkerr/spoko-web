@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const dotenv = require('dotenv');
-const FigmaTokenGenerator = require('../lib/figma-tokens.js');
+import dotenv from 'dotenv';
+import FigmaTokenGenerator from '../lib/figma-tokens.js';
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
