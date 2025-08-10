@@ -16,7 +16,8 @@
     "figma:components": "node scripts/figma-sync.js components",
     "figma:content": "node scripts/figma-sync.js content",
     "figma:all": "node scripts/figma-sync.js all",
-    "figma:help": "node scripts/figma-sync.js"
+    "figma:help": "node scripts/figma-sync.js",
+    "figma:list": "node scripts/list-figma-components.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
