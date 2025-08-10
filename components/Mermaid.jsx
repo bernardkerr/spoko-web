@@ -15,7 +15,7 @@ const useIsClient = () => {
 
 
 
-export default function Mermaid({ code, className }) {
+export function Mermaid({ code, className }) {
   const ref = useRef(null)
   const [error, setError] = useState(null)
   const isClient = useIsClient()

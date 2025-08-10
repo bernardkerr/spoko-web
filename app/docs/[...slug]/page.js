@@ -5,34 +5,56 @@ import { getImagePath } from '@/lib/paths'
 
 // Component to handle Mermaid diagrams in rendered HTML
 function MermaidRenderer({ html }) {
-  // Extract mermaid diagrams and render them separately
-  const parts = html.split(/<div class="mermaid-wrapper">.*?<\/div>/g)
-  const mermaidMatches = html.match(/<div class="mermaid"[^>]*data-mermaid="([^"]*)"[^>]*><\/div>/g) || []
+  // Use a more robust approach to find and replace Mermaid diagrams
+  const parts = []
+  let lastIndex = 0
   
-  const elements = []
+  // Find all mermaid wrapper divs
+  const mermaidRegex = /<div class="mermaid-wrapper"><div class="mermaid" data-mermaid="([^"]*)"><\/div><\/div>/g
+  let match
   
-  for (let i = 0; i < parts.length; i++) {
-    if (parts[i]) {
-      elements.push(
-        <div 
-          key={`html-${i}`}
-          dangerouslySetInnerHTML={{ __html: parts[i] }}
-        />
-      )
-    }
-    
-    if (mermaidMatches[i]) {
-      const match = mermaidMatches[i].match(/data-mermaid="([^"]*)"/)
-      if (match) {
-        const code = match[1].replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-        elements.push(
-          <Mermaid key={`mermaid-${i}`} code={code} />
+  while ((match = mermaidRegex.exec(html)) !== null) {
+    // Add HTML content before this mermaid diagram
+    if (match.index > lastIndex) {
+      const htmlPart = html.substring(lastIndex, match.index)
+      if (htmlPart.trim()) {
+        parts.push(
+          <div 
+            key={`html-${parts.length}`}
+            dangerouslySetInnerHTML={{ __html: htmlPart }}
+          />
         )
       }
     }
+    
+    // Add the Mermaid component
+    const code = match[1].replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    parts.push(
+      <Mermaid key={`mermaid-${parts.length}`} code={code} />
+    )
+    
+    lastIndex = match.index + match[0].length
   }
   
-  return <>{elements}</>
+  // Add any remaining HTML content
+  if (lastIndex < html.length) {
+    const remainingHtml = html.substring(lastIndex)
+    if (remainingHtml.trim()) {
+      parts.push(
+        <div 
+          key={`html-${parts.length}`}
+          dangerouslySetInnerHTML={{ __html: remainingHtml }}
+        />
+      )
+    }
+  }
+  
+  // If no mermaid diagrams found, just render the HTML
+  if (parts.length === 0) {
+    return <div dangerouslySetInnerHTML={{ __html: html }} />
+  }
+  
+  return <>{parts}</>
 }
 
 export async function generateStaticParams() {
@@ -41,7 +63,8 @@ export async function generateStaticParams() {
 }
 
 export default async function DocPage({ params }) {
-  const slug = params.slug.join('/')
+  const resolvedParams = await params
+  const slug = resolvedParams.slug.join('/')
   const doc = await getMarkdownContent(slug)
   
   if (!doc) {
@@ -50,9 +73,17 @@ export default async function DocPage({ params }) {
 
   // Process images in the HTML to use correct paths
   let processedContent = doc.content
+  
+  // Handle absolute paths that include content-submodule
   processedContent = processedContent.replace(
     /src="([^"]*\/content-submodule\/[^"]*)"/g,
     (match, src) => `src="${getImagePath(src)}"`
+  )
+  
+  // Handle relative paths from markdown (e.g., images/diagram.png)
+  processedContent = processedContent.replace(
+    /src="((?!http|\/)images\/[^"]*)"/g,
+    (match, src) => `src="${getImagePath(`/content-submodule/${src}`)}"`
   )
 
   return (

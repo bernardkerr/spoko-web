@@ -1,4 +1,4 @@
-import Mermaid from '@/components/Mermaid'
+import { Mermaid } from '@/components/Mermaid'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 const flowchartCode = `
