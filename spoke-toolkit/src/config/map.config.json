@@ -1,0 +1,34 @@
+{
+  "colors": {
+    "color.background": "--background",
+    "color.foreground": "--foreground",
+    "color.primary": "--primary",
+    "color.primary.foreground": "--primary-foreground",
+    "color.secondary": "--secondary",
+    "color.secondary.foreground": "--secondary-foreground",
+    "color.muted": "--muted",
+    "color.muted.foreground": "--muted-foreground",
+    "color.accent": "--accent",
+    "color.accent.foreground": "--accent-foreground",
+    "color.destructive": "--destructive",
+    "color.destructive.foreground": "--destructive-foreground",
+    "color.border": "--border",
+    "color.input": "--input",
+    "color.ring": "--ring"
+  },
+  "radii": {
+    "radius.base": "--radius"
+  },
+  "typography": {
+    "fontFamily": {
+      "font.family.sans": "sans"
+    },
+    "fontSize": {
+      "font.size.base": "base"
+    }
+  },
+  "out": {
+    "cssVarsSelector": ":root",
+    "darkModeSelector": "[data-theme=\"dark\"]"
+  }
+}

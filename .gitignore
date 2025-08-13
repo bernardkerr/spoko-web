@@ -8,7 +8,7 @@ lerna-debug.log*
 
 # Next.js
 .next/
-out/
+/out/
 build/
 dist/
 
@@ -84,7 +84,11 @@ jspm_packages/
 
 # Next.js build output
 .next
-out
+/out
+
+# Allow committing toolkit outputs under spoke-toolkit/out
+!spoke-toolkit/out/
+!spoke-toolkit/out/**
 
 # Nuxt.js build / generate output
 .nuxt

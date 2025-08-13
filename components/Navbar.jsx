@@ -9,45 +9,15 @@ export function Navbar() {
         <div className="mr-4 hidden md:flex">
           <Link href={getAssetPath('/')} className="mr-6 flex items-center space-x-2">
             <span className="hidden font-bold sm:inline-block">
-              Next.js Static Site
+              SPOKO
             </span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             <Link
-              href={getAssetPath('/')}
+              href={getAssetPath('/test')}
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
-              Home
-            </Link>
-            <Link
-              href={getAssetPath('/three')}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              Three.js
-            </Link>
-            <Link
-              href={getAssetPath('/mermaid')}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              Mermaid
-            </Link>
-            <Link
-              href={getAssetPath('/docs')}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              Docs
-            </Link>
-            <Link
-              href={getAssetPath('/figma')}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              Figma
-            </Link>
-            <Link
-              href={getAssetPath('/design')}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              Design
+              Test
             </Link>
           </nav>
         </div>

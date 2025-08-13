@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Spoke Toolkit Builder</title>
+    <style>
+      body { font: 12px sans-serif; margin: 16px; }
+      textarea { width: 100%; height: 200px; }
+      .row { margin: 12px 0; }
+      button { padding: 6px 10px; }
+    </style>
+  </head>
+  <body>
+    <h3>Spoke Toolkit Builder</h3>
+    <p>Paste the contents of <code>out/tokens.for-figma.json</code> below and click Import.</p>
+    <div class="row">
+      <textarea id="tokens" placeholder="{\n  \"version\": 1,\n  ...\n}"></textarea>
+    </div>
+    <div class="row">
+      <button id="importBtn">Import</button>
+    </div>
+    <script>
+      const btn = document.getElementById('importBtn');
+      btn.onclick = () => {
+        const raw = document.getElementById('tokens').value;
+        try {
+          const json = JSON.parse(raw);
+          parent.postMessage({ pluginMessage: { type: 'IMPORT_TOKENS', payload: json } }, '*');
+        } catch (e) {
+          alert('Invalid JSON');
+        }
+      };
+    </script>
+  </body>
+</html>

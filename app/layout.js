@@ -6,8 +6,8 @@ import '@/styles/globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Next.js Static Site',
-  description: 'A static Next.js site with Three.js, Mermaid, and Markdown support',
+  title: 'SPOKO',
+  description: 'SPOKO site',
 }
 
 export default function RootLayout({ children }) {
