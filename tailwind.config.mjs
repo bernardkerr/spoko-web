@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import homeExtend from './spoke-toolkit/out/themes/home/tailwind.extend.json' assert { type: 'json' }
+
 export default {
   darkMode: ['class'],
   content: [
@@ -95,6 +97,7 @@ export default {
           },
         },
       },
+      ...(homeExtend || {}),
     },
   },
   plugins: [require('@tailwindcss/typography')],

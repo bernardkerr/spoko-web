@@ -4,10 +4,10 @@ import { getAssetPath } from '@/lib/paths'
 
 export default function TestPage() {
   return (
-    <div className="container py-8">
+    <main className="home container py-8">
       <div className="flex flex-col items-center space-y-8 text-center">
         <div className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+          <h1 className="text-h1 font-bold tracking-tighter">
             Test
           </h1>
           <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
@@ -102,6 +102,6 @@ export default function TestPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
