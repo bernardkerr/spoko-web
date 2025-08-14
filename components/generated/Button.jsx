@@ -1,42 +1,20 @@
-import { Card, CardContent } from '@/components/ui/card';
+"use client"
 
-export default function Button() {
+import { getAssetPath } from '@/lib/paths'
+
+export default function Button({ href = '#', variant = 'primary', children, className = '', ...rest }) {
+  const isInternal = typeof href === 'string' && href.startsWith('/')
+  const finalHref = isInternal ? getAssetPath(href) : href
+  const baseCls = 'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-6'
+  const variants = {
+    primary: `${baseCls} bg-primary text-primary-foreground hover:bg-primary/90`,
+    secondary: `${baseCls} border border-input bg-background hover:bg-accent hover:text-accent-foreground`,
+    link: `${baseCls} bg-transparent underline px-0 h-auto`,
+  }
+  const cls = `${variants[variant] || variants.primary} ${className}`.trim()
   return (
-    <Card 
-      className="w-full"
-      style={{
-        "backgroundColor": "#ffffff",
-        "borderRadius": "0px",
-        "minHeight": "340px",
-        "paddingTop": "32px",
-        "paddingRight": "32px",
-        "paddingBottom": "64px",
-        "paddingLeft": "32px"
-}}
-    >
-      <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Button</h3>
-        <div className="mb-4">
-        <div className="mb-4">
-        <div className="mb-4">
-        <p className="text-sm">Button</p>
-        <p className="text-sm">Displays a button or a component that looks like a button.
-</p>
-        </div>
-        <div className="mb-4">
-        <div className="mb-2 p-2 border border-gray-200 rounded text-xs text-gray-500">
-          INSTANCE: button
-        </div>
-        </div>
-        </div>
-        <div className="mb-2 p-2 border border-gray-200 rounded text-xs text-gray-500">
-          LINE: Line 2
-        </div>
-        </div>
-        <div className="mb-2 p-2 border border-gray-200 rounded text-xs text-gray-500">
-          INSTANCE: button
-        </div>
-      </CardContent>
-    </Card>
-  );
+    <a href={finalHref} className={cls} {...rest}>
+      {children}
+    </a>
+  )
 }

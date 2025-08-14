@@ -23,12 +23,6 @@ export function Navbar() {
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium ml-6">
             <Link
-              href={getAssetPath('/test')}
-              className="transition-colors hover:text-white/80 text-white/60"
-            >
-              Test
-            </Link>
-            <Link
               href={getAssetPath('/docs')}
               className="transition-colors hover:text-white/80 text-white/60"
             >
@@ -39,6 +33,12 @@ export function Navbar() {
               className="transition-colors hover:text-white/80 text-white/60"
             >
               Design
+            </Link>
+            <Link
+              href={getAssetPath('/test')}
+              className="transition-colors hover:text-white/80 text-white/60"
+            >
+              Test
             </Link>
           </nav>
         </div>

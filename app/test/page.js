@@ -11,7 +11,7 @@ export default function TestPage() {
             Test
           </h1>
           <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-            All content that previously appeared on the front page now lives here.
+            These are test pages.
           </p>
         </div>
         
