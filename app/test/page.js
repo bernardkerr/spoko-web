@@ -1,107 +1,81 @@
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import NextLink from 'next/link'
 import { getAssetPath } from '@/lib/paths'
+import {
+  Section,
+  Box,
+  Flex,
+  Heading,
+  Text,
+  Separator,
+  Code,
+  Grid,
+  Card,
+  Button,
+} from '@radix-ui/themes'
 
 export default function TestPage() {
   return (
-    <main className="home container py-8">
-      <div className="flex flex-col items-center space-y-8 text-center">
-        <div className="space-y-4">
-          <h1 className="text-h1 font-bold tracking-tighter">
-            Test
-          </h1>
-          <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-            These are test pages.
-          </p>
-        </div>
-        
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 w-full max-w-7xl">
-          <Card className="transition-colors hover:bg-accent">
-            <CardHeader>
-              <CardTitle>Three.js Examples</CardTitle>
-              <CardDescription>
-                Interactive 3D graphics and animations powered by Three.js and React Three Fiber.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link 
-                href={getAssetPath('/three')}
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-              >
-                View Examples
-              </Link>
-            </CardContent>
+    <Section size="4">
+      <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
+        <Box mb="6">
+          <Heading size="8" mb="2">Radix Themes Pilot</Heading>
+          <Text as="p" color="gray" size="3" mb="3">
+            These components are rendered using <Code>@radix-ui/themes</Code> and inherit the global appearance.
+          </Text>
+          <Flex gap="3" align="center">
+            <Text>Flex row</Text>
+            <Separator orientation="vertical" />
+            <Text color="gray">Tokenized spacing/typography</Text>
+          </Flex>
+        </Box>
+
+        <Box mb="5">
+          <Heading size="9">Test</Heading>
+          <Text as="p" color="gray" size="4">These are test pages.</Text>
+        </Box>
+
+        <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
+          <Card>
+            <Box p="4">
+              <Heading size="4" mb="1">Three.js Examples</Heading>
+              <Text color="gray" size="2" mb="3">Interactive 3D graphics and animations powered by Three.js and React Three Fiber.</Text>
+              <Button asChild>
+                <NextLink href={getAssetPath('/three')}>View Examples</NextLink>
+              </Button>
+            </Box>
           </Card>
 
-          <Card className="transition-colors hover:bg-accent">
-            <CardHeader>
-              <CardTitle>Mermaid Diagrams</CardTitle>
-              <CardDescription>
-                Beautiful diagrams and flowcharts with site-themed Mermaid integration.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link 
-                href={getAssetPath('/mermaid')}
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-              >
-                View Diagrams
-              </Link>
-            </CardContent>
+          <Card>
+            <Box p="4">
+              <Heading size="4" mb="1">Mermaid Diagrams</Heading>
+              <Text color="gray" size="2" mb="3">Beautiful diagrams and flowcharts with site-themed Mermaid integration.</Text>
+              <Button asChild>
+                <NextLink href={getAssetPath('/mermaid')}>View Diagrams</NextLink>
+              </Button>
+            </Box>
           </Card>
 
-          <Card className="transition-colors hover:bg-accent">
-            <CardHeader>
-              <CardTitle>Documentation</CardTitle>
-              <CardDescription>
-                Markdown-based documentation with support for Git submodules and rich typography.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link 
-                href={getAssetPath('/docs')}
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-              >
-                Read Docs
-              </Link>
-            </CardContent>
+          <Card>
+            <Box p="4">
+              <Heading size="4" mb="1">Documentation</Heading>
+              <Text color="gray" size="2" mb="3">Markdown-based documentation with support for Git submodules and rich typography.</Text>
+              <Button asChild>
+                <NextLink href={getAssetPath('/docs')}>Read Docs</NextLink>
+              </Button>
+            </Box>
           </Card>
 
-          <Card className="transition-colors hover:bg-accent">
-            <CardHeader>
-              <CardTitle>Figma Design System</CardTitle>
-              <CardDescription>
-                Design token synchronization and component generation from Figma designs.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link 
-                href={getAssetPath('/figma')}
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-              >
-                View Design System
-              </Link>
-            </CardContent>
+          <Card>
+            <Box p="4">
+              <Heading size="4" mb="1">Radix Design Showcase</Heading>
+              <Text color="gray" size="2" mb="3">Components built with @radix-ui/themes demonstrating the site theme.</Text>
+              <Button asChild>
+                <NextLink href={getAssetPath('/radix')}>View Showcase</NextLink>
+              </Button>
+            </Box>
           </Card>
-
-          <Card className="transition-colors hover:bg-accent">
-            <CardHeader>
-              <CardTitle>Figma Design</CardTitle>
-              <CardDescription>
-                Your complete Figma design rendered as an interactive web interface.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link 
-                href={getAssetPath('/design')}
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-              >
-                View Design
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </main>
+        </Grid>
+      </Box>
+    </Section>
   )
 }

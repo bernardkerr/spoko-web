@@ -1,3 +1,14 @@
+// DEPRECATED: This file is intentionally disabled per request to remove the
+// legacy DesignShowcase (shadcn/custom components). Do not import or use.
+// If you need this file permanently gone, delete it from the repo.
+
+export default function DesignShowcase() {
+  if (process.env.NODE_ENV !== 'production') {
+    throw new Error('DesignShowcase is deprecated and must not be used.')
+  }
+  return null
+}
+
 'use client'
 
 import React from 'react'
@@ -28,7 +39,7 @@ export default function DesignShowcase() {
       <div className="container mx-auto py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Spoko Design System</h1>
-          <p className="text-lg text-muted-foreground">Real ShadCN components styled with spoke-toolkit tokens</p>
+          <p className="text-lg text-muted-foreground">Real ShadCN components styled with site tokens / Radix tokens</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -198,7 +209,7 @@ export default function DesignShowcase() {
               <h3 className="text-2xl font-semibold">Heading 3</h3>
               <h4 className="text-xl font-medium">Heading 4</h4>
               <p className="text-sm text-muted-foreground">
-                Body text uses tokens: foreground/muted-foreground. This matches the spoke-toolkit theme.
+                Body text uses tokens: foreground/muted-foreground. This matches the site theme.
               </p>
               <p className="text-sm">
                 Links can be styled with brand color: <a href="#" className="text-primary underline-offset-4 hover:underline">Learn more</a>

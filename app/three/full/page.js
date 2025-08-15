@@ -1,41 +1,44 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import NextLink from 'next/link'
 import { ThreeCanvas } from '@/components/ThreeCanvas'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
 import { getAssetPath } from '@/lib/paths'
+import { Box, Button, Heading, Text } from '@radix-ui/themes'
 
 export default function ThreeFullPage() {
   const [spinning, setSpinning] = useState(true)
   const [wireframe, setWireframe] = useState(false)
 
   return (
-    <div className="relative h-screen w-screen">
+    <Box style={{ position: 'relative', height: '100vh', width: '100vw' }}>
       {/* Controls overlay */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 bg-background/80 backdrop-blur-sm rounded-lg p-4 border">
-        <Link href={getAssetPath('/three')}>
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </Link>
-        <Button
-          variant={spinning ? "default" : "outline"}
-          size="sm"
-          onClick={() => setSpinning(!spinning)}
-        >
+      <Box
+        style={{
+          position: 'absolute',
+          top: 16,
+          left: 16,
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          backgroundColor: 'var(--color-panel-translucent)',
+          backdropFilter: 'blur(8px)',
+          borderRadius: 8,
+          padding: 16,
+          border: '1px solid var(--gray-a6)',
+        }}
+      >
+        <Button asChild variant="soft" size="2">
+          <NextLink href={getAssetPath('/three')}>Back</NextLink>
+        </Button>
+        <Button size="2" onClick={() => setSpinning(!spinning)}>
           {spinning ? 'Stop' : 'Spin'}
         </Button>
-        <Button
-          variant={wireframe ? "default" : "outline"}
-          size="sm"
-          onClick={() => setWireframe(!wireframe)}
-        >
+        <Button size="2" onClick={() => setWireframe(!wireframe)}>
           {wireframe ? 'Solid' : 'Wire'}
         </Button>
-      </div>
+      </Box>
 
       {/* Full-screen canvas */}
       <ThreeCanvas
@@ -44,6 +47,6 @@ export default function ThreeFullPage() {
         showBackground={true}
         fullscreen={true}
       />
-    </div>
+    </Box>
   )
 }

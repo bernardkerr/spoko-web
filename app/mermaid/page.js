@@ -1,5 +1,5 @@
 import { Mermaid } from '@/components/Mermaid'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Section, Box, Grid, Card, Heading, Text } from '@radix-ui/themes'
 
 const flowchartCode = `
 flowchart TD
@@ -56,25 +56,20 @@ gitgraph
 
 export default function MermaidPage() {
   return (
-    <div className="container py-8">
-      <div className="space-y-8">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight">Mermaid Diagrams</h1>
-          <p className="text-muted-foreground">
-            Beautiful diagrams and flowcharts with site-themed Mermaid integration.
-            These diagrams automatically adapt to your light/dark theme preferences.
-          </p>
-        </div>
+    <Section size="4">
+      <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
+        <Box mb="5">
+          <Heading size="9">Mermaid Diagrams</Heading>
+          <Text as="p" color="gray" size="4">
+            Beautiful diagrams and flowcharts with site-themed Mermaid integration. These diagrams automatically adapt to your light/dark theme preferences.
+          </Text>
+        </Box>
 
-        <div className="grid gap-8">
+        <Grid columns={{ initial: '1', md: '2' }} gap="5">
           <Card>
-            <CardHeader>
-              <CardTitle>Flowchart</CardTitle>
-              <CardDescription>
-                A simple decision flowchart showing a typical debugging process.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <Box p="4">
+              <Heading size="4" mb="2">Flowchart</Heading>
+              <Text color="gray" size="2" mb="3">A simple decision flowchart showing a typical debugging process.</Text>
               <Mermaid code={`
 flowchart TD
     A[Start] --> B{Is it working?}
@@ -85,17 +80,13 @@ flowchart TD
     C --> F[Deploy]
     F --> G[End]
 `} />
-            </CardContent>
+            </Box>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Sequence Diagram</CardTitle>
-              <CardDescription>
-                Visualizing the interaction between user, browser, server, and database.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <Box p="4">
+              <Heading size="4" mb="2">Sequence Diagram</Heading>
+              <Text color="gray" size="2" mb="3">Visualizing the interaction between user, browser, server, and database.</Text>
               <Mermaid code={`
 sequenceDiagram
     participant User
@@ -110,17 +101,13 @@ sequenceDiagram
     Server-->>Browser: HTTP Response
     Browser-->>User: Display Page
 `} />
-            </CardContent>
+            </Box>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Class Diagram</CardTitle>
-              <CardDescription>
-                Object-oriented design showing relationships between User, Post, and Comment entities.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <Box p="4">
+              <Heading size="4" mb="2">Class Diagram</Heading>
+              <Text color="gray" size="2" mb="3">Object-oriented design showing relationships between User, Post, and Comment entities.</Text>
               <Mermaid code={`
 classDiagram
     class User {
@@ -145,17 +132,13 @@ classDiagram
     User "1" --> "*" Post : creates
     Post "1" --> "*" Comment : has
 `} />
-            </CardContent>
+            </Box>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Git Graph</CardTitle>
-              <CardDescription>
-                A Git workflow visualization showing branching, merging, and releases.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <Box p="4">
+              <Heading size="4" mb="2">Git Graph</Heading>
+              <Text color="gray" size="2" mb="3">A Git workflow visualization showing branching, merging, and releases.</Text>
               <Mermaid code={`
 gitGraph
     commit id: "Initial commit"
@@ -164,42 +147,32 @@ gitGraph
     commit id: "Add feature A"
     commit id: "Add feature B"
     checkout main
-    commit id: "Hotfix"
     merge develop
     commit id: "Release v1.0"
-    branch feature/new-ui
-    checkout feature/new-ui
-    commit id: "New UI design"
-    checkout develop
-    merge feature/new-ui
+    branch hotfix
+    checkout hotfix
+    commit id: "Fix critical bug"
+    checkout main
+    merge hotfix
+    commit id: "Release v1.0.1"
 `} />
-            </CardContent>
+            </Box>
           </Card>
-        </div>
+        </Grid>
 
-        <div className="prose dark:prose-invert max-w-none">
-          <h2>About Mermaid Integration</h2>
-          <p>
-            This site includes a custom Mermaid component that automatically themes diagrams 
-            based on your CSS variables. The integration features:
-          </p>
+        <Box mt="6">
+          <Heading size="6" mb="2">About Mermaid Integration</Heading>
+          <Text as="p" color="gray" size="3" mb="3">
+            This site includes a custom Mermaid component that automatically themes diagrams based on your CSS variables. The integration features:
+          </Text>
           <ul>
             <li>Automatic light/dark theme adaptation</li>
             <li>Responsive design that prevents overflow</li>
             <li>Custom color scheme using site brand colors</li>
             <li>Support for all Mermaid diagram types</li>
           </ul>
-          
-          <h3 className="prose-sm">Typography Examples</h3>
-          <div className="prose-sm">
-            <p>This is an example of smaller prose text that might be used for captions or secondary content.</p>
-          </div>
-          
-          <div className="prose-lg">
-            <p>This is an example of larger prose text that might be used for emphasis or important content sections.</p>
-          </div>
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Section>
   )
 }

@@ -22,6 +22,8 @@ export function ThemeToggle() {
       root.classList.remove('dark')
     }
     localStorage.setItem('theme', newTheme)
+    // Notify any listeners (e.g., RadixThemeProvider) about theme change
+    window.dispatchEvent(new CustomEvent('theme-change', { detail: { theme: newTheme } }))
   }
 
   const toggleTheme = () => {

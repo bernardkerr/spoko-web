@@ -29,12 +29,6 @@ export function Navbar() {
               Docs
             </Link>
             <Link
-              href={getAssetPath('/design')}
-              className="transition-colors hover:text-white/80 text-white/60"
-            >
-              Design
-            </Link>
-            <Link
               href={getAssetPath('/test')}
               className="transition-colors hover:text-white/80 text-white/60"
             >

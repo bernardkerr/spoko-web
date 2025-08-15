@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { getMarkdownContent, getAllMarkdownSlugs } from '@/lib/markdown'
 import { Mermaid } from '@/components/Mermaid'
 import { getImagePath } from '@/lib/paths'
+import { Section, Box, Heading, Text } from '@radix-ui/themes'
 
 // Component to handle Mermaid diagrams in rendered HTML
 function MermaidRenderer({ html }) {
@@ -87,24 +88,21 @@ export default async function DocPage({ params }) {
   )
 
   return (
-    <div className="container py-8">
-      <div className="space-y-8">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight">
-            {doc.frontmatter.title || 
-             slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-          </h1>
+    <Section size="4">
+      <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
+        <Box mb="5">
+          <Heading size="9">
+            {doc.frontmatter.title || slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          </Heading>
           {doc.frontmatter.description && (
-            <p className="text-muted-foreground text-lg">
-              {doc.frontmatter.description}
-            </p>
+            <Text as="p" color="gray" size="4">{doc.frontmatter.description}</Text>
           )}
-        </div>
+        </Box>
 
         <article className="prose dark:prose-invert max-w-none">
           <MermaidRenderer html={processedContent} />
         </article>
-      </div>
-    </div>
+      </Box>
+    </Section>
   )
 }

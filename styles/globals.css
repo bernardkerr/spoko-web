@@ -82,6 +82,15 @@
   }
 }
 
+/* Normalize autolinked heading anchors */
+.anchor-link {
+  color: inherit;
+  text-decoration: none;
+}
+.anchor-link:hover {
+  text-decoration: underline;
+}
+
 /* Mermaid styling */
 .mermaid {
   /* Remove typography styles for mermaid diagrams */

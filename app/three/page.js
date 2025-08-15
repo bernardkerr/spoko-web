@@ -1,12 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import NextLink from 'next/link'
 import { ThreeCanvas } from '@/components/ThreeCanvas'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getAssetPath } from '@/lib/paths'
+import {
+  Section,
+  Box,
+  Tabs,
+  Card,
+  Button,
+  Heading,
+  Text,
+} from '@radix-ui/themes'
 
 export default function ThreePage() {
   const [spinning, setSpinning] = useState(false)
@@ -14,85 +20,71 @@ export default function ThreePage() {
   const [showBackground, setShowBackground] = useState(true)
 
   return (
-    <div className="container py-8">
-      <div className="space-y-8">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight">Three.js Examples</h1>
-          <p className="text-muted-foreground">
-            Interactive 3D graphics powered by Three.js and React Three Fiber.
-          </p>
-        </div>
+    <Section size="4">
+      <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
+        <Box mb="5">
+          <Heading size="9">Three.js Examples</Heading>
+          <Text as="p" color="gray" size="4">Interactive 3D graphics powered by Three.js and React Three Fiber.</Text>
+        </Box>
 
-        <Tabs defaultValue="embedded" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="embedded">Embedded Viewer</TabsTrigger>
-            <TabsTrigger value="fullscreen">
-              <Link href={getAssetPath('/three/full')}>
-                Full Screen
-              </Link>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="embedded" className="space-y-6">
+        <Tabs.Root defaultValue="embedded">
+          <Tabs.List>
+            <Tabs.Trigger value="embedded">Embedded Viewer</Tabs.Trigger>
+            <Tabs.Trigger value="fullscreen">
+              <Button asChild variant="soft">
+                <NextLink href={getAssetPath('/three/full')}>Full Screen</NextLink>
+              </Button>
+            </Tabs.Trigger>
+          </Tabs.List>
+
+          <Tabs.Content value="embedded">
             <Card>
-              <CardHeader>
-                <CardTitle>Interactive 3D Cube</CardTitle>
-                <CardDescription>
-                  Use the controls below to modify the 3D scene. Click and drag to rotate the view.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={spinning ? "default" : "outline"}
-                    onClick={() => setSpinning(!spinning)}
-                  >
+              <Box p="4">
+                <Heading size="4" mb="2">Interactive 3D Cube</Heading>
+                <Text color="gray" size="2" mb="3">Use the controls below to modify the 3D scene. Click and drag to rotate the view.</Text>
+                <Box mb="3" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <Button onClick={() => setSpinning(!spinning)}>
                     {spinning ? 'Stop Spinning' : 'Start Spinning'}
                   </Button>
-                  <Button
-                    variant={wireframe ? "default" : "outline"}
-                    onClick={() => setWireframe(!wireframe)}
-                  >
+                  <Button onClick={() => setWireframe(!wireframe)}>
                     {wireframe ? 'Solid' : 'Wireframe'}
                   </Button>
-                  <Button
-                    variant={showBackground ? "default" : "outline"}
-                    onClick={() => setShowBackground(!showBackground)}
-                  >
+                  <Button onClick={() => setShowBackground(!showBackground)}>
                     {showBackground ? 'Hide Background' : 'Show Background'}
                   </Button>
-                </div>
-                
-                <div className="h-96 w-full rounded-lg border">
+                </Box>
+                <Box style={{ height: 384, width: '100%', borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden' }}>
                   <ThreeCanvas
                     spinning={spinning}
                     wireframe={wireframe}
                     showBackground={showBackground}
                   />
-                </div>
-              </CardContent>
+                </Box>
+              </Box>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </Tabs.Content>
+        </Tabs.Root>
 
-        <div className="prose dark:prose-invert max-w-none">
-          <h2>About This Demo</h2>
-          <p>
-            This Three.js integration demonstrates how to embed interactive 3D content 
-            in a static Next.js site. The scene includes:
-          </p>
-          <ul>
-            <li>A rotating cube with customizable materials</li>
-            <li>Orbit controls for camera manipulation</li>
-            <li>Dynamic lighting and background options</li>
-            <li>Responsive design that works on all devices</li>
-          </ul>
-          <p>
-            The implementation uses React Three Fiber for declarative 3D programming 
-            and @react-three/drei for additional utilities and controls.
-          </p>
-        </div>
-      </div>
-    </div>
+        <Box mt="6">
+          <div className="prose dark:prose-invert max-w-none">
+            <h2>About This Demo</h2>
+            <p>
+              This Three.js integration demonstrates how to embed interactive 3D content 
+              in a static Next.js site. The scene includes:
+            </p>
+            <ul>
+              <li>A rotating cube with customizable materials</li>
+              <li>Orbit controls for camera manipulation</li>
+              <li>Dynamic lighting and background options</li>
+              <li>Responsive design that works on all devices</li>
+            </ul>
+            <p>
+              The implementation uses React Three Fiber for declarative 3D programming 
+              and @react-three/drei for additional utilities and controls.
+            </p>
+          </div>
+        </Box>
+      </Box>
+    </Section>
   )
 }
