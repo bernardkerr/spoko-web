@@ -2,7 +2,11 @@
 import fs from 'fs'
 import path from 'path'
 
-const SRC_DIR = path.join(process.cwd(), 'content', 'images')
+const SRC_DIRS = [
+  // Prefer local content to override submodule; copy submodule first then local
+  path.join(process.cwd(), 'content-submodule', 'images'),
+  path.join(process.cwd(), 'content', 'images'),
+]
 const DEST_DIR = path.join(process.cwd(), 'public', 'content', 'images')
 
 function copyDir(src, dest) {
@@ -20,8 +24,10 @@ function copyDir(src, dest) {
 }
 
 try {
-  copyDir(SRC_DIR, DEST_DIR)
-  console.log(`[sync-content-images] Synced ${SRC_DIR} -> ${DEST_DIR}`)
+  for (const src of SRC_DIRS) {
+    copyDir(src, DEST_DIR)
+    console.log(`[sync-content-images] Synced ${src} -> ${DEST_DIR}`)
+  }
 } catch (e) {
   console.error('[sync-content-images] Error:', e)
   process.exitCode = 1

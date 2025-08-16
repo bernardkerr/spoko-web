@@ -5,7 +5,11 @@ import { Theme } from '@radix-ui/themes'
 import { IBM_Plex_Mono } from 'next/font/google'
 
 // Next.js font loaders must be called at module scope
-const ibmPlexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600', '700'] })
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-ibm-plex-mono',
+})
 
 /**
  * RadixThemeProvider
@@ -36,8 +40,8 @@ export default function RadixThemeProvider({ children }) {
       radius="large"
       className={ibmPlexMono.className}
       style={{
-        '--default-font-family': ibmPlexMono.style.fontFamily,
-        '--code-font-family': ibmPlexMono.style.fontFamily,
+        '--default-font-family': 'var(--font-ibm-plex-mono)',
+        '--code-font-family': 'var(--font-ibm-plex-mono)',
       }}
     >
       {children}

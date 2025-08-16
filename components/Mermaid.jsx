@@ -19,6 +19,41 @@ export function Mermaid({ code, className }) {
   const ref = useRef(null)
   const [error, setError] = useState(null)
   const isClient = useIsClient()
+  const [themeVersion, setThemeVersion] = useState(0)
+
+  // Read colors from the nearest Radix Theme root (.rt-Theme) with fallbacks
+  const readTheme = () => {
+    const el = ref.current || document.documentElement
+    const themeRoot = el.closest?.('.rt-Theme') || document.querySelector('.rt-Theme') || document.documentElement
+    const cs = getComputedStyle(themeRoot)
+
+    const pick = (...vars) => {
+      for (const v of vars) {
+        const val = cs.getPropertyValue(v).trim()
+        if (val) return val
+      }
+      return ''
+    }
+
+    // Convert Radix numeric HSL tokens like "240 6.9% 10.0%" to a valid CSS color string
+    const toCss = (raw, fallback) => {
+      if (!raw) return fallback
+      const s = raw.replace(/^hsl\(|\)$/g, '').trim()
+      if (/^\d/.test(s) && s.includes('%')) return `hsl(${s})`
+      return raw
+    }
+
+    const background = toCss(
+      pick('--color-panel', '--color-surface', '--background', '--gray-1', '--bg'),
+      '#ffffff'
+    )
+    const foreground = toCss(pick('--foreground', '--gray-12', '--fg'), '#1f2937')
+    const muted = toCss(pick('--gray-6', '--muted', '--gray-5'), 'hsl(215 16.3% 46.9%)')
+    const border = toCss(pick('--gray-6', '--border', '--gray-a6'), 'hsl(214 32% 91%)')
+    const primary = toCss(pick('--accent-9', '--iris-9', '--indigo-9', '--accent', '--brand'), '#3b82f6')
+
+    return { themeRoot, background, foreground, muted, border, primary }
+  }
 
   useEffect(() => {
     if (!isClient || !code) return
@@ -29,6 +64,7 @@ export function Mermaid({ code, className }) {
         
         // Dynamic import to avoid SSR issues
         const mermaid = (await import('mermaid')).default
+        const theme = readTheme()
         
         // Initialize Mermaid with theme configuration
         mermaid.initialize({
@@ -44,20 +80,20 @@ export function Mermaid({ code, className }) {
             theme: 'base'
           },
           themeVariables: {
-            // Read CSS custom properties for theming
-            primaryColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-hex').trim() || '#3b82f6',
-            primaryTextColor: getComputedStyle(document.documentElement).getPropertyValue('--fg-hex').trim() || '#1f2937',
-            primaryBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-hex').trim() || '#3b82f6',
-            lineColor: getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground-hex').trim() || '#6b7280',
-            sectionBkgColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff',
-            altSectionBkgColor: getComputedStyle(document.documentElement).getPropertyValue('--muted-hex').trim() || '#f9fafb',
-            gridColor: getComputedStyle(document.documentElement).getPropertyValue('--border-hex').trim() || '#e5e7eb',
-            secondaryColor: getComputedStyle(document.documentElement).getPropertyValue('--muted-hex').trim() || '#f3f4f6',
-            tertiaryColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff',
-            background: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff',
-            mainBkg: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff',
-            secondBkg: getComputedStyle(document.documentElement).getPropertyValue('--muted-hex').trim() || '#f9fafb',
-            tertiaryBkg: getComputedStyle(document.documentElement).getPropertyValue('--bg-hex').trim() || '#ffffff'
+            // Colors aligned to Radix tokens (allow hsl() strings)
+            primaryColor: theme.primary,
+            primaryTextColor: theme.foreground,
+            primaryBorderColor: theme.primary,
+            lineColor: theme.muted,
+            sectionBkgColor: theme.background,
+            altSectionBkgColor: theme.background,
+            gridColor: theme.border,
+            secondaryColor: theme.muted,
+            tertiaryColor: theme.background,
+            background: theme.background,
+            mainBkg: theme.background,
+            secondBkg: theme.muted,
+            tertiaryBkg: theme.background
           }
         })
         
@@ -77,7 +113,14 @@ export function Mermaid({ code, className }) {
     }
 
     renderDiagram()
-  }, [code, isClient])
+  }, [code, isClient, themeVersion])
+
+  // Re-render on custom theme change events from Radix provider
+  useEffect(() => {
+    const onThemeChange = () => setThemeVersion((v) => v + 1)
+    window.addEventListener('theme-change', onThemeChange)
+    return () => window.removeEventListener('theme-change', onThemeChange)
+  }, [])
 
   if (!isClient) {
     return (
