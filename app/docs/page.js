@@ -1,6 +1,5 @@
 import NextLink from 'next/link'
 import { getMarkdownFiles } from '@/lib/markdown'
-import { getAssetPath } from '@/lib/paths'
 import {
   Section,
   Box,
@@ -51,7 +50,7 @@ export default async function DocsPage() {
               <Card key={file.slug}>
                 <Box p="4">
                   <Heading size="4" mb="1">
-                    <NextLink href={getAssetPath(`/docs/${file.slug}`)}>
+                    <NextLink href={`/docs/${file.slug}`}>
                       {file.slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </NextLink>
                   </Heading>

@@ -1,5 +1,3 @@
-import Link from 'next/link'
-import { getAssetPath } from '@/lib/paths'
 import ClientHomeContent from '@/components/ClientHomeContent'
 // Note: Using static export. Avoid force-dynamic/noStore to keep compatibility.
 import { Section, Box, Heading, Text, Button, Flex } from '@radix-ui/themes'
@@ -46,10 +44,10 @@ export default async function Home() {
           </Text>
           <Flex mt="6" gap="3" justify="center" wrap="wrap">
             <Button asChild>
-              <NextLink href={getAssetPath('/test')}>Go to Test</NextLink>
+              <NextLink href="/test">Go to Test</NextLink>
             </Button>
             <Button asChild variant="soft">
-              <NextLink href={getAssetPath('/docs')}>View Documentation</NextLink>
+              <NextLink href="/docs">View Documentation</NextLink>
             </Button>
           </Flex>
         </Box>

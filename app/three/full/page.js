@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import NextLink from 'next/link'
 import { ThreeCanvas } from '@/components/ThreeCanvas'
-import { getAssetPath } from '@/lib/paths'
 import { Box, Button, Heading, Text } from '@radix-ui/themes'
 
 export default function ThreeFullPage() {
@@ -30,7 +29,7 @@ export default function ThreeFullPage() {
         }}
       >
         <Button asChild variant="soft" size="2">
-          <NextLink href={getAssetPath('/three')}>Back</NextLink>
+          <NextLink href="/three">Back</NextLink>
         </Button>
         <Button size="2" onClick={() => setSpinning(!spinning)}>
           {spinning ? 'Stop' : 'Spin'}

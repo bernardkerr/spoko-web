@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import NextLink from 'next/link'
 import { ThreeCanvas } from '@/components/ThreeCanvas'
-import { getAssetPath } from '@/lib/paths'
 import {
   Section,
   Box,
@@ -32,7 +31,7 @@ export default function ThreePage() {
             <Tabs.Trigger value="embedded">Embedded Viewer</Tabs.Trigger>
             <Tabs.Trigger value="fullscreen">
               <Button asChild variant="soft">
-                <NextLink href={getAssetPath('/three/full')}>Full Screen</NextLink>
+                <NextLink href="/three/full">Full Screen</NextLink>
               </Button>
             </Tabs.Trigger>
           </Tabs.List>

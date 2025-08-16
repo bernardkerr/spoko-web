@@ -1,5 +1,4 @@
 import NextLink from 'next/link'
-import { getAssetPath } from '@/lib/paths'
 import {
   Section,
   Box,
@@ -40,7 +39,7 @@ export default function TestPage() {
               <Heading size="4" mb="1">Three.js Examples</Heading>
               <Text color="gray" size="2" mb="3">Interactive 3D graphics and animations powered by Three.js and React Three Fiber.</Text>
               <Button asChild>
-                <NextLink href={getAssetPath('/three')}>View Examples</NextLink>
+                <NextLink href="/three">View Examples</NextLink>
               </Button>
             </Box>
           </Card>
@@ -50,7 +49,7 @@ export default function TestPage() {
               <Heading size="4" mb="1">Mermaid Diagrams</Heading>
               <Text color="gray" size="2" mb="3">Beautiful diagrams and flowcharts with site-themed Mermaid integration.</Text>
               <Button asChild>
-                <NextLink href={getAssetPath('/mermaid')}>View Diagrams</NextLink>
+                <NextLink href="/mermaid">View Diagrams</NextLink>
               </Button>
             </Box>
           </Card>
@@ -60,7 +59,7 @@ export default function TestPage() {
               <Heading size="4" mb="1">Documentation</Heading>
               <Text color="gray" size="2" mb="3">Markdown-based documentation with support for Git submodules and rich typography.</Text>
               <Button asChild>
-                <NextLink href={getAssetPath('/docs')}>Read Docs</NextLink>
+                <NextLink href="/docs">Read Docs</NextLink>
               </Button>
             </Box>
           </Card>
@@ -70,7 +69,7 @@ export default function TestPage() {
               <Heading size="4" mb="1">Radix Design Showcase</Heading>
               <Text color="gray" size="2" mb="3">Components built with @radix-ui/themes demonstrating the site theme.</Text>
               <Button asChild>
-                <NextLink href={getAssetPath('/radix')}>View Showcase</NextLink>
+                <NextLink href="/radix">View Showcase</NextLink>
               </Button>
             </Box>
           </Card>

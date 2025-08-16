@@ -4,7 +4,6 @@ import HomeContent from '@/content/home.mdx'
 import MDXImage from '@/components/MDXImage'
 import NextLink from 'next/link'
 import { Button as RadixButton, Card as RadixCard, Heading, Text, Box, Grid } from '@radix-ui/themes'
-import { getAssetPath } from '@/lib/paths'
 
 // Inline MDX Button adapter using Radix Themes
 function MDXButton({ href, variant = 'primary', children, ...props }) {
@@ -20,7 +19,7 @@ function MDXButton({ href, variant = 'primary', children, ...props }) {
   if (href) {
     return (
       <RadixButton asChild variant={radixVariant} {...props}>
-        <NextLink href={getAssetPath(href)}>{children}</NextLink>
+        <NextLink href={href}>{children}</NextLink>
       </RadixButton>
     )
   }

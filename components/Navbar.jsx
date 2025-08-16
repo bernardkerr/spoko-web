@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { ThemeToggle } from './ThemeToggle'
-import { getAssetPath } from '@/lib/paths'
 import Image from 'next/image'
 
 export function Navbar() {
@@ -8,7 +7,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b bg-black backdrop-blur">
       <div className="container flex h-20 items-center">
         <div className="mr-4 flex">
-          <Link href={getAssetPath('/')} className="mr-6 flex items-center">
+          <Link href="/" className="mr-6 flex items-center">
             {/* Spoko Logo - Dark variant for black navbar */}
             <div className="h-12 w-auto">
               <Image
@@ -23,13 +22,13 @@ export function Navbar() {
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium ml-6">
             <Link
-              href={getAssetPath('/docs')}
+              href="/docs"
               className="transition-colors hover:text-white/80 text-white/60"
             >
               Docs
             </Link>
             <Link
-              href={getAssetPath('/test')}
+              href="/test"
               className="transition-colors hover:text-white/80 text-white/60"
             >
               Test
