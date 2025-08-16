@@ -1,0 +1,18 @@
+{
+  "flowchart": {
+    "path": "/diagrams/flowchart.svg",
+    "success": true
+  },
+  "sequence": {
+    "path": "/diagrams/sequence.svg",
+    "success": true
+  },
+  "class": {
+    "path": "/diagrams/class.svg",
+    "success": true
+  },
+  "gitgraph": {
+    "path": "/diagrams/gitgraph.svg",
+    "success": true
+  }
+}

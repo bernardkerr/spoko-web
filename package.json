@@ -10,16 +10,7 @@
     "lint": "next lint",
     "prebuild": "node scripts/generate-static-svgs.js && node scripts/sync-content-images.js",
     "sync:images": "node scripts/sync-content-images.js",
-    "diagrams:generate": "node scripts/generate-static-svgs.js",
-    "figma:sync": "node scripts/figma-sync.js",
-    "figma:test": "node scripts/test-figma.js",
-    "figma:tokens": "node scripts/figma-sync.js tokens",
-    "figma:generate": "node scripts/figma-to-react.js",
-    "figma:components": "node scripts/figma-sync.js components",
-    "figma:content": "node scripts/figma-sync.js content",
-    "figma:all": "node scripts/figma-sync.js all",
-    "figma:help": "node scripts/figma-sync.js",
-    "figma:list": "node scripts/list-figma-components.js"
+    "diagrams:generate": "node scripts/generate-static-svgs.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -33,7 +24,6 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "dotenv": "^17.2.1",
-    "figma-api": "^2.0.2-beta",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.539.0",
     "mermaid": "^11.9.0",

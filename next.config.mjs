@@ -6,6 +6,9 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production'
+// Allow configuring basePath/assetPrefix via env for GitHub Pages.
+// Example: NEXT_PUBLIC_BASE_PATH=/spoko-web
+const repoBasePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 const nextConfig = {
   ...(isProd && { output: 'export' }),
   trailingSlash: true,
@@ -28,12 +31,16 @@ const nextConfig = {
   },
   // React configuration for better WebGL compatibility
   reactStrictMode: false, // Temporarily disable for WebGL context issues
-  // Uncomment and set your repo name for GitHub Pages deployment
-  // basePath: process.env.GITHUB_ACTIONS === 'true' ? '/your-repo-name' : '',
-  // assetPrefix: process.env.GITHUB_ACTIONS === 'true' ? '/your-repo-name/' : '',
+  // Configure basePath/assetPrefix when building for Pages
+  ...(isProd && repoBasePath
+    ? {
+        basePath: repoBasePath,
+        assetPrefix: repoBasePath.endsWith('/') ? repoBasePath : `${repoBasePath}/`,
+      }
+    : {}),
 }
 const withMDX = createMDX({
-  extension: /\.mdx?$/,
+  extension: /.mdx?$/,
   options: {
     remarkPlugins: [remarkGfm, remarkFrontmatter],
     rehypePlugins: [

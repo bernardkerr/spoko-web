@@ -18,19 +18,13 @@ A modern, fully static Next.js site template featuring Three.js 3D graphics, Mer
 ```bash
 # Clone the repository
 git clone <your-repo-url>
-cd nextjs-static-site
+cd spoko-web
 
 # Install dependencies
 npm install
 
 # Start development server
 npm run dev
-
-# Build and export for production
-npm run export
-
-# Serve static files locally
-npm run start:static
 ```
 
 ## 📁 Project Structure
@@ -184,17 +178,15 @@ git push
    - Go to repository Settings → Pages
    - Set Source to "GitHub Actions"
 
-2. **Configure Base Path:**
-   Update `next.config.mjs` with your repository name:
-   ```javascript
-   basePath: process.env.GITHUB_ACTIONS === 'true' ? '/your-repo-name' : '',
-   assetPrefix: process.env.GITHUB_ACTIONS === 'true' ? '/your-repo-name/' : '',
-   ```
+2. **Base Path configuration:**
+   This project uses `NEXT_PUBLIC_BASE_PATH` to configure the base path in production builds. For project pages, it should be `/<repo-name>`.
+   - In CI (GitHub Actions), this is already set to `/spoko-web` in `.github/workflows/deploy-pages.yml`.
+   - For local testing of an exported build, you can set `NEXT_PUBLIC_BASE_PATH` accordingly before `npm run build`.
 
 3. **Deploy:**
    - Push to main branch
    - GitHub Actions will build and deploy automatically
-   - Site will be available at `https://username.github.io/repo-name/`
+   - Site will be available at `https://<username>.github.io/<repo-name>/`
 
 ### Other Platforms
 
@@ -271,9 +263,7 @@ mermaid.initialize({
 
 ```bash
 npm run dev          # Start development server
-npm run build        # Build for production
-npm run export       # Build and export static files
-npm run start:static # Serve static files locally
+npm run build        # Build for production (exports static site to ./out in prod)
 npm run lint         # Run ESLint
 npm run format       # Format code with Prettier
 ```
