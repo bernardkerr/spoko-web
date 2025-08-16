@@ -1,0 +1,798 @@
+{
+  "generatedAt": "2025-08-16T23:02:49.740Z",
+  "searchedDirs": [
+    "app",
+    "components",
+    "styles",
+    "lib"
+  ],
+  "filesScanned": 55,
+  "varsDeclared": 1129,
+  "varsUsed": 37,
+  "topUsed": [
+    {
+      "var": "--muted-foreground",
+      "value": null,
+      "group": "muted-foreground",
+      "count": 6,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/components/Footer.jsx",
+        "/media/david/BIGDATA/spoko-web/components/Mermaid.jsx",
+        "/media/david/BIGDATA/spoko-web/components/ThreeCanvas.jsx",
+        "/media/david/BIGDATA/spoko-web/components/ui/scroll-area.jsx",
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--border",
+      "value": null,
+      "group": "border",
+      "count": 4,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--foreground",
+      "value": null,
+      "group": "foreground",
+      "count": 3,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/components/MermaidAutoRender.jsx",
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--gray-a6",
+      "value": null,
+      "group": "gray-a6",
+      "count": 2,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/app/three/page.js",
+        "/media/david/BIGDATA/spoko-web/app/three/full/page.js"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--color-panel",
+      "value": null,
+      "group": "color-panel",
+      "count": 2,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/app/styles/page.js",
+        "/media/david/BIGDATA/spoko-web/components/MermaidAutoRender.jsx"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--gray-11",
+      "value": null,
+      "group": "gray-11",
+      "count": 2,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/components/MermaidAutoRender.jsx"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--font-ibm-plex-mono",
+      "value": null,
+      "group": "font-ibm-plex",
+      "count": 2,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/components/providers/RadixThemeProvider.jsx"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--background",
+      "value": null,
+      "group": "background",
+      "count": 2,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--color-panel-translucent",
+      "value": null,
+      "group": "color-panel-translucent",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/app/three/full/page.js"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--destructive",
+      "value": null,
+      "group": "destructive",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/components/Mermaid.jsx"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--muted",
+      "value": null,
+      "group": "muted",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/components/MermaidAutoRender.jsx"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--color-scheme-colors-blue-1",
+      "value": "rgba(251, 253, 255, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-2",
+      "value": "rgba(244, 250, 255, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-3",
+      "value": "rgba(230, 244, 254, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-4",
+      "value": "rgba(213, 239, 255, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-5",
+      "value": "rgba(194, 229, 255, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-6",
+      "value": "rgba(172, 216, 252, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-7",
+      "value": "rgba(142, 200, 246, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-8",
+      "value": "rgba(94, 177, 239, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-9",
+      "value": "rgba(0, 144, 255, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-10",
+      "value": "rgba(5, 136, 240, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-11",
+      "value": "rgba(13, 116, 206, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-blue-12",
+      "value": "rgba(17, 50, 100, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-1",
+      "value": "rgba(252, 252, 253, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-2",
+      "value": "rgba(249, 249, 251, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-3",
+      "value": "rgba(240, 240, 243, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-4",
+      "value": "rgba(232, 232, 236, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-5",
+      "value": "rgba(224, 225, 230, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-6",
+      "value": "rgba(217, 217, 224, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-7",
+      "value": "rgba(205, 206, 214, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-8",
+      "value": "rgba(185, 187, 198, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-9",
+      "value": "rgba(139, 141, 152, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-10",
+      "value": "rgba(128, 131, 141, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-11",
+      "value": "rgba(96, 100, 108, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--color-scheme-colors-slate-12",
+      "value": "rgba(28, 32, 36, 1)",
+      "group": "color-scheme-colors",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": true
+    },
+    {
+      "var": "--card",
+      "value": null,
+      "group": "card",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": false
+    },
+    {
+      "var": "--card-foreground",
+      "value": null,
+      "group": "card-foreground",
+      "count": 1,
+      "files": [
+        "/media/david/BIGDATA/spoko-web/styles/globals.css"
+      ],
+      "declared": false
+    }
+  ],
+  "byGroup": {
+    "gray-a6": [
+      {
+        "var": "--gray-a6",
+        "value": null,
+        "group": "gray-a6",
+        "count": 2,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/app/three/page.js",
+          "/media/david/BIGDATA/spoko-web/app/three/full/page.js"
+        ],
+        "declared": false
+      }
+    ],
+    "color-panel-translucent": [
+      {
+        "var": "--color-panel-translucent",
+        "value": null,
+        "group": "color-panel-translucent",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/app/three/full/page.js"
+        ],
+        "declared": false
+      }
+    ],
+    "color-panel": [
+      {
+        "var": "--color-panel",
+        "value": null,
+        "group": "color-panel",
+        "count": 2,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/app/styles/page.js",
+          "/media/david/BIGDATA/spoko-web/components/MermaidAutoRender.jsx"
+        ],
+        "declared": false
+      }
+    ],
+    "muted-foreground": [
+      {
+        "var": "--muted-foreground",
+        "value": null,
+        "group": "muted-foreground",
+        "count": 6,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/components/Footer.jsx",
+          "/media/david/BIGDATA/spoko-web/components/Mermaid.jsx",
+          "/media/david/BIGDATA/spoko-web/components/ThreeCanvas.jsx",
+          "/media/david/BIGDATA/spoko-web/components/ui/scroll-area.jsx",
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": false
+      }
+    ],
+    "destructive": [
+      {
+        "var": "--destructive",
+        "value": null,
+        "group": "destructive",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/components/Mermaid.jsx"
+        ],
+        "declared": false
+      }
+    ],
+    "foreground": [
+      {
+        "var": "--foreground",
+        "value": null,
+        "group": "foreground",
+        "count": 3,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/components/MermaidAutoRender.jsx",
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": false
+      }
+    ],
+    "gray-11": [
+      {
+        "var": "--gray-11",
+        "value": null,
+        "group": "gray-11",
+        "count": 2,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/components/MermaidAutoRender.jsx"
+        ],
+        "declared": false
+      }
+    ],
+    "muted": [
+      {
+        "var": "--muted",
+        "value": null,
+        "group": "muted",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/components/MermaidAutoRender.jsx"
+        ],
+        "declared": false
+      }
+    ],
+    "font-ibm-plex": [
+      {
+        "var": "--font-ibm-plex-mono",
+        "value": null,
+        "group": "font-ibm-plex",
+        "count": 2,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/components/providers/RadixThemeProvider.jsx"
+        ],
+        "declared": false
+      }
+    ],
+    "color-scheme-colors": [
+      {
+        "var": "--color-scheme-colors-blue-1",
+        "value": "rgba(251, 253, 255, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-2",
+        "value": "rgba(244, 250, 255, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-3",
+        "value": "rgba(230, 244, 254, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-4",
+        "value": "rgba(213, 239, 255, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-5",
+        "value": "rgba(194, 229, 255, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-6",
+        "value": "rgba(172, 216, 252, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-7",
+        "value": "rgba(142, 200, 246, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-8",
+        "value": "rgba(94, 177, 239, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-9",
+        "value": "rgba(0, 144, 255, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-10",
+        "value": "rgba(5, 136, 240, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-11",
+        "value": "rgba(13, 116, 206, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-blue-12",
+        "value": "rgba(17, 50, 100, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-1",
+        "value": "rgba(252, 252, 253, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-2",
+        "value": "rgba(249, 249, 251, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-3",
+        "value": "rgba(240, 240, 243, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-4",
+        "value": "rgba(232, 232, 236, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-5",
+        "value": "rgba(224, 225, 230, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-6",
+        "value": "rgba(217, 217, 224, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-7",
+        "value": "rgba(205, 206, 214, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-8",
+        "value": "rgba(185, 187, 198, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-9",
+        "value": "rgba(139, 141, 152, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-10",
+        "value": "rgba(128, 131, 141, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-11",
+        "value": "rgba(96, 100, 108, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      },
+      {
+        "var": "--color-scheme-colors-slate-12",
+        "value": "rgba(28, 32, 36, 1)",
+        "group": "color-scheme-colors",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": true
+      }
+    ],
+    "border": [
+      {
+        "var": "--border",
+        "value": null,
+        "group": "border",
+        "count": 4,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": false
+      }
+    ],
+    "background": [
+      {
+        "var": "--background",
+        "value": null,
+        "group": "background",
+        "count": 2,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": false
+      }
+    ],
+    "card": [
+      {
+        "var": "--card",
+        "value": null,
+        "group": "card",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": false
+      }
+    ],
+    "card-foreground": [
+      {
+        "var": "--card-foreground",
+        "value": null,
+        "group": "card-foreground",
+        "count": 1,
+        "files": [
+          "/media/david/BIGDATA/spoko-web/styles/globals.css"
+        ],
+        "declared": false
+      }
+    ]
+  }
+}

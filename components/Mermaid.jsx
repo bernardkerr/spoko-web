@@ -124,21 +124,18 @@ export function Mermaid({ code, className }) {
 
   if (!isClient) {
     return (
-      <div className="flex items-center justify-center p-8 text-muted-foreground">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, color: 'hsl(var(--muted-foreground))' }}>
         <span>Initializing...</span>
       </div>
     )
   }
 
   return (
-    <div className="relative">
-      <div 
-        ref={ref}
-        className="mermaid-container w-full overflow-auto min-h-[200px]"
-      />
+    <div style={{ position: 'relative' }}>
+      <div ref={ref} className="mermaid-container" />
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="text-destructive text-center">
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.05)', backdropFilter: 'blur(2px)' }}>
+          <div style={{ color: 'hsl(var(--destructive))', textAlign: 'center' }}>
             <span>Error rendering diagram: {error}</span>
           </div>
         </div>

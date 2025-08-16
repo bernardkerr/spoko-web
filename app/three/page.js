@@ -65,7 +65,7 @@ export default function ThreePage() {
         </Tabs.Root>
 
         <Box mt="6">
-          <div className="prose dark:prose-invert max-w-none">
+          <div style={{ maxWidth: 'none' }}>
             <h2>About This Demo</h2>
             <p>
               This Three.js integration demonstrates how to embed interactive 3D content 

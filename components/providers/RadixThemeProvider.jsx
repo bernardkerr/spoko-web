@@ -36,7 +36,7 @@ export default function RadixThemeProvider({ children }) {
   return (
     <Theme
       appearance={appearance}
-      accentColor="iris"
+      accentColor="blue"
       radius="large"
       className={ibmPlexMono.className}
       style={{

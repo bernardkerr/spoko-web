@@ -3,22 +3,22 @@ import { Github } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer className="border-t py-6 md:py-0">
-      <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-        <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            Built with Next.js, Tailwind CSS, and shadcn/ui.  And some AI.
+    <footer className="site-footer">
+      <div className="container site-footer-inner">
+        <div>
+          <p style={{ margin: 0, color: 'hsl(var(--muted-foreground))', lineHeight: 1.6, textAlign: 'center' }}>
+            Built with Next.js, Radix Themes, and some AI.
           </p>
         </div>
-        <div className="flex items-center space-x-1">
+        <div>
           <Link
-            href="https://github.com/your-username/your-repo"
+            href="https://github.com/davidthings/spoko-web"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:bg-accent hover:text-accent-foreground h-9 py-2 w-9 px-0"
+            aria-label="GitHub"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 8, color: 'inherit', textDecoration: 'none' }}
           >
-            <Github className="h-4 w-4" />
-            <span className="sr-only">GitHub</span>
+            <Github size={18} />
           </Link>
         </div>
       </div>

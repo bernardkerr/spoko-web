@@ -10,7 +10,13 @@
     "lint": "next lint",
     "prebuild": "node scripts/generate-static-svgs.js && node scripts/sync-content-images.js",
     "sync:images": "node scripts/sync-content-images.js",
-    "diagrams:generate": "node scripts/generate-static-svgs.js"
+    "diagrams:generate": "node scripts/generate-static-svgs.js",
+    "serve:static": "serve -l 5054 out",
+    "tokens:inspect": "node scripts/inspect-figma-tokens.js",
+    "tokens:usage": "node scripts/analyze-token-usage.js",
+    "figma:react": "node scripts/figma_to_react.js",
+    "figma:fetch": "node scripts/fetch_from_figma.js",
+    "figma:ingest": "node scripts/ingest_figma_exports.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -39,14 +45,12 @@
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.0",
     "remark-rehype": "^11.1.2",
-    "tailwind-merge": "^2.0.0",
     "three": "^0.179.1"
   },
   "devDependencies": {
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
     "@next/mdx": "^15.4.6",
-    "@tailwindcss/typography": "^0.5.10",
     "autoprefixer": "^10.0.1",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0",
@@ -55,7 +59,6 @@
     "prettier": "^3.0.0",
     "puppeteer": "^24.16.0",
     "remark-frontmatter": "^5.0.0",
-    "serve": "^14.2.1",
-    "tailwindcss": "^3.3.0"
+    "serve": "^14.2.1"
   }
 }

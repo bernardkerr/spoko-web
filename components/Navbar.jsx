@@ -4,42 +4,25 @@ import Image from 'next/image'
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-black backdrop-blur">
-      <div className="container flex h-20 items-center">
-        <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center">
-            {/* Spoko Logo - Dark variant for black navbar */}
-            <div className="h-12 w-auto">
-              <Image
-                src="/assets/spoko-logo-navbar.svg"
-                alt="Spoko Logo"
-                width={120}
-                height={36}
-                className="h-9 w-auto"
-                priority
-              />
-            </div>
+    <header className="navbar">
+      <div className="container navbar-inner">
+        <div className="navbar-brand">
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', marginRight: 24 }}>
+            <Image
+              src="/assets/spoko-logo-navbar.svg"
+              alt="Spoko Logo"
+              width={120}
+              height={36}
+              priority
+            />
           </Link>
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium ml-6">
-            <Link
-              href="/docs"
-              className="transition-colors hover:text-white/80 text-white/60"
-            >
-              Docs
-            </Link>
-            <Link
-              href="/test"
-              className="transition-colors hover:text-white/80 text-white/60"
-            >
-              Test
-            </Link>
+          <nav className="navbar-links">
+            <Link href="/docs">Docs</Link>
+            <Link href="/test">Test</Link>
           </nav>
         </div>
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            {/* Mobile menu could go here */}
-          </div>
-          <nav className="flex items-center">
+        <div className="navbar-right">
+          <nav>
             <ThemeToggle />
           </nav>
         </div>

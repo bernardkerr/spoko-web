@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useRef, useEffect } from 'react'
+import { Suspense, useState, useRef, useEffect, useMemo, memo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { Color } from 'three'
@@ -23,6 +23,18 @@ function AnimatedCube({ spinning, wireframe, color }) {
     </mesh>
   )
 }
+
+// Only re-render when actual visual props change. Prevents hover/enter bubbling re-renders.
+export const ThreeCanvas = memo(
+  ThreeCanvasImpl,
+  (prev, next) => (
+    prev.spinning === next.spinning &&
+    prev.wireframe === next.wireframe &&
+    prev.showBackground === next.showBackground &&
+    prev.fullscreen === next.fullscreen &&
+    prev.className === next.className
+  )
+)
 
 // Background plane component
 function BackgroundPlane({ showBackground, color }) {
@@ -77,10 +89,10 @@ function Scene({ spinning, wireframe, showBackground, colors }) {
 // Loading component
 function LoadingFallback() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
-      <div className="flex items-center text-muted-foreground">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-current"></div>
-        <span className="ml-2">Loading 3D scene...</span>
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+      <div style={{ display: 'flex', alignItems: 'center', color: 'hsl(var(--muted-foreground))' }}>
+        <div style={{ width: 24, height: 24, borderRadius: '50%', borderBottom: '2px solid currentColor', animation: 'spin 1s linear infinite' }} />
+        <span style={{ marginLeft: 8 }}>Loading 3D scene...</span>
       </div>
     </div>
   )
@@ -89,17 +101,17 @@ function LoadingFallback() {
 // Error boundary component
 function ErrorFallback({ error, resetError }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 text-center p-4">
-      <div className="text-red-500 mb-4">
-        <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', textAlign: 'center', padding: 16 }}>
+      <div style={{ color: '#ef4444', marginBottom: 16 }}>
+        <svg style={{ width: 48, height: 48, display: 'block', margin: '0 auto 8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
         </svg>
-        <h3 className="text-lg font-semibold">3D Canvas Error</h3>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>3D Canvas Error</h3>
       </div>
-      <p className="text-muted-foreground mb-4">{error?.message || 'Failed to initialize 3D scene'}</p>
+      <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: 16 }}>{error?.message || 'Failed to initialize 3D scene'}</p>
       <button 
         onClick={resetError}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        style={{ padding: '8px 12px', backgroundColor: '#3b82f6', color: '#fff', borderRadius: 6, border: 'none', cursor: 'pointer' }}
       >
         Try Again
       </button>
@@ -192,7 +204,7 @@ function useRadixThemeColors(targetRef) {
   return colors
 }
 
-export function ThreeCanvas({ 
+function ThreeCanvasImpl({ 
   spinning = true, 
   wireframe = false, 
   showBackground = true,
@@ -203,6 +215,11 @@ export function ThreeCanvas({
   const isClient = useIsClient()
   const containerRef = useRef(null)
   const themeColors = useRadixThemeColors(containerRef)
+
+  // Memoize camera and gl options so Canvas doesn't recreate renderer/context
+  const cameraOptions = useMemo(() => ({ position: [5, 5, 5], fov: 60 }), [])
+  const glOptions = useMemo(() => ({ antialias: true, alpha: false, powerPreference: 'default' }), [])
+  const canvasStyle = useMemo(() => ({ width: '100%', height: '100%' }), [])
 
   const handleError = (error) => {
     console.error('Three.js Canvas Error:', error)
@@ -238,15 +255,15 @@ export function ThreeCanvas({
       ref={containerRef}
     >
       <Canvas
-        camera={{ position: [5, 5, 5], fov: 60 }}
-        gl={{
-          antialias: true,
-          alpha: false,
-          powerPreference: 'default'
-        }}
+        camera={cameraOptions}
+        // Known-good stable attributes (memoized)
+        gl={glOptions}
+        dpr={[1, 2]}
+        onPointerEnter={(e) => e.stopPropagation()}
+        onPointerLeave={(e) => e.stopPropagation()}
         onError={handleError}
         // Avoid CSS background to prevent any secondary 2D draws; background is set via gl.clearColor
-        style={{ width: '100%', height: '100%' }}
+        style={canvasStyle}
       >
         <Suspense fallback={<LoadingFallback />}>
           {/* Inject colors via context by setting materials inline below */}
