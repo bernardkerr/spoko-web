@@ -101,11 +101,11 @@
   }
 /* Global element defaults */
 * {
-  border-color: hsl(var(--border));
+  border-color: var(--theme-colors-neutral-neutral-6);
 }
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background-color: var(--theme-tokens-colors-surface, var(--theme-colors-default-white));
+  color: var(--theme-colors-neutral-neutral-12);
 }
 
 /* Normalize autolinked heading anchors */
@@ -143,21 +143,21 @@ body {
 .mermaid .node circle,
 .mermaid .node ellipse,
 .mermaid .node polygon {
-  fill: hsl(var(--card));
-  stroke: hsl(var(--border));
+  fill: var(--theme-tokens-colors-surface, var(--theme-colors-default-white));
+  stroke: var(--theme-colors-neutral-neutral-6);
 }
 
 .mermaid .node text {
-  fill: hsl(var(--card-foreground));
+  fill: var(--theme-colors-neutral-neutral-12);
 }
 
 .mermaid .edgePath path {
-  stroke: hsl(var(--muted-foreground));
+  stroke: var(--theme-colors-neutral-neutral-9);
 }
 
 .mermaid .edgeLabel {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background-color: var(--theme-tokens-colors-surface, var(--theme-colors-default-white));
+  color: var(--theme-colors-neutral-neutral-12);
 }
 
 /* Three.js canvas styling */
@@ -202,7 +202,7 @@ body {
   top: 0;
   z-index: 40;
   width: 100%;
-  border-bottom: 1px solid hsl(var(--border));
+  border-bottom: 1px solid var(--theme-colors-neutral-neutral-6);
   background-color: #000; /* black */
   color: #fff;
   backdrop-filter: saturate(180%) blur(8px);
@@ -240,7 +240,7 @@ body {
 
 /* Footer minimal styles so it doesn't look broken */
 .site-footer {
-  border-top: 1px solid hsl(var(--border));
+  border-top: 1px solid var(--theme-colors-neutral-neutral-6);
   padding: 16px 0;
 }
 .site-footer-inner {

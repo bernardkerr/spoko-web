@@ -9,9 +9,9 @@ export function Navbar() {
         <div className="navbar-brand">
           <Link href="/" style={{ display: 'flex', alignItems: 'center', marginRight: 24 }}>
             <Image
-              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/assets/spoko-logo-navbar.svg`}
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/assets/spoko-logo-outline.svg`}
               alt="Spoko Logo"
-              width={120}
+              width={96}
               height={36}
               priority
             />

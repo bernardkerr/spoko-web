@@ -21,11 +21,9 @@ export function Mermaid({ code, className }) {
   const isClient = useIsClient()
   const [themeVersion, setThemeVersion] = useState(0)
 
-  // Read colors from the nearest Radix Theme root (.rt-Theme) with fallbacks
+  // Read colors from --theme variables with sensible fallbacks
   const readTheme = () => {
-    const el = ref.current || document.documentElement
-    const themeRoot = el.closest?.('.rt-Theme') || document.querySelector('.rt-Theme') || document.documentElement
-    const cs = getComputedStyle(themeRoot)
+    const cs = getComputedStyle(document.documentElement)
 
     const pick = (...vars) => {
       for (const v of vars) {
@@ -35,24 +33,13 @@ export function Mermaid({ code, className }) {
       return ''
     }
 
-    // Convert Radix numeric HSL tokens like "240 6.9% 10.0%" to a valid CSS color string
-    const toCss = (raw, fallback) => {
-      if (!raw) return fallback
-      const s = raw.replace(/^hsl\(|\)$/g, '').trim()
-      if (/^\d/.test(s) && s.includes('%')) return `hsl(${s})`
-      return raw
-    }
+    const background = pick('--theme-tokens-colors-surface', '--theme-colors-default-white') || '#ffffff'
+    const foreground = pick('--theme-colors-neutral-neutral-12') || '#1f2937'
+    const muted = pick('--theme-colors-neutral-neutral-9') || '#64748b'
+    const border = pick('--theme-colors-neutral-neutral-6') || '#e2e8f0'
+    const primary = pick('--theme-colors-accent-accent-9') || '#3b82f6'
 
-    const background = toCss(
-      pick('--color-panel', '--color-surface', '--background', '--gray-1', '--bg'),
-      '#ffffff'
-    )
-    const foreground = toCss(pick('--foreground', '--gray-12', '--fg'), '#1f2937')
-    const muted = toCss(pick('--gray-6', '--muted', '--gray-5'), 'hsl(215 16.3% 46.9%)')
-    const border = toCss(pick('--gray-6', '--border', '--gray-a6'), 'hsl(214 32% 91%)')
-    const primary = toCss(pick('--accent-9', '--iris-9', '--indigo-9', '--accent', '--brand'), '#3b82f6')
-
-    return { themeRoot, background, foreground, muted, border, primary }
+    return { background, foreground, muted, border, primary }
   }
 
   useEffect(() => {
@@ -80,7 +67,7 @@ export function Mermaid({ code, className }) {
             theme: 'base'
           },
           themeVariables: {
-            // Colors aligned to Radix tokens (allow hsl() strings)
+            // Colors aligned to --theme variables
             primaryColor: theme.primary,
             primaryTextColor: theme.foreground,
             primaryBorderColor: theme.primary,
@@ -124,7 +111,7 @@ export function Mermaid({ code, className }) {
 
   if (!isClient) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, color: 'hsl(var(--muted-foreground))' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, color: 'var(--theme-colors-neutral-neutral-9)' }}>
         <span>Initializing...</span>
       </div>
     )
@@ -135,7 +122,7 @@ export function Mermaid({ code, className }) {
       <div ref={ref} className="mermaid-container" />
       {error && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.05)', backdropFilter: 'blur(2px)' }}>
-          <div style={{ color: 'hsl(var(--destructive))', textAlign: 'center' }}>
+          <div style={{ color: 'var(--theme-colors-semantic-error-9)', textAlign: 'center' }}>
             <span>Error rendering diagram: {error}</span>
           </div>
         </div>

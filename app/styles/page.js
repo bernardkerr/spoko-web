@@ -1,8 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import { Section, Box, Heading, Text, Code, Grid, Card } from '@radix-ui/themes'
-import { Suspense } from 'react'
-import StylesUsageClient from '../../components/StylesUsageClient.jsx'
+import { Section, Box } from '@radix-ui/themes'
+import TokensViewerClient from '../../components/TokensViewerClient.jsx'
 
 function readJSON(filePath) {
   try {
@@ -74,43 +73,34 @@ export default async function StylesInspectorPage() {
     usage = { __error: e.message }
   }
 
+  // Read consolidated tokens and css variables
+  const tokensPath = path.join(exportsDir, 'tokens.json')
+  let tokensJson = {}
+  try {
+    if (fs.existsSync(tokensPath)) {
+      tokensJson = JSON.parse(fs.readFileSync(tokensPath, 'utf-8'))
+    }
+  } catch (e) {
+    tokensJson = { __error: e.message }
+  }
+
+  const cssVarsPath = path.join(process.cwd(), 'styles', 'figma-tokens.css')
+  let cssVarsText = ''
+  try {
+    if (fs.existsSync(cssVarsPath)) {
+      cssVarsText = fs.readFileSync(cssVarsPath, 'utf-8')
+    }
+  } catch (e) {
+    cssVarsText = ''
+  }
+
   return (
     <Section size="4">
       <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
-        <Box mb="6">
-          <Heading size="8" mb="2">Figma Tokens – Inspector</Heading>
-          <Text as="p" color="gray" size="3" mb="3">
-            Live view of exported token files from <Code>figma/exports/</Code>. This is for inspection only; curated views will come next.
-          </Text>
-        </Box>
-
-        <Grid columns={{ initial: '1', sm: '2', lg: '3' }} gap="3">
-          {Object.entries(stats).map(([name, info]) => (
-            <Card key={name}>
-              <Box p="4">
-                <Heading size="5" mb="2">{name}.json</Heading>
-                {info.hasError ? (
-                  <Text color="red" size="2">Error: {info.error}</Text>
-                ) : (
-                  <>
-                    <Text as="p" size="2" mb="2" color="gray">
-                      Token count (approx, nested keys): {info.tokenCount}
-                    </Text>
-                    <Text as="p" size="2" mb="1">
-                      Top-level keys: {info.topLevelKeys.length}
-                    </Text>
-                    <Text as="p" size="1" color="gray">Preview hidden</Text>
-                  </>
-                )}
-              </Box>
-            </Card>
-          ))}
-        </Grid>
-
-        {/* Client-side usage summary (reads query params on the client) */}
-        <Suspense fallback={<Box mt="7"><Text as="p" color="gray" size="3">Loading usage summary…</Text></Box>}>
-          <StylesUsageClient usage={usage} />
-        </Suspense>
+        <TokensViewerClient
+          tokensJson={tokensJson}
+          cssVarsText={cssVarsText}
+        />
       </Box>
     </Section>
   )

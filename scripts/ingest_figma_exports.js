@@ -8,13 +8,13 @@
  *   variableIds: [...],
  *   variables: [
  *     { id, name, type: 'COLOR'|'FLOAT'|'STRING'|..., valuesByMode: {<modeId>: <value>}, resolvedValuesByMode: {<modeId>: { resolvedValue, alias } } }
- *   ]
- * }
- *
- * Output: styles/figma-tokens.css
- * - :root { --<collection>-<var-name>: value; }
- * - Picks the first mode in each collection, unless overridden with FIGMA_EXPORT_MODE="<Mode Name>"
- */
+  *   ]
+  * }
+  *
+  * Output: styles/figma-tokens.css
+  * - :root { --<collection>-<var-name>: value; }
+  * - Picks the first mode in each collection, unless overridden with FIGMA_EXPORT_MODE="<Mode Name>"
+  */
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -45,10 +45,21 @@ function readJson(file) {
 
 function toKebab(s) {
   return String(s)
+    // insert dash between camelCase boundaries and between letters/digits
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+    .replace(/([a-zA-Z])([0-9]+)/g, '$1-$2')
+    .replace(/([0-9])([a-zA-Z])/g, '$1-$2')
+    // normalize spaces and slashes to dashes
     .replace(/\s+/g, '-')
     .replace(/\//g, '-')
+    // drop unsupported chars
     .replace(/[^a-zA-Z0-9_-]/g, '')
+    // collapse multiple dashes
     .replace(/-+/g, '-')
+    // trim leading/trailing dashes
+    .replace(/^-/g, '')
+    .replace(/-$/g, '')
     .toLowerCase()
 }
 
@@ -119,6 +130,56 @@ function renderCollection(collection, preferredModeName) {
   return lines
 }
 
+// Support for a simple tokens map format like:
+// {
+//   "themeA": { "colorsAccentAccent1": "#fff", "radius1": 3, ... },
+//   "themeB": { ... }
+// }
+function isTokensMap(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return false
+  // Heuristic: values are objects with primitive leaves
+  return Object.values(data).every((v) => v && typeof v === 'object' && !Array.isArray(v))
+}
+
+function humanizeKey(k) {
+  // e.g., themeA -> Theme A
+  const withSpaces = String(k)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[-_]+/g, ' ')
+  return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1)
+}
+
+function renderTokensMap(data, preferredModeName) {
+  const entries = Object.entries(data)
+  if (entries.length === 0) return []
+
+  let chosen = entries[0]
+  if (preferredModeName) {
+    const found = entries.find(([key]) => key === preferredModeName || humanizeKey(key) === preferredModeName)
+    if (found) chosen = found
+  }
+
+  const [modeKey, tokens] = chosen
+  const lines = []
+  const colName = 'theme' // fixed collection name for tokens maps
+  lines.push(`  /* Theme — mode: ${humanizeKey(modeKey)} */`)
+
+  for (const [rawKey, rawVal] of Object.entries(tokens)) {
+    const varName = toKebab(rawKey)
+    let cssValue
+    if (typeof rawVal === 'number') {
+      cssValue = floatToCss(rawVal)
+    } else {
+      cssValue = colorToCss(rawVal)
+    }
+    if (cssValue == null || cssValue === 'undefined') continue
+    const cssVar = `--${colName}-${varName}`
+    lines.push(`  ${cssVar}: ${cssValue};`)
+  }
+
+  return lines
+}
+
 function main() {
   const files = listJsonFiles(EXPORTS_DIR)
   if (files.length === 0) {
@@ -134,11 +195,15 @@ function main() {
 
   for (const file of files) {
     const data = readJson(file)
-    if (!data || !data.variables) {
-      // Some exports might be summarized; skip if no variables array
+    if (data && data.variables) {
+      chunks.push(...renderCollection(data, preferredMode))
       continue
     }
-    chunks.push(...renderCollection(data, preferredMode))
+    if (isTokensMap(data)) {
+      chunks.push(...renderTokensMap(data, preferredMode))
+      continue
+    }
+    // Unknown format: skip
   }
 
   chunks.push('}')

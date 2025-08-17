@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="site-footer">
       <div className="container site-footer-inner">
         <div>
-          <p style={{ margin: 0, color: 'hsl(var(--muted-foreground))', lineHeight: 1.6, textAlign: 'center' }}>
+          <p style={{ margin: 0, color: 'var(--theme-colors-neutral-neutral-9)', lineHeight: 1.6, textAlign: 'center' }}>
             Built with Next.js, Radix Themes, and some AI.
           </p>
         </div>

@@ -90,7 +90,7 @@ function Scene({ spinning, wireframe, showBackground, colors }) {
 function LoadingFallback() {
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
-      <div style={{ display: 'flex', alignItems: 'center', color: 'hsl(var(--muted-foreground))' }}>
+      <div style={{ display: 'flex', alignItems: 'center', color: 'var(--theme-colors-neutral-neutral-9)' }}>
         <div style={{ width: 24, height: 24, borderRadius: '50%', borderBottom: '2px solid currentColor', animation: 'spin 1s linear infinite' }} />
         <span style={{ marginLeft: 8 }}>Loading 3D scene...</span>
       </div>
@@ -108,7 +108,7 @@ function ErrorFallback({ error, resetError }) {
         </svg>
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>3D Canvas Error</h3>
       </div>
-      <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: 16 }}>{error?.message || 'Failed to initialize 3D scene'}</p>
+      <p style={{ color: 'var(--theme-colors-neutral-neutral-9)', marginBottom: 16 }}>{error?.message || 'Failed to initialize 3D scene'}</p>
       <button 
         onClick={resetError}
         style={{ padding: '8px 12px', backgroundColor: '#3b82f6', color: '#fff', borderRadius: 6, border: 'none', cursor: 'pointer' }}

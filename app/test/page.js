@@ -76,7 +76,7 @@ export default function TestPage() {
 
           <Card>
             <Box p="4">
-              <Heading size="4" mb="1">Figma Tokens Inspector</Heading>
+              <Heading size="4" mb="1">Style Inspector</Heading>
               <Text color="gray" size="2" mb="3">Inspect exported design tokens from figma/exports and plan curated views.</Text>
               <Button asChild>
                 <NextLink href="/styles">Open Inspector</NextLink>

@@ -10,7 +10,7 @@ export default function MermaidAutoRender() {
     let cancelled = false
 
     const readTheme = () => {
-      const themeRoot = document.querySelector('.rt-Theme') || document.documentElement
+      const themeRoot = document.documentElement
       const cs = getComputedStyle(themeRoot)
       const pick = (...vars) => {
         for (const v of vars) {
@@ -19,17 +19,12 @@ export default function MermaidAutoRender() {
         }
         return ''
       }
-      const toCss = (raw, fallback) => {
-        if (!raw) return fallback
-        const s = raw.replace(/^hsl\(|\)$/g, '').trim()
-        if (/^\d/.test(s) && s.includes('%')) return `hsl(${s})`
-        return raw || fallback
-      }
-      const background = toCss(pick('--color-panel', '--color-surface', '--background', '--gray-1', '--bg'), '#ffffff')
-      const foreground = toCss(pick('--foreground', '--gray-12', '--fg'), '#111111')
-      const muted = toCss(pick('--gray-6', '--muted', '--gray-7'), 'hsl(215 16.3% 46.9%)')
-      const border = toCss(pick('--gray-6', '--border', '--gray-a6'), 'hsl(214 32% 91%)')
-      const primary = toCss(pick('--accent-9', '--iris-9', '--indigo-9', '--accent', '--brand'), '#3b82f6')
+      const fallback = (val, fb) => (val && val.length ? val : fb)
+      const background = fallback(pick('--theme-tokens-colors-surface', '--theme-colors-default-white'), '#ffffff')
+      const foreground = fallback(pick('--theme-colors-neutral-neutral-12'), '#111111')
+      const muted = fallback(pick('--theme-colors-neutral-neutral-9'), '#64748b')
+      const border = fallback(pick('--theme-colors-neutral-neutral-6'), '#e2e8f0')
+      const primary = fallback(pick('--theme-colors-accent-accent-9'), '#3b82f6')
       return { background, foreground, muted, border, primary }
     }
 
@@ -71,8 +66,8 @@ export default function MermaidAutoRender() {
           const { svg } = await mermaid.render(id, code)
           if (cancelled) return
 
-          // Inject minimal CSS to align with Radix theme
-          const scopedCss = `\n<style>\nsvg{color: hsl(var(--foreground, 222.2 84% 4.9%));}\ntext,tspan{fill: currentColor;}\n.actor rect{fill: hsl(var(--color-panel, var(--background,0 0% 100%))); stroke: hsl(var(--gray-11,215 16.3% 46.9%));}\n.actor-line,.messageLine0,.messageLine1,.loopLine,.signal,.relation{stroke: currentColor;}\n.note{fill: hsl(var(--muted,210 40% 96%)); stroke: hsl(var(--gray-11,215 16.3% 46.9%)); color: currentColor;}\n.marker path{fill: currentColor; stroke: none;}\n</style>`
+          // Inject minimal CSS aligned with --theme variables (resolved to concrete values)
+          const scopedCss = `\n<style>\nsvg{color: ${theme.foreground};}\ntext,tspan{fill: currentColor;}\n.actor rect{fill: ${theme.background}; stroke: ${theme.border};}\n.actor-line,.messageLine0,.messageLine1,.loopLine,.signal,.relation{stroke: currentColor;}\n.note{fill: ${theme.muted}; stroke: ${theme.border}; color: currentColor;}\n.marker path{fill: currentColor; stroke: none;}\n</style>`
           const svgWithCss = svg.replace(/<svg([^>]*)>/i, `<svg$1>${scopedCss}`)
 
           const container = document.createElement('div')
