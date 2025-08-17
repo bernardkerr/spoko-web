@@ -9,7 +9,7 @@ export function Navbar() {
         <div className="navbar-brand">
           <Link href="/" style={{ display: 'flex', alignItems: 'center', marginRight: 24 }}>
             <Image
-              src="/assets/spoko-logo-navbar.svg"
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/assets/spoko-logo-navbar.svg`}
               alt="Spoko Logo"
               width={120}
               height={36}
