@@ -259,3 +259,30 @@ body {
   overflow: auto;
   min-height: 200px;
 }
+
+/* Typography container used in docs */
+.prose {
+  line-height: 1.7;
+}
+
+/* Constrain media inside prose */
+.prose img,
+.prose video,
+.prose svg,
+.prose canvas {
+  display: block;
+  /* Default max width narrower than container for readability */
+  max-width: min(100%, 900px);
+  height: auto;
+  margin: 16px auto; /* center */
+}
+
+/* Optional size helpers (opt-in via class="sm|md|lg|full") */
+.prose img.sm { max-width: 360px; }
+.prose img.md { max-width: 600px; }
+.prose img.lg { max-width: 900px; }
+.prose img.full { max-width: 100%; }
+
+/* Figure support */
+.prose figure { margin: 24px auto; text-align: center; }
+.prose figcaption { font-size: 0.9rem; color: var(--muted-foreground-hex); margin-top: 8px; }

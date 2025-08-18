@@ -158,6 +158,23 @@ gitGraph
 `} />
             </Box>
           </Card>
+
+          <Card>
+            <Box p="4">
+              <Heading size="4" mb="2">Timeline</Heading>
+              <Text color="gray" size="2" mb="3">Chronological milestones across product and marketing tracks.</Text>
+              <Mermaid code={`
+timeline
+  title Product + Marketing
+  section Product
+    2023-01 : Design
+    2023-03 : MVP
+  section Marketing
+    2023-02 : Brand
+    2023-04 : Launch
+`} />
+            </Box>
+          </Card>
         </Grid>
 
         <Box mt="6">
