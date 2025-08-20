@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { Section, Box } from '@radix-ui/themes'
-import TokensViewerClient from '../../components/TokensViewerClient.jsx'
+import TokensViewerClient from '../../../components/TokensViewerClient.jsx'
 
 function readJSON(filePath) {
   try {
