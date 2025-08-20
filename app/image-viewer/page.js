@@ -1,10 +1,10 @@
 "use client"
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { Suspense, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Section, Box, Button, Text } from '@radix-ui/themes'
 
-export default function ImageViewerPage() {
+function ImageViewerContent() {
   const sp = useSearchParams()
   const { src, alt, back, backLabel } = useMemo(() => {
     const src = sp.get('src') || ''
@@ -57,5 +57,33 @@ export default function ImageViewerPage() {
         </Box>
       </Box>
     </Section>
+  )
+}
+
+export default function ImageViewerPage() {
+  return (
+    <Suspense
+      fallback={(
+        <Section size="4">
+          <Box mx="auto" style={{ maxWidth: 1400, width: '100%' }}>
+            <Box
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '70vh',
+                borderRadius: 8,
+                background: 'var(--color-panel-solid)',
+                padding: 16,
+              }}
+            >
+              <Text size="3" color="gray">Loading image…</Text>
+            </Box>
+          </Box>
+        </Section>
+      )}
+    >
+      <ImageViewerContent />
+    </Suspense>
   )
 }
