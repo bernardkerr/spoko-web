@@ -15,7 +15,7 @@ export async function generateStaticParams() {
   return slugs
 }
 
-export default async function DocPage({ params }) {
+export default async function DocumentationPage({ params }) {
   const resolvedParams = await params
   const slugSegments = resolvedParams.slug
   const slug = slugSegments.join('/')
@@ -25,8 +25,6 @@ export default async function DocPage({ params }) {
     const { unstable_noStore } = await import('next/cache')
     unstable_noStore()
   }
-
-  // Allow all nested docs paths; index page controls visibility
 
   // Peek at frontmatter to decide renderer/layout early
   const fm = await getMarkdownFrontmatterFromRoots(slug, ['docs-submodules'])
@@ -58,20 +56,20 @@ export default async function DocPage({ params }) {
 
   // Handle absolute paths that include docs-test or docs-submodules
   processedContent = processedContent.replace(
-    /src="([^"]*\/(docs-test|docs-submodules)\/[^"]*)"/g,
+    /src="([^"]*\/(docs-test|docs-submodules)\/[^\"]*)"/g,
     (match, src) => `src="${getImagePath(src)}"`
   )
 
   // Handle absolute paths starting with /images/
   processedContent = processedContent.replace(
-    /src="(\/images\/[^\"]*)"/g,
+    /src="(\/images\/[^"]*)"/g,
     (match, src) => `src="${getImagePath(src)}"`
   )
 
   // Handle relative paths from markdown (e.g., images/diagram.png)
   processedContent = processedContent.replace(
-    /src="((?!http|\/)images\/[^\"]*)"/g,
-    (match, src) => `src="${getImagePath(src)}"`
+    /src=\"((?!http|\/)images\/[^"]*)\"/g,
+    (match, src) => `src=\"${getImagePath(src)}\"`
   )
 
   // If sideImages renderer/layout is specified, use alternate template
@@ -80,7 +78,7 @@ export default async function DocPage({ params }) {
     (doc.frontmatter && (doc.frontmatter.renderer === 'sideImages' || doc.frontmatter.layout === 'sideImages'))
 
   if (wantsSideImages) {
-    const originPath = `/docs/${slug}`
+    const originPath = `/documentation/${slug}`
     return (
       <SideImagesDoc
         title={pageTitle}

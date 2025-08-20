@@ -47,7 +47,7 @@ export default async function Home() {
               <NextLink href="/test">Go to Test</NextLink>
             </Button>
             <Button asChild variant="soft">
-              <NextLink href="/docs">View Documentation</NextLink>
+              <NextLink href="/documentation">View Documentation</NextLink>
             </Button>
           </Flex>
         </Box>

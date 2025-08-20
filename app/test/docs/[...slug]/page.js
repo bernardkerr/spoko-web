@@ -74,11 +74,13 @@ export default async function DocPage({ params }) {
     (doc.frontmatter && (doc.frontmatter.renderer === 'sideImages' || doc.frontmatter.layout === 'sideImages'))
 
   if (wantsSideImages) {
+    const originPath = `/test/docs/${slug}`
     return (
       <SideImagesDoc
         title={pageTitle}
         description={doc.frontmatter.description}
         html={processedContent}
+        originPath={originPath}
       />
     )
   }

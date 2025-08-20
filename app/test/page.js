@@ -17,21 +17,9 @@ export default function TestPage() {
   return (
     <Section size="4">
       <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
-        <Box mb="6">
-          <Heading size="8" mb="2">Radix Themes Pilot</Heading>
-          <Text as="p" color="gray" size="3" mb="3">
-            These components are rendered using <Code>@radix-ui/themes</Code> and inherit the global appearance.
-          </Text>
-          <Flex gap="3" align="center">
-            <Text>Flex row</Text>
-            <Separator orientation="vertical" />
-            <Text color="gray">Tokenized spacing/typography</Text>
-          </Flex>
-        </Box>
-
         <Box mb="5">
           <Heading size="9">Test</Heading>
-          <Text as="p" color="gray" size="4">These are test pages.</Text>
+          <Text as="p" color="gray" size="4">These pages highlight the capabilities of the site.</Text>
         </Box>
 
         <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">

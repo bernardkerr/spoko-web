@@ -9,61 +9,73 @@ layout: sideImages
 
 Spoke is a composable system for building robots.  Robots are complex, so building them requires understanding and building many different kinds of systems.
 
-## Body
+## Why Spoke?
 
-![](images/body.png)
+Spoke is a composable system for building robots.  It is designed to be easy to use, but also flexible enough to be used for a wide range of different robots.
 
-Robots can take many forms.  [Spoke Body](/docs/spoke-body/spoke-body) is the system that permits robots to be constructed from interchangeable parts.
+## Robot Systems
 
-<Flex wrap="wrap" gap="2" mt="2" pl="5">
-  <LinkButton href="/docs/spoke-body/frame" size="2">Frame</LinkButton>
-  <LinkButton href="/docs/spoke-body/panel" size="2">Panel</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">Joint</LinkButton>
-</Flex>
+### Body
 
-## Compute
+![Spoke Body](images/body.png)
 
-The critical core of the Robot is the main source of compute.
+Robots can take many forms.  [Spoke Body](/documentation/spoke-body/spoke-body) is the system that permits robots to be constructed from interchangeable parts.
 
 <Flex wrap="wrap" gap="2" mt="2" pl="5">
-  <LinkButton href="/docs/spoke-body/frame" size="2">Compute Module</LinkButton>
-  <LinkButton href="/docs/spoke-body/panel" size="2">Jetson</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">Software</LinkButton>
+  <LinkButton href="/documentation/spoke-body/frame" size="2">Frame</LinkButton>
+  <LinkButton href="/documentation/spoke-body/panel" size="2">Panel</LinkButton>
+  <LinkButton href="/documentation/spoke-body/joint" size="2">Joint</LinkButton>
 </Flex>
 
-## Controller
+### Compute
+
+The critical core of the Robot is the main source of compute.  This is where larger AI algorithms run.  Typically these are Linux-based SBCs.
 
 <Flex wrap="wrap" gap="2" mt="2" pl="5">
-  <LinkButton href="/docs/spoke-body/frame" size="2">ESP32-S3</LinkButton>
-  <LinkButton href="/docs/spoke-body/panel" size="2">ESP32-S3-Pico</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">Software</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Compute Module</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Jetson</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Software</LinkButton>
 </Flex>
 
-## FPGA
+### Controller
+
+Inside the robot, local processing is handled by micro controllers.  These are connected to the main compute module via ethernet.  They are interconnected via micro network.
 
 <Flex wrap="wrap" gap="2" mt="2" pl="5">
-  <LinkButton href="/docs/spoke-body/frame" size="2">iCE40</LinkButton>
-  <LinkButton href="/docs/spoke-body/panel" size="2">ECP5</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">Gateware</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">ESP32-S3</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">ESP32-S3-Pico</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">STM32G4</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Raspberry Pi Pico</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Software</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Networking</LinkButton>
 </Flex>
 
-## Peripheral
+### FPGA
+
+Where specialized processing is required, FPGAs can sometimes be the perfect solution.
 
 <Flex wrap="wrap" gap="2" mt="2" pl="5">
-  <LinkButton href="/docs/spoke-body/frame" size="2">Camera</LinkButton>
-  <LinkButton href="/docs/spoke-body/panel" size="2">Motor Driver</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">IMU</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">Microphone</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">Speaker</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">LED Panel</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">Touch Panel</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">iCE40</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">ECP5</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Gateware</LinkButton>
 </Flex>
 
-## Power
+### Peripheral
 
 <Flex wrap="wrap" gap="2" mt="2" pl="5">
-  <LinkButton href="/docs/spoke-body/frame" size="2">Battery</LinkButton>
-  <LinkButton href="/docs/spoke-body/panel" size="2">Charger</LinkButton>
-  <LinkButton href="/docs/spoke-body/joint" size="2">Wireless Power Receiver</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Camera</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Motor Driver</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">IMU</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Microphone</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Speaker</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">LED Panel</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Touch Panel</LinkButton>
 </Flex>
 
+### Power
+
+<Flex wrap="wrap" gap="2" mt="2" pl="5">
+  <LinkButton disabled size="2" title="Coming soon">Battery</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Charger</LinkButton>
+  <LinkButton disabled size="2" title="Coming soon">Wireless Power Receiver</LinkButton>
+</Flex>

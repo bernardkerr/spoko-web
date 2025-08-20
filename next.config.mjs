@@ -16,6 +16,20 @@ const nextConfig = {
     unoptimized: true,
   },
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+  async redirects() {
+    return [
+      {
+        source: '/docs',
+        destination: '/documentation',
+        permanent: false,
+      },
+      {
+        source: '/docs/:path*',
+        destination: '/documentation/:path*',
+        permanent: false,
+      },
+    ]
+  },
   async headers() {
     if (isProd) return []
     return [

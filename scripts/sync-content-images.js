@@ -3,8 +3,12 @@ import fs from 'fs'
 import path from 'path'
 
 const SRC_DIRS = [
-  // Prefer local content to override submodule; copy submodule first then local
+  // Legacy test images
   path.join(process.cwd(), 'docs-test', 'images'),
+  // All submodule images: docs-submodules/<repo>/images
+  // We'll expand this glob-like path at runtime
+  path.join(process.cwd(), 'docs-submodules'),
+  // Local content images override everything
   path.join(process.cwd(), 'content', 'images'),
 ]
 const DEST_DIR = path.join(process.cwd(), 'public', 'content', 'images')
@@ -25,6 +29,21 @@ function copyDir(src, dest) {
 
 try {
   for (const src of SRC_DIRS) {
+    // If src is the docs-submodules root, iterate its children and copy their images/ folders
+    const docsSubmodulesRoot = path.join(process.cwd(), 'docs-submodules')
+    if (src === docsSubmodulesRoot && fs.existsSync(docsSubmodulesRoot)) {
+      for (const entry of fs.readdirSync(docsSubmodulesRoot, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue
+        const imagesDir = path.join(docsSubmodulesRoot, entry.name, 'images')
+        if (fs.existsSync(imagesDir)) {
+          copyDir(imagesDir, DEST_DIR)
+          console.log(`[sync-content-images] Synced ${imagesDir} -> ${DEST_DIR}`)
+        }
+      }
+      continue
+    }
+
+    // Otherwise, copy the src directory directly if it exists
     copyDir(src, DEST_DIR)
     console.log(`[sync-content-images] Synced ${src} -> ${DEST_DIR}`)
   }

@@ -1,5 +1,6 @@
 import { Section, Box, Heading, Text } from '@radix-ui/themes'
 import { Mdx } from '@/lib/mdx'
+import MDXImage from '@/components/MDXImage'
 import { getTopLevelContentSlugs } from '@/lib/markdown'
 import { notFound } from 'next/navigation'
 import fs from 'fs'
@@ -58,7 +59,19 @@ export default async function TopLevelContentPage({ params }) {
             </Box>
             
             <div className="prose dark:prose-invert max-w-none">
-              <Mdx source={content} layout={frontmatter.layout} />
+              <Mdx
+                source={content}
+                layout={frontmatter.layout}
+                components={{
+                  img: (imgProps) => (
+                    <MDXImage
+                      {...imgProps}
+                      originPath={`/${slug}`}
+                      backLabel={pageTitle}
+                    />
+                  ),
+                }}
+              />
             </div>
           </Box>
         </Section>

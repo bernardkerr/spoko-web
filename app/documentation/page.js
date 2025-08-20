@@ -15,7 +15,7 @@ import {
   Code,
 } from '@radix-ui/themes'
 
-export default async function DocsIndexPage() {
+export default async function DocumentationIndexPage() {
   const files = await getMarkdownFilesFromRoots(['docs-submodules'])
   // Only show entries that follow the convention: "<repo>/<repo>"
   const filtered = files.filter(f => /^([^/]+)\/\1$/.test(f.slug))
@@ -40,7 +40,6 @@ export default async function DocsIndexPage() {
   const repoUrlByRepo = new Map()
   try {
     const gm = fs.readFileSync(path.join(process.cwd(), '.gitmodules'), 'utf8')
-    // Split into sections like [submodule "docs-submodules/<name>"]
     const sections = gm.split(/\n(?=\[submodule ")/g)
     for (const sec of sections) {
       const pathMatch = sec.match(/\bpath\s*=\s*(.+)\s*/)
@@ -48,11 +47,9 @@ export default async function DocsIndexPage() {
       if (!pathMatch || !urlMatch) continue
       const subPath = pathMatch[1].trim()
       const urlRaw = urlMatch[1].trim()
-      // Expect subPath like "docs-submodules/<repo>"
       const parts = subPath.split('/')
       const repo = parts[parts.length - 1]
       let httpsUrl = urlRaw
-      // Normalize SSH to HTTPS and strip trailing .git
       if (/^git@github.com:/.test(httpsUrl)) {
         httpsUrl = 'https://github.com/' + httpsUrl.replace(/^git@github.com:/, '')
       }
@@ -60,16 +57,16 @@ export default async function DocsIndexPage() {
       repoUrlByRepo.set(repo, httpsUrl)
     }
   } catch (e) {
-    // If .gitmodules missing or unreadable, silently ignore
+    // Ignore if .gitmodules missing/unreadable
   }
 
   return (
     <Section size="4">
       <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
         <Box mb="5">
-          <Heading size="9">Docs</Heading>
+          <Heading size="9">Documentation</Heading>
           <Text as="p" color="gray" size="4">
-            Documentation from Git submodules mounted under <Code>docs-submodules/</Code>.
+            Spoke Documentation.
           </Text>
         </Box>
 
@@ -94,18 +91,16 @@ export default async function DocsIndexPage() {
                   </div>
                 ) : null })()}
                 <Heading size="4" mb="1">
-                  <NextLink href={`/docs/${file.slug}`}>
+                  <NextLink href={`/documentation/${file.slug}`}>
                     {file.slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </NextLink>
                 </Heading>
-                {(() => { const repo = file.slug.split('/')[0]; const url = repoUrlByRepo.get(repo); return (
-                  <Text color="gray" size="2">
-                    Repo: {url ? (
-                      <NextLink href={url} target="_blank" rel="noopener noreferrer">{url}</NextLink>
-                    ) : (
-                      repo
-                    )}
-                  </Text>
+                {(() => { const repo = file.slug.split('/')[0]; const url = repoUrlByRepo.get(repo); return url ? (
+                  <Button asChild size="1">
+                    <NextLink href={url} target="_blank" rel="noopener noreferrer">Open Repository</NextLink>
+                  </Button>
+                ) : (
+                  <Text color="gray" size="2">Repo: {repo}</Text>
                 ) })()}
               </DocCard>
             ))}

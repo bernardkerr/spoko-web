@@ -342,9 +342,9 @@ body {
   height: auto;
   max-width: 100%;
   margin: 0; /* override .prose img margins */
-  border: 1px solid var(--theme-colors-neutral-neutral-6);
+  border: none;
   border-radius: var(--theme-radius-3);
-  background-color: var(--theme-tokens-colors-surface, var(--theme-colors-default-white));
+  background-color: transparent;
 }
 .sideimages-image--full {
   border-radius: var(--theme-radius-4);

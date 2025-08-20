@@ -1,11 +1,13 @@
 import { Section, Box, Heading, Text } from '@radix-ui/themes'
+import Link from 'next/link'
+import { Search } from 'lucide-react'
 import { Mermaid } from '@/components/Mermaid'
 import FloatingTOC from '@/components/FloatingTOC'
 import styles from './SideImagesDoc.module.css'
 
 // Splits content into sections by <h1>/<h2> and groups images per section.
 // Renders each section as a two-column row (text left, images right).
-export default function SideImagesDoc({ title, description, html }) {
+export default function SideImagesDoc({ title, description, html, originPath }) {
   const sections = splitIntoSections(html)
 
   return (
@@ -32,22 +34,33 @@ export default function SideImagesDoc({ title, description, html }) {
                         const cleanRest = { ...rest }
                         delete cleanRest.width
                         delete cleanRest.height
-                        return (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            key={i}
-                            {...cleanRest}
-                            style={{
-                              display: 'block',
-                              maxWidth: '100%',
-                              width: '100%',
-                              height: 'auto',
-                              maxHeight: '50vh',
-                              objectFit: 'contain',
-                              borderRadius: 6
-                            }}
-                          />
-                        )
+                        const src = cleanRest.src
+                        const alt = cleanRest.alt || ''
+                        const back = originPath || ''
+                        const backLabel = title || ''
+                        const href = src
+                          ? `/image-viewer?src=${encodeURIComponent(src)}&alt=${encodeURIComponent(alt)}&back=${encodeURIComponent(back)}&backLabel=${encodeURIComponent(backLabel)}`
+                          : undefined
+                        return href ? (
+                          <Link key={i} href={href} title={alt || 'Open full size'} className={styles.imageLinkWrap}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              {...cleanRest}
+                              style={{
+                                display: 'block',
+                                maxWidth: '100%',
+                                width: '100%',
+                                height: 'auto',
+                                maxHeight: '50vh',
+                                objectFit: 'contain',
+                                borderRadius: 6
+                              }}
+                            />
+                            <div className={styles.zoomOverlay} aria-hidden>
+                              <Search size={24} />
+                            </div>
+                          </Link>
+                        ) : null
                       })}
                     </div>
                   </div>
@@ -68,22 +81,33 @@ export default function SideImagesDoc({ title, description, html }) {
                         // Drop raw width/height to rely on our sizing
                         delete cleanRest.width
                         delete cleanRest.height
-                        return (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            key={i}
-                            {...cleanRest}
-                            style={{
-                              display: 'block',
-                              maxWidth: '100%',
-                              width: '100%',
-                              height: 'auto',
-                              maxHeight: '40vh',
-                              objectFit: 'contain',
-                              borderRadius: 6
-                            }}
-                          />
-                        )
+                        const src = cleanRest.src
+                        const alt = cleanRest.alt || ''
+                        const back = originPath || ''
+                        const backLabel = title || ''
+                        const href = src
+                          ? `/image-viewer?src=${encodeURIComponent(src)}&alt=${encodeURIComponent(alt)}&back=${encodeURIComponent(back)}&backLabel=${encodeURIComponent(backLabel)}`
+                          : undefined
+                        return href ? (
+                          <Link key={i} href={href} title={alt || 'Open full size'} className={styles.imageLinkWrap}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              {...cleanRest}
+                              style={{
+                                display: 'block',
+                                maxWidth: '100%',
+                                width: '100%',
+                                height: 'auto',
+                                maxHeight: '40vh',
+                                objectFit: 'contain',
+                                borderRadius: 6
+                              }}
+                            />
+                            <div className={styles.zoomOverlay} aria-hidden>
+                              <Search size={22} />
+                            </div>
+                          </Link>
+                        ) : null
                       })}
                     </div>
                   </aside>
