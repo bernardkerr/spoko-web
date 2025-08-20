@@ -5,7 +5,7 @@ A modern static website built with Next.js (App Router), MDX/Markdown content, M
 ## ✨ Highlights
 
 - **Static export** for GitHub Pages and static hosts
-- **MDX + Markdown** content from `content/` and `content-submodule/`
+- **MDX + Markdown** content from `content/` and `docs-test/`
 - **Mermaid** diagram generation to static SVGs
 - **Design tokens** via local JSON exports → CSS custom properties
 - **Radix Themes + Tailwind-compatible CSS**
@@ -29,7 +29,7 @@ npm run build
 app/                     # Next.js App Router pages
 components/              # UI components
 content/                 # Local markdown/mdx content 
-content-submodule/       # Submodules for docs 
+docs-test/              # Test docs directory 
 figma/exports/           # Local JSON token exports input for ingestion
 lib/                     # Utilities (markdown, paths, mdx)
 public/                  # Static assets
@@ -39,7 +39,7 @@ styles/                  # Global styles + generated token CSS
 
 ## 📝 Content Model
 
-- Markdown/MDX is read from `content/` and `content-submodule/` with preference for `content/`.
+- Markdown/MDX is read from `content/` and `docs-test/` with preference for `content/`.
 - Raw HTML in markdown is allowed (see `lib/markdown.js`).
 - Internal links are made basePath‑aware at render time.
 

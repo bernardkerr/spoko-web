@@ -94,7 +94,7 @@ Ensure image paths in your Markdown use relative paths:
 Not absolute paths:
 
 ```markdown
-![Diagram](/content-submodule/images/diagram.png)
+![Diagram](/docs-test/images/diagram.png)
 ```
 
 ### Base Path Issues
@@ -111,7 +111,7 @@ To update submodule content:
 
 ```bash
 git submodule update --remote
-git add content-submodule
+git add docs-test
 git commit -m "Update documentation"
 git push
 ```

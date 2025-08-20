@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
-import {
-  getMarkdownContentFromRoots,
-  getAllMarkdownSlugsFromRoots,
-  getMarkdownFrontmatterFromRoots,
+import { 
+  getMarkdownContentFromRoots, 
+  getAllMarkdownSlugsFromRoots, 
+  getMarkdownFrontmatterFromRoots 
 } from '@/lib/markdown'
 import { getImagePath } from '@/lib/paths'
 import { Mermaid } from '@/components/Mermaid'
@@ -10,8 +10,10 @@ import { Section, Box, Heading, Text } from '@radix-ui/themes'
 import SideImagesDoc from '@/components/templates/SideImagesDoc'
 import FloatingTOC from '@/components/FloatingTOC'
 
+// Mermaid diagrams are now pre-rendered to inline SVG by lib/markdown.js.
+
 export async function generateStaticParams() {
-  const slugs = await getAllMarkdownSlugsFromRoots(['docs-submodules'])
+  const slugs = await getAllMarkdownSlugsFromRoots(['docs-test'])
   return slugs
 }
 
@@ -20,9 +22,10 @@ export default async function DocPage({ params }) {
   const slug = resolvedParams.slug.join('/')
 
   // Peek at frontmatter to decide renderer/layout early
-  const fm = await getMarkdownFrontmatterFromRoots(slug, ['docs-submodules'])
+  const fm = await getMarkdownFrontmatterFromRoots(slug, ['docs-test'])
 
-  const doc = await getMarkdownContentFromRoots(slug, ['docs-submodules'])
+  const doc = await getMarkdownContentFromRoots(slug, ['docs-test'])
+  
   if (!doc) {
     notFound()
   }
@@ -41,27 +44,27 @@ export default async function DocPage({ params }) {
   // Derive page title: prefer frontmatter, then first H1 text, then slug fallback
   let pageTitle = doc.frontmatter.title || firstH1Text
   if (!pageTitle) {
-    pageTitle = slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+    pageTitle = slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
 
   // Process images in the HTML to use correct paths
   let processedContent = html
-
+  
   // Handle absolute paths that include docs-test or docs-submodules
   processedContent = processedContent.replace(
     /src="([^"]*\/(docs-test|docs-submodules)\/[^"]*)"/g,
     (match, src) => `src="${getImagePath(src)}"`
   )
-
+  
   // Handle absolute paths starting with /images/
   processedContent = processedContent.replace(
-    /src="(\/images\/[^\"]*)"/g,
+    /src="(\/images\/[^"]*)"/g,
     (match, src) => `src="${getImagePath(src)}"`
   )
 
   // Handle relative paths from markdown (e.g., images/diagram.png)
   processedContent = processedContent.replace(
-    /src="((?!http|\/)images\/[^\"]*)"/g,
+    /src="((?!http|\/)images\/[^"]*)"/g,
     (match, src) => `src="${getImagePath(src)}"`
   )
 
@@ -72,7 +75,11 @@ export default async function DocPage({ params }) {
 
   if (wantsSideImages) {
     return (
-      <SideImagesDoc title={pageTitle} description={doc.frontmatter.description} html={processedContent} />
+      <SideImagesDoc
+        title={pageTitle}
+        description={doc.frontmatter.description}
+        html={processedContent}
+      />
     )
   }
 
@@ -81,18 +88,15 @@ export default async function DocPage({ params }) {
       <Section size="4">
         <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
           <Box mb="5">
-            <Heading size="9">{pageTitle}</Heading>
+            <Heading size="9">
+              {pageTitle}
+            </Heading>
             {doc.frontmatter.description && (
-              <Text as="p" color="gray" size="4">
-                {doc.frontmatter.description}
-              </Text>
+              <Text as="p" color="gray" size="4">{doc.frontmatter.description}</Text>
             )}
           </Box>
 
-          <article
-            className="prose dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: processedContent }}
-          />
+          <article className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: processedContent }} />
           <Mermaid autoRender={true} />
         </Box>
       </Section>

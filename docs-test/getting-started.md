@@ -35,7 +35,7 @@ components/            # Reusable React components
   ui/                 # shadcn/ui components
 lib/                  # Utility functions and helpers
 styles/               # Global CSS and Tailwind config
-content-submodule/    # Git submodule for documentation
+docs-test/           # Git submodule for documentation
 public/               # Static assets
 ```
 
@@ -55,7 +55,7 @@ Edit the CSS variables in `styles/globals.css` to customize your theme:
 
 ### Adding Content
 
-Place your Markdown files in the `content-submodule` directory. The site will automatically discover and render them.
+Place your Markdown files in the `docs-test` directory. The site will automatically discover and render them.
 
 ## Mermaid Example
 
@@ -72,7 +72,7 @@ flowchart LR
 
 ## Images
 
-You can include images in your documentation. Place them in the `content-submodule/images/` directory:
+You can include images in your documentation. Place them in the `docs-test/images/` directory:
 
 ![Example Diagram](images/diagram.png)
 

@@ -1,8 +1,12 @@
 import Link from 'next/link'
 import { ThemeToggle } from './ThemeToggle'
 import Image from 'next/image'
+import { getTopLevelContentFiles } from '@/lib/markdown'
 
-export function Navbar() {
+export async function Navbar() {
+  // Get top-level content files for dynamic navigation
+  const topLevelPages = await getTopLevelContentFiles()
+
   return (
     <header className="navbar">
       <div className="container navbar-inner">
@@ -17,6 +21,14 @@ export function Navbar() {
             />
           </Link>
           <nav className="navbar-links">
+            {/* Dynamic content pages */}
+            {topLevelPages.map(page => (
+              <Link key={page.slug} href={`/${page.slug}`}>
+                {page.title}
+              </Link>
+            ))}
+            
+            {/* Static navigation items */}
             <Link href="/docs">Docs</Link>
             <Link href="/test">Test</Link>
           </nav>

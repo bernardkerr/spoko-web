@@ -286,3 +286,74 @@ body {
 /* Figure support */
 .prose figure { margin: 24px auto; text-align: center; }
 .prose figcaption { font-size: 0.9rem; color: var(--muted-foreground-hex); margin-top: 8px; }
+
+/* Card content typography using figma tokens */
+.card-title {
+  font-size: var(--theme-typography-font-size-4);
+  line-height: var(--theme-typography-line-height-4);
+  font-weight: var(--theme-typography-font-weight-medium);
+  color: var(--theme-colors-neutral-neutral-12);
+  margin-bottom: var(--theme-spacing-2);
+}
+
+.card-description {
+  font-size: var(--theme-typography-font-size-2);
+  line-height: var(--theme-typography-line-height-2);
+  color: var(--theme-colors-neutral-neutral-11);
+  margin-bottom: var(--theme-spacing-3);
+}
+
+/* Side Images MDX layout */
+.sideimages-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--theme-spacing-6);
+  align-items: start;
+  margin: var(--theme-spacing-7) 0;
+}
+@media (min-width: 1024px) {
+  .sideimages-row {
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: var(--theme-spacing-8);
+  }
+}
+.sideimages-text {
+  min-width: 0; /* allow content to shrink within grid */
+}
+.sideimages-aside {
+  position: relative;
+}
+.sideimages-imageStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-spacing-4);
+  position: sticky;
+  top: var(--theme-spacing-7);
+}
+/* On mobile, don't stick */
+@media (max-width: 1023.98px) {
+  .sideimages-imageStack {
+    position: static;
+  }
+}
+.sideimages-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  margin: 0; /* override .prose img margins */
+  border: 1px solid var(--theme-colors-neutral-neutral-6);
+  border-radius: var(--theme-radius-3);
+  background-color: var(--theme-tokens-colors-surface, var(--theme-colors-default-white));
+}
+.sideimages-image--full {
+  border-radius: var(--theme-radius-4);
+}
+.sideimages-fullwidth {
+  margin: var(--theme-spacing-7) 0;
+}
+.sideimages-fullwidthStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-spacing-4);
+}

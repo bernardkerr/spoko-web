@@ -1,4 +1,5 @@
 import NextLink from 'next/link'
+import DocCard from '@/components/DocCard'
 import {
   Section,
   Box,
@@ -34,55 +35,45 @@ export default function TestPage() {
         </Box>
 
         <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="1">Three.js Examples</Heading>
-              <Text color="gray" size="2" mb="3">Interactive 3D graphics and animations powered by Three.js and React Three Fiber.</Text>
-              <Button asChild>
-                <NextLink href="/three">View Examples</NextLink>
-              </Button>
-            </Box>
-          </Card>
+          <DocCard>
+            <Heading size="4" mb="1">Three.js Examples</Heading>
+            <Text color="gray" size="2" mb="3">Interactive 3D graphics and animations powered by Three.js and React Three Fiber.</Text>
+            <Button asChild>
+              <NextLink href="/test/three">View Examples</NextLink>
+            </Button>
+          </DocCard>
 
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="1">Mermaid Diagrams</Heading>
-              <Text color="gray" size="2" mb="3">Beautiful diagrams and flowcharts with site-themed Mermaid integration.</Text>
-              <Button asChild>
-                <NextLink href="/mermaid">View Diagrams</NextLink>
-              </Button>
-            </Box>
-          </Card>
+          <DocCard>
+            <Heading size="4" mb="1">Mermaid Diagrams</Heading>
+            <Text color="gray" size="2" mb="3">Beautiful diagrams and flowcharts with site-themed Mermaid integration.</Text>
+            <Button asChild>
+              <NextLink href="/test/mermaid">View Diagrams</NextLink>
+            </Button>
+          </DocCard>
 
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="1">Documentation</Heading>
-              <Text color="gray" size="2" mb="3">Markdown-based documentation with support for Git submodules and rich typography.</Text>
-              <Button asChild>
-                <NextLink href="/docs">Read Docs</NextLink>
-              </Button>
-            </Box>
-          </Card>
+          <DocCard>
+            <Heading size="4" mb="1">Documentation</Heading>
+            <Text color="gray" size="2" mb="3">Markdown-based documentation with support for Git submodules and rich typography.</Text>
+            <Button asChild>
+              <NextLink href="/test/docs">Read Docs</NextLink>
+            </Button>
+          </DocCard>
 
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="1">Radix Design Showcase</Heading>
-              <Text color="gray" size="2" mb="3">Components built with @radix-ui/themes demonstrating the site theme.</Text>
-              <Button asChild>
-                <NextLink href="/radix">View Showcase</NextLink>
-              </Button>
-            </Box>
-          </Card>
+          <DocCard>
+            <Heading size="4" mb="1">Radix Design Showcase</Heading>
+            <Text color="gray" size="2" mb="3">Components built with @radix-ui/themes demonstrating the site theme.</Text>
+            <Button asChild>
+              <NextLink href="/test/radix">View Showcase</NextLink>
+            </Button>
+          </DocCard>
 
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="1">Style Inspector</Heading>
-              <Text color="gray" size="2" mb="3">Inspect exported design tokens from figma/exports and plan curated views.</Text>
-              <Button asChild>
-                <NextLink href="/styles">Open Inspector</NextLink>
-              </Button>
-            </Box>
-          </Card>
+          <DocCard>
+            <Heading size="4" mb="1">Style Inspector</Heading>
+            <Text color="gray" size="2" mb="3">Inspect exported design tokens from figma/exports and plan curated views.</Text>
+            <Button asChild>
+              <NextLink href="/test/styles">Open Inspector</NextLink>
+            </Button>
+          </DocCard>
         </Grid>
       </Box>
     </Section>

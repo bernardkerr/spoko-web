@@ -1,4 +1,5 @@
 import { Mermaid } from '@/components/Mermaid'
+import DocCard from '@/components/DocCard'
 import { Section, Box, Grid, Card, Heading, Text } from '@radix-ui/themes'
 
 const flowchartCode = `
@@ -66,11 +67,10 @@ export default function MermaidPage() {
         </Box>
 
         <Grid columns={{ initial: '1', md: '2' }} gap="5">
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="2">Flowchart</Heading>
-              <Text color="gray" size="2" mb="3">A simple decision flowchart showing a typical debugging process.</Text>
-              <Mermaid code={`
+          <DocCard>
+            <Heading className="card-title">Flowchart</Heading>
+            <Text className="card-description">A simple decision flowchart showing a typical debugging process.</Text>
+            <Mermaid code={`
 flowchart TD
     A[Start] --> B{Is it working?}
     B -->|Yes| C[Great!]
@@ -80,14 +80,12 @@ flowchart TD
     C --> F[Deploy]
     F --> G[End]
 `} />
-            </Box>
-          </Card>
+          </DocCard>
 
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="2">Sequence Diagram</Heading>
-              <Text color="gray" size="2" mb="3">Visualizing the interaction between user, browser, server, and database.</Text>
-              <Mermaid code={`
+          <DocCard>
+            <Heading className="card-title">Sequence Diagram</Heading>
+            <Text className="card-description">Visualizing the interaction between user, browser, server, and database.</Text>
+            <Mermaid code={`
 sequenceDiagram
     participant User
     participant Browser
@@ -101,14 +99,12 @@ sequenceDiagram
     Server-->>Browser: HTTP Response
     Browser-->>User: Display Page
 `} />
-            </Box>
-          </Card>
+          </DocCard>
 
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="2">Class Diagram</Heading>
-              <Text color="gray" size="2" mb="3">Object-oriented design showing relationships between User, Post, and Comment entities.</Text>
-              <Mermaid code={`
+          <DocCard>
+            <Heading className="card-title">Class Diagram</Heading>
+            <Text className="card-description">Object-oriented design showing relationships between User, Post, and Comment entities.</Text>
+            <Mermaid code={`
 classDiagram
     class User {
         +int id
@@ -132,14 +128,12 @@ classDiagram
     User "1" --> "*" Post : creates
     Post "1" --> "*" Comment : has
 `} />
-            </Box>
-          </Card>
+          </DocCard>
 
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="2">Git Graph</Heading>
-              <Text color="gray" size="2" mb="3">A Git workflow visualization showing branching, merging, and releases.</Text>
-              <Mermaid code={`
+          <DocCard>
+            <Heading className="card-title">Git Graph</Heading>
+            <Text className="card-description">A Git workflow visualization showing branching, merging, and releases.</Text>
+            <Mermaid code={`
 gitGraph
     commit id: "Initial commit"
     branch develop
@@ -156,14 +150,12 @@ gitGraph
     merge hotfix
     commit id: "Release v1.0.1"
 `} />
-            </Box>
-          </Card>
+          </DocCard>
 
-          <Card>
-            <Box p="4">
-              <Heading size="4" mb="2">Timeline</Heading>
-              <Text color="gray" size="2" mb="3">Chronological milestones across product and marketing tracks.</Text>
-              <Mermaid code={`
+          <DocCard>
+            <Heading className="card-title">Timeline</Heading>
+            <Text className="card-description">Chronological milestones across product and marketing tracks.</Text>
+            <Mermaid code={`
 timeline
   title Product + Marketing
   section Product
@@ -173,8 +165,7 @@ timeline
     2023-02 : Brand
     2023-04 : Launch
 `} />
-            </Box>
-          </Card>
+          </DocCard>
         </Grid>
 
         <Box mt="6">

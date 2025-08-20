@@ -4,7 +4,7 @@ import path from 'path'
 
 const SRC_DIRS = [
   // Prefer local content to override submodule; copy submodule first then local
-  path.join(process.cwd(), 'content-submodule', 'images'),
+  path.join(process.cwd(), 'docs-test', 'images'),
   path.join(process.cwd(), 'content', 'images'),
 ]
 const DEST_DIR = path.join(process.cwd(), 'public', 'content', 'images')
