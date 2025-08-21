@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import matter from 'gray-matter'
 import { notFound } from 'next/navigation'
 import { getMarkdownFilesFromRoots } from '@/lib/markdown'
 import { Mdx } from '@/lib/mdx'
@@ -25,9 +26,16 @@ export default async function CadMdDocPage({ params }) {
     notFound()
   }
 
-  // Derive page title from first H1 or filename
-  const firstH1 = md.match(/^#\s+(.+)$/m)
-  const pageTitle = firstH1 ? firstH1[1].trim() : slugParts[slugParts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  // Parse frontmatter and strip it from MDX source
+  const { data: fm, content } = matter(md)
+
+  // Derive page title: prefer frontmatter.title, else first H1, else filename
+  const firstH1 = content.match(/^#\s+(.+)$/m)
+  const fallbackTitle = slugParts[slugParts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  const pageTitle = (fm && fm.title) ? String(fm.title) : (firstH1 ? firstH1[1].trim() : fallbackTitle)
+
+  // Determine layout/renderer
+  const layout = (fm && (fm.layout || fm.renderer)) || undefined
 
   return (
     <Section size="4">
@@ -39,7 +47,7 @@ export default async function CadMdDocPage({ params }) {
           </Text>
         </Box>
         <article className="prose dark:prose-invert max-w-none">
-          <Mdx source={md} />
+          <Mdx source={content} layout={layout} />
         </article>
       </Box>
     </Section>

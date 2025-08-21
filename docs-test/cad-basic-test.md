@@ -24,4 +24,3 @@ export function buildModel(oc) {
   return fused
 }
 ```
-

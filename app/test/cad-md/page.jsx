@@ -1,10 +1,10 @@
 import NextLink from 'next/link'
-import { getMarkdownFilesFromRoots } from '@/lib/markdown'
+import { getMarkdownFilesWithCadjsFromRoots } from '@/lib/markdown'
 import DocCard from '@/components/DocCard'
 import { Section, Box, Heading, Text, Grid, Code } from '@radix-ui/themes'
 
 export default async function CadMdIndexPage() {
-  const files = await getMarkdownFilesFromRoots(['docs-test'])
+  const files = await getMarkdownFilesWithCadjsFromRoots(['docs-test'])
 
   return (
     <Section size="4">
