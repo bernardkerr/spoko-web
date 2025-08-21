@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Box, Card, Heading, Text, Button, Callout } from '@radix-ui/themes'
+import { Wrench, Eye } from 'lucide-react'
 import * as THREE from 'three'
 import { ThreeCadViewer } from '@/components/cad/ThreeCadViewer'
 import { Toolbar } from '@/components/cad/Toolbar'
@@ -29,10 +30,46 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
 ) {
   if (!id) throw new Error('CadWorkbench requires a unique id')
 
+  // Workbench vs. viewer-only mode
+  const [workbenchVisible, setWorkbenchVisible] = useState(!!ui?.workbench)
+
   const [spinEnabled, setSpinEnabled] = useState(!!initialViewer?.spinEnabled)
   const [frameMode, setFrameMode] = useState(initialViewer?.frameMode || 'HIDE')
   const [shadingMode, setShadingMode] = useState(initialViewer?.shadingMode || 'GRAY')
   const [originVisible, setOriginVisible] = useState(!!initialViewer?.originVisible)
+
+  // Preserve previous viewer settings when collapsing to viewer-only
+  const prevViewerStateRef = useRef({
+    spinEnabled: !!initialViewer?.spinEnabled,
+    frameMode: initialViewer?.frameMode || 'HIDE',
+    shadingMode: initialViewer?.shadingMode || 'GRAY',
+    originVisible: !!initialViewer?.originVisible,
+  })
+
+  // When entering viewer-only mode, force conservative settings
+  useEffect(() => {
+    if (!workbenchVisible) {
+      // save previous state once when switching off
+      prevViewerStateRef.current = {
+        spinEnabled,
+        frameMode,
+        shadingMode,
+        originVisible,
+      }
+      setSpinEnabled(false)
+      setFrameMode('HIDE')
+      // keep shading as-is (GRAY by default) for pleasant fill
+      setOriginVisible(false)
+    } else {
+      // restore previous state when returning to workbench
+      const p = prevViewerStateRef.current
+      setSpinEnabled(!!p.spinEnabled)
+      setFrameMode(p.frameMode || 'HIDE')
+      setShadingMode(p.shadingMode || 'GRAY')
+      setOriginVisible(!!p.originVisible)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workbenchVisible])
 
   const [status, setStatus] = useState('Ready')
   const [error, setError] = useState(null)
@@ -272,53 +309,87 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   }
 
   return (
-    <Card>
+    <Card variant="ghost">
       <Box p="4">
-        <Toolbar
-          spinEnabled={spinEnabled}
-          frameMode={frameMode}
-          shadingMode={shadingMode}
-          originVisible={originVisible}
-          onToggleSpin={() => setSpinEnabled(v => !v)}
-          onToggleFrame={() => setFrameMode(prev => prev === 'HIDE' ? 'LIGHT' : prev === 'LIGHT' ? 'DARK' : 'HIDE')}
-          onToggleShading={() => setShadingMode(prev => prev === 'GRAY' ? 'BLACK' : prev === 'BLACK' ? 'OFF' : 'GRAY')}
-          onToggleOrigin={() => setOriginVisible(v => !v)}
-        />
-
-        <Box mt="3" style={{ height: 480, width: '100%', borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden' }}>
-          <ThreeCadViewer
-            ref={viewerRef}
+        {workbenchVisible && (
+          <Toolbar
             spinEnabled={spinEnabled}
             frameMode={frameMode}
             shadingMode={shadingMode}
             originVisible={originVisible}
+            onToggleSpin={() => setSpinEnabled(v => !v)}
+            onToggleFrame={() => setFrameMode(prev => prev === 'HIDE' ? 'LIGHT' : prev === 'LIGHT' ? 'DARK' : 'HIDE')}
+            onToggleShading={() => setShadingMode(prev => prev === 'GRAY' ? 'BLACK' : prev === 'BLACK' ? 'OFF' : 'GRAY')}
+            onToggleOrigin={() => setOriginVisible(v => !v)}
           />
-        </Box>
+        )}
 
-        <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button variant="surface" onClick={() => viewerRef.current?.fitView?.()}>Fit View</Button>
-          <Button variant="surface" onClick={() => viewerRef.current?.reset?.()}>Reset</Button>
-          <Button onClick={runBuild} disabled={busy}>{!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}</Button>
-          <Button variant="soft" onClick={doExportSTEP}>Export STEP</Button>
-          <Button variant="soft" onClick={doExportSTL}>Export STL</Button>
-          <Button variant="soft" onClick={doExportGLB}>Export GLB</Button>
-          {!showEditor && (
-            <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
+        <Box mt="3" style={{ position: 'relative' }}>
+          <Box style={{ height: 480, width: '100%', borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden' }}>
+            <ThreeCadViewer
+              ref={viewerRef}
+              spinEnabled={spinEnabled}
+              frameMode={frameMode}
+              shadingMode={shadingMode}
+              originVisible={originVisible}
+            />
+          </Box>
+          {!workbenchVisible && (
+            <Button
+              size="1"
+              variant="ghost"
+              onClick={() => setWorkbenchVisible(true)}
+              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0 }}
+              aria-label="Open workbench"
+              title="Open workbench"
+            >
+              <Wrench width={28} height={28} strokeWidth={2} />
+            </Button>
+          )}
+          {workbenchVisible && (
+            <Button
+              size="1"
+              variant="ghost"
+              onClick={() => setWorkbenchVisible(false)}
+              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0 }}
+              aria-label="Viewer only"
+              title="Viewer only"
+            >
+              <Eye width={28} height={28} strokeWidth={2} />
+            </Button>
           )}
         </Box>
 
-        <Box mt="3">
-          <Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>
-        </Box>
-        {error && (
-          <Box mt="2">
-            <Callout.Root color="red">
-              <Callout.Text>{error}</Callout.Text>
-            </Callout.Root>
+        {workbenchVisible && (
+          <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Button variant="surface" onClick={() => viewerRef.current?.fitView?.()}>Fit View</Button>
+            <Button variant="surface" onClick={() => viewerRef.current?.reset?.()}>Reset</Button>
+            <Button onClick={runBuild} disabled={busy}>{!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}</Button>
+            <Button variant="soft" onClick={doExportSTEP}>Export STEP</Button>
+            <Button variant="soft" onClick={doExportSTL}>Export STL</Button>
+            <Button variant="soft" onClick={doExportGLB}>Export GLB</Button>
+            {!showEditor && (
+              <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
+            )}
           </Box>
         )}
 
-        {showEditor && (
+        {workbenchVisible && (
+          <>
+            <Box mt="3">
+              <Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>
+            </Box>
+            {error && (
+              <Box mt="2">
+                <Callout.Root color="red">
+                  <Callout.Text>{error}</Callout.Text>
+                </Callout.Root>
+              </Box>
+            )}
+          </>
+        )}
+
+        {workbenchVisible && showEditor && (
           <Box mt="6">
             <Card>
               <Box p="4">

@@ -106,3 +106,36 @@ Make sure the output is RAW markdown, so the user can copy the contents easily
 | gp_Pnt_3 | Construct from coordinates. | gp_Pnt_3(x, y, z) | https://ocjs.org/reference-docs/classes/gp_Pnt_3 | - |
 | STEPControl_Writer | Export a shape to STEP format. | STEPControl_Writer() | https://ocjs.org/reference-docs/classes/STEPControl_Writer | https://dev.opencascade.org/doc/refman/html/class_s_t_e_p_control___writer.html |
 | STEPControl_Writer_1 | Basic export workflow. | STEPControl_Writer_1(); | https://ocjs.org/reference-docs/classes/STEPControl_Writer_1 | - |
+
+## CAD Code Blocks: Workbench vs Viewer
+
+You can choose between the full CAD Workbench (editor + controls) and a minimal Viewer when embedding `cadjs` code blocks.
+
+- __Default (viewer-only)__: If you omit the `workbench` flag, the block renders a viewer without controls. A tiny wrench button overlays the top-right corner to open the Workbench at runtime.
+- __Workbench enabled__: Set `workbench:true` to show all controls (Toolbar, Run/Export/Fit/Reset) and the code editor.
+
+### Examples
+
+- __Viewer-only (default)__
+
+```md
+```cadjs {name:"MyPart"}
+// Define buildModel(oc) here
+// export function buildModel(oc) { ... }
+```
+```
+
+- __Full Workbench__
+
+```md
+```cadjs {name:"MyPart", workbench:true}
+// Define buildModel(oc) here
+// export function buildModel(oc) { ... }
+```
+```
+
+### Runtime toggle behavior
+
+- __Viewer-only → Workbench__: Click the small wrench button in the viewer overlay.
+- __Workbench → Viewer-only__: Click the “Viewer Only” button in the control row.
+- When entering viewer-only, conservative viewer settings are applied (no spin, frame hidden, origin hidden). When returning to Workbench, your previous viewer settings are restored.

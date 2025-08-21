@@ -32,7 +32,7 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     }
 
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xf3f4f6)
+    scene.background = new THREE.Color(0xffffff)
 
     const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000)
     camera.position.set(6, 6, 6)
