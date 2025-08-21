@@ -2,9 +2,9 @@
 
 This page demonstrates using cadjs code blocks inside pure Markdown.
 
-## Example A: Simple Box (v2)
+## Example A: Simple Box
 
-```cadjs
+```js cad {"name":"SimpleBox","units":"mm"}
 export function buildModel(oc) {
   // ocjs Hello World pattern: constructor overload with dimensions
   const box = new oc.BRepPrimAPI_MakeBox_2(20, 15, 10)
@@ -14,7 +14,7 @@ export function buildModel(oc) {
 
 ## Example B: Visible Boolean Cut
 
-```cadjs
+```js cad {"name":"BooleanCut","units":"mm"}
 export function buildModel(oc) {
   // Box minus a larger sphere so the cut is visible from outside
   const box = new oc.BRepPrimAPI_MakeBox_2(20, 20, 20)

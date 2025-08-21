@@ -10,6 +10,7 @@ import { loadOc } from '@/components/cad/OcLoader'
 import { runBuildModel } from '@/components/cad/OcModelBuilder'
 
 let oc = null
+let lastShape = null
 
 function cross(ax, ay, az, bx, by, bz) {
   return [ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx]
@@ -118,11 +119,59 @@ self.addEventListener('message', async (ev) => {
     if (msg.type === 'build') {
       const oc = await ensureOc()
       const shape = runBuildModel(oc, msg.source || '')
+      // cache for later exports
+      lastShape = shape
       const { positions, normals, indices } = shapeToBuffers(oc, shape)
       self.postMessage(
         { type: 'buildResult', id: msg.id, positions, normals, indices },
         [positions.buffer, normals.buffer, indices.buffer]
       )
+      return
+    }
+    if (msg.type === 'exportStep') {
+      const oc = await ensureOc()
+      // Reuse lastShape if available; otherwise (or if source provided) rebuild
+      let shape = lastShape
+      if (!shape || (msg.source && typeof msg.source === 'string')) {
+        shape = runBuildModel(oc, msg.source || '')
+        lastShape = shape
+      }
+      if (!shape) throw new Error('No shape available to export. Run build first.')
+
+      const filename = msg.filename || 'model.step'
+      // Clean any previous output
+      try { oc.FS.unlink(filename) } catch {}
+
+      const writer = new oc.STEPControl_Writer_1()
+      const done = oc.IFSelect_ReturnStatus?.IFSelect_RetDone ?? 1
+      const isDone = (v) => v === true || v === done
+      const modes = [
+        oc.STEPControl_StepModelType?.STEPControl_AsIs,
+        oc.STEPControl_StepModelType?.STEPControl_ManifoldSolidBrep,
+        oc.STEPControl_StepModelType?.STEPControl_FacetedBrep,
+      ].filter((v) => typeof v === 'number')
+      const progress = new oc.Message_ProgressRange_1()
+
+      let lastStatus = -1
+      let lastWrite = -1
+      let ok = false
+      for (const mode of modes.length ? modes : [0]) {
+        try { writer.Model(true) } catch {}
+        const st = writer.Transfer(shape, mode, true, progress)
+        lastStatus = st
+        if (!isDone(st)) continue
+        const wr = writer.Write(filename)
+        lastWrite = wr
+        if (isDone(wr)) { ok = true; break }
+      }
+      if (!ok) {
+        throw new Error(`STEP write failed (transfer=${lastStatus}, write=${lastWrite})`)
+      }
+
+      const dataArr = oc.FS.readFile(filename) // Uint8Array
+      // Create a standalone ArrayBuffer for transfer
+      const buf = dataArr.buffer.slice(dataArr.byteOffset, dataArr.byteOffset + dataArr.byteLength)
+      self.postMessage({ type: 'exportStepResult', id: msg.id, filename, data: buf }, [buf])
       return
     }
   } catch (e) {

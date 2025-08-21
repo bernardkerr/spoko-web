@@ -8,7 +8,7 @@ import { Toolbar } from '@/components/cad/Toolbar'
 import { CodeEditor } from '@/components/cad/CodeEditor'
 // Worker-based pipeline: build+mesh off main thread
 import { callOcWorker, isOcWorkerReady, waitForOcWorkerReady, onOcWorkerReady } from '@/components/cad/workers/ocWorkerClient'
-import { exportSTEP, exportSTL, exportGLTF } from '@/components/cad/Exporters'
+import { exportSTL, exportGLTF, downloadBlob, saveBlobWithPicker } from '@/components/cad/Exporters'
 // import { useOcModuleCache } from '@/components/cad/hooks/useOcModuleCache'
 import { useLastGoodCode } from '@/components/cad/hooks/useLastGoodCode'
 import { useOcWarmupWorker } from '@/components/cad/hooks/useOcWarmupWorker'
@@ -66,6 +66,30 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       console.log(`[CAD] warmup status: ${warmupStatus}`)
     }
   }, [warmupStatus])
+
+  // Derive a human-friendly base filename from several sources
+  const sanitizeBase = (s) => {
+    return String(s || '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w.-]+/g, '_')
+      .replace(/^\.+/, '')
+      || String(id)
+  }
+
+  const deriveExportBaseName = () => {
+    // 1) explicit UI name if provided
+    const uiName = ui?.exportName || ui?.name
+    if (uiName && typeof uiName === 'string') return sanitizeBase(uiName)
+    // 2) look for a code comment like: // name: My Part
+    const code = editorRef.current?.getValue?.() ?? initialValuesRef.current?.code ?? initialCode ?? ''
+    const m = code && code.match(/^\s*\/\/\s*name\s*:\s*(.+)$/mi)
+    if (m && m[1]) return sanitizeBase(m[1])
+    // 3) document title if available
+    if (typeof document !== 'undefined' && document?.title) return sanitizeBase(document.title)
+    // 4) fallback to id
+    return sanitizeBase(id)
+  }
 
   // initialize editor value if editor mounts later
   const initialValuesRef = useRef(null)
@@ -178,14 +202,38 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
     resetCamera: () => viewerRef.current?.reset?.(),
   }))
 
-  const doExportSTEP = () => {
-    // Disabled: shape lives in worker; wire via worker later
-    setError('STEP export is not available in worker mode yet')
-    setStatus('Error')
-  }
-  const doExportSTL = () => {
+  const doExportSTEP = async () => {
     try {
-      exportSTL(lastGeometryRef.current, `${id}.stl`, true)
+      // Ask worker to export STEP from last built shape
+      const base = deriveExportBaseName()
+      const filename = `${base}.step`
+      const res = await callOcWorker('exportStep', { filename })
+      if (!res || res.type !== 'exportStepResult' || !res.data) {
+        throw new Error('Unexpected worker response for STEP export')
+      }
+      const rawName = res.filename || filename
+      // sanitize filename: allow word chars, dash, underscore, dot; force .step suffix
+      let safeName = String(rawName).replace(/[^\w.-]+/g, '_').replace(/^\.+/, '')
+      if (!/\.step$/i.test(safeName)) safeName = safeName.replace(/\.[^.]*$/g, '') + '.step'
+      const blob = new Blob([res.data], { type: 'application/step' })
+      const bytes = res.data?.byteLength ?? blob.size
+      if (typeof window !== 'undefined') {
+        console.log('[CAD] STEP export filename:', safeName, 'bytes:', bytes)
+      }
+      setStatus(`Exported STEP: ${safeName} (${Math.max(1, Math.round((bytes||0)/1024))} KB)`) // echo to UI
+      await saveBlobWithPicker(safeName, blob)
+    } catch (e) {
+      const msg = e?.message || String(e)
+      const detailed = `${msg}\nPhase: Export STEP${e?.stack ? `\n${e.stack}` : ''}`
+      setError(detailed)
+      setStatus('Error')
+      onError?.(detailed)
+    }
+  }
+  const doExportSTL = async () => {
+    try {
+      const base = deriveExportBaseName()
+      await exportSTL(lastGeometryRef.current, `${base}.stl`, true)
     } catch (e) {
       const msg = e?.message || String(e)
       const detailed = `${msg}\nPhase: Export STL${e?.stack ? `\n${e.stack}` : ''}`
@@ -196,7 +244,8 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   }
   const doExportGLB = async () => {
     try {
-      await exportGLTF(lastGeometryRef.current, `${id}.glb`, true)
+      const base = deriveExportBaseName()
+      await exportGLTF(lastGeometryRef.current, `${base}.glb`, true)
     } catch (e) {
       const msg = e?.message || String(e)
       const detailed = `${msg}\nPhase: Export GLB${e?.stack ? `\n${e.stack}` : ''}`

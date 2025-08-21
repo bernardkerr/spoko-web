@@ -13,7 +13,7 @@ function hashString(str) {
   return Math.abs(h).toString(36)
 }
 
-export default function CadBlock({ code = '', idPrefix = 'mdx-cad', initialViewer }) {
+export default function CadBlock({ code = '', idPrefix = 'mdx-cad', initialViewer, params }) {
   // Allow MDX fences that use module syntax like `export function buildModel`.
   const sanitized = (code || '')
     .replace(/^\s*export\s+default\s+function\s+buildModel/m, 'function buildModel')
@@ -26,6 +26,11 @@ export default function CadBlock({ code = '', idPrefix = 'mdx-cad', initialViewe
       autoRun={true}
       showEditorDefault={false}
       initialViewer={initialViewer || { spinEnabled: true, frameMode: 'HIDE', shadingMode: 'GRAY', originVisible: false }}
+      ui={{
+        ...(params || {}),
+        // Prefer explicit fence name as exportName if present
+        ...(params?.name ? { exportName: params.name } : {}),
+      }}
     />
   )
 }

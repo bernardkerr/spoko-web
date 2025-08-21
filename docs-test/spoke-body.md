@@ -174,7 +174,7 @@ The body system has been designed to be convenient for robot designers and build
 Resin printing with a nylon-like resin has been found to give the best overall results, although FDM printing in nylon can also give good results.
 
 
-```cadjs
+```js cad
 export function buildModel(oc) {
   // ocjs v2: cylinder constructor overloads
   // BRepPrimAPI_MakeCylinder_1(radius, height)

@@ -43,7 +43,7 @@ export default async function CadMdDocPage({ params }) {
         <Box mb="5">
           <Heading size="9">{pageTitle}</Heading>
           <Text as="p" color="gray" size="4">
-            Markdown rendered via MDX. <code>cadjs</code> code fences are interactive.
+            Markdown rendered via MDX. <code>js cad</code> code fences are interactive (back-compat for <code>cadjs</code> is supported).
           </Text>
         </Box>
         <article className="prose dark:prose-invert max-w-none">

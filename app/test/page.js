@@ -33,7 +33,7 @@ export default function TestPage() {
 
           <DocCard>
             <Heading size="4" mb="1">CAD in Markdown</Heading>
-            <Text color="gray" size="2" mb="3">Markdown pages that embed live CAD workbenches via <Code>```cadjs</Code> blocks.</Text>
+            <Text color="gray" size="2" mb="3">Markdown pages that embed live CAD workbenches via <Code>```js cad</Code> blocks (back-compat for <Code>```cadjs</Code>).</Text>
             <Button asChild>
               <NextLink href="/test/cad-md">Browse CAD-MD</NextLink>
             </Button>
