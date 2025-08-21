@@ -29,16 +29,23 @@ export function useLastGoodCode(id, initialCode) {
   }, [LAST_GOOD_KEY])
 
   const resolveSource = useCallback((editorGetValue) => {
+    // 1) Prefer what the user currently has in the editor
+    const current = editorGetValue?.()
+    if (current && typeof current === 'string' && current.trim().length > 0) return current
+
+    // 2) Fall back to last good (useful on first load before editor mounts)
     if (typeof window !== 'undefined') {
       const lg = localStorage.getItem(LAST_GOOD_KEY)
       if (lg && lg.trim().length > 0) return lg
     }
-    const current = editorGetValue?.()
-    if (current && typeof current === 'string') return current
+
+    // 3) Fall back to saved code (manual saves)
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(CODE_KEY)
       if (saved && saved.trim().length > 0) return saved
     }
+
+    // 4) Finally, initial code
     return initialCode
   }, [CODE_KEY, LAST_GOOD_KEY, initialCode])
 

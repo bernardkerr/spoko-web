@@ -40,6 +40,14 @@ export default function TestPage() {
           </DocCard>
 
           <DocCard>
+            <Heading size="4" mb="1">CAD Docs Helper</Heading>
+            <Text color="gray" size="2" mb="3">Searchable OCJS reference table used by the CAD editor.</Text>
+            <Button asChild>
+              <NextLink href="/test/cad-doc">Open Docs</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
             <Heading size="4" mb="1">Three.js Examples</Heading>
             <Text color="gray" size="2" mb="3">Interactive 3D graphics and animations powered by Three.js and React Three Fiber.</Text>
             <Button asChild>

@@ -2,14 +2,17 @@
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Box, Card, Heading, Text, Button, Callout } from '@radix-ui/themes'
+import * as THREE from 'three'
 import { ThreeCadViewer } from '@/components/cad/ThreeCadViewer'
 import { Toolbar } from '@/components/cad/Toolbar'
 import { CodeEditor } from '@/components/cad/CodeEditor'
-import { shapeToGeometry } from '@/components/cad/OcToThree'
-import { runBuildModel } from '@/components/cad/OcModelBuilder'
+// Worker-based pipeline: build+mesh off main thread
+import { callOcWorker, isOcWorkerReady, waitForOcWorkerReady, onOcWorkerReady } from '@/components/cad/workers/ocWorkerClient'
 import { exportSTEP, exportSTL, exportGLTF } from '@/components/cad/Exporters'
-import { useOcModuleCache } from '@/components/cad/hooks/useOcModuleCache'
+// import { useOcModuleCache } from '@/components/cad/hooks/useOcModuleCache'
 import { useLastGoodCode } from '@/components/cad/hooks/useLastGoodCode'
+import { useOcWarmupWorker } from '@/components/cad/hooks/useOcWarmupWorker'
+import { DocsTable } from '@/components/cad/DocsTable'
 
 export const CadWorkbench = forwardRef(function CadWorkbench(
   {
@@ -35,6 +38,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [showEditor, setShowEditor] = useState(!!showEditorDefault)
+  const [showDocsHelper, setShowDocsHelper] = useState(false)
 
   const viewerRef = useRef(null)
   const editorRef = useRef(null)
@@ -42,8 +46,26 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   const lastShapeRef = useRef(null)
   const lastGeometryRef = useRef(null)
 
-  const { loadOc } = useOcModuleCache()
+  // Track OC worker readiness to adjust UI labels
+  const [ocReady, setOcReady] = useState(() => isOcWorkerReady())
+  useEffect(() => {
+    if (isOcWorkerReady()) return
+    const off = onOcWorkerReady(() => setOcReady(true))
+    return () => off?.()
+  }, [])
+
+  // const { loadOc } = useOcModuleCache()
   const { read, writeCode, writeLastGood, resolveSource } = useLastGoodCode(id, initialCode || '')
+
+  // Kick off a background warmup to fetch OC assets (JS + WASM) early.
+  // This reduces the perceived latency of the first Run without moving
+  // any build/meshing off the main thread.
+  const warmupStatus = useOcWarmupWorker()
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log(`[CAD] warmup status: ${warmupStatus}`)
+    }
+  }, [warmupStatus])
 
   // initialize editor value if editor mounts later
   const initialValuesRef = useRef(null)
@@ -54,31 +76,59 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   const runBuild = async () => {
     setBusy(true)
     setError(null)
-    let phase = 'Loading OpenCascade…'
+    let phase = 'Building in worker…'
     setStatus(phase)
     onStatus?.(phase)
     try {
-      const oc = await loadOc()
-      lastOcRef.current = oc
+      const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+      console.groupCollapsed('[CAD] runBuild')
+      console.time('[CAD] total')
+      // If worker isn't ready yet, inform user and wait for readiness
+      if (!isOcWorkerReady()) {
+        phase = 'Initializing OpenCascade…'
+        setStatus(phase)
+        onStatus?.(phase)
+        console.time('[CAD] wait worker ready')
+        await waitForOcWorkerReady()
+        console.timeEnd('[CAD] wait worker ready')
+        phase = 'Building in worker…'
+        setStatus(phase)
+        onStatus?.(phase)
+      }
       const src = resolveSource(() => editorRef.current?.getValue?.()) || ''
-      phase = 'Building model…'
+      if (typeof window !== 'undefined') {
+        console.log('[CAD] sending source', { length: src.length, head: src.slice(0, 120) })
+      }
+      console.time('[CAD] worker build')
+      const res = await callOcWorker('build', { source: src })
+      console.timeEnd('[CAD] worker build')
+
+      phase = 'Reconstructing geometry…'
       setStatus(phase)
       onStatus?.(phase)
-      const shape = runBuildModel(oc, src)
-      lastShapeRef.current = shape
-      phase = 'Meshing and converting…'
-      setStatus(phase)
-      onStatus?.(phase)
-      const geometry = await Promise.resolve(shapeToGeometry(oc, shape))
+      console.time('[CAD] reconstruct')
+      const geometry = new THREE.BufferGeometry()
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(res.positions, 3))
+      geometry.setAttribute('normal', new THREE.Float32BufferAttribute(res.normals, 3))
+      geometry.setIndex(new THREE.Uint32BufferAttribute(res.indices, 1))
+      geometry.computeBoundingSphere()
+      geometry.computeBoundingBox()
+      console.timeEnd('[CAD] reconstruct')
       lastGeometryRef.current = geometry
       phase = 'Rendering…'
       setStatus(phase)
       onStatus?.(phase)
+      console.time('[CAD] render')
       viewerRef.current?.setGeometry?.(geometry)
+      console.timeEnd('[CAD] render')
       // persist last good
       writeLastGood(src)
       setStatus('Done')
       onStatus?.('Done')
+      console.timeEnd('[CAD] total')
+      const t1 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+      console.log(`[CAD] runBuild finished in ${Math.round(t1 - t0)}ms`)
+      console.groupEnd()
     } catch (e) {
       console.error(e)
       const msg = e?.message || String(e)
@@ -97,10 +147,26 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
     writeCode(val)
   }
 
-  // auto run once
+  // Auto-close docs helper when editor closes
+  useEffect(() => {
+    if (!showEditor && showDocsHelper) setShowDocsHelper(false)
+  }, [showEditor, showDocsHelper])
+
+  // auto run once: wait for worker ready to avoid long first-run wait perception
   useEffect(() => {
     if (!autoRun) return
-    const t = setTimeout(() => runBuild(), 0)
+    let cancelled = false
+    const kick = async () => {
+      try {
+        if (!isOcWorkerReady()) {
+          setStatus('Initializing OpenCascade…')
+          onStatus?.('Initializing OpenCascade…')
+          await waitForOcWorkerReady()
+        }
+        if (!cancelled) runBuild()
+      } catch {}
+    }
+    const t = setTimeout(kick, 0)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -113,15 +179,9 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   }))
 
   const doExportSTEP = () => {
-    try {
-      exportSTEP(lastOcRef.current, lastShapeRef.current, `${id}.step`)
-    } catch (e) {
-      const msg = e?.message || String(e)
-      const detailed = `${msg}\nPhase: Export STEP${e?.stack ? `\n${e.stack}` : ''}`
-      setError(detailed)
-      setStatus('Error')
-      onError?.(detailed)
-    }
+    // Disabled: shape lives in worker; wire via worker later
+    setError('STEP export is not available in worker mode yet')
+    setStatus('Error')
   }
   const doExportSTL = () => {
     try {
@@ -189,7 +249,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
         <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Button variant="surface" onClick={() => viewerRef.current?.fitView?.()}>Fit View</Button>
           <Button variant="surface" onClick={() => viewerRef.current?.reset?.()}>Reset</Button>
-          <Button onClick={runBuild} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
+          <Button onClick={runBuild} disabled={busy}>{!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}</Button>
           <Button variant="soft" onClick={doExportSTEP}>Export STEP</Button>
           <Button variant="soft" onClick={doExportSTL}>Export STL</Button>
           <Button variant="soft" onClick={doExportGLB}>Export GLB</Button>
@@ -228,10 +288,19 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
                   />
                 </Box>
                 <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <Button onClick={runBuild} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
+                  <Button onClick={runBuild} disabled={busy}>{!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}</Button>
                   <Button variant="soft" onClick={resetEditorToLastRunning}>Reset to Last Running</Button>
                   <Button variant="soft" onClick={resetEditorToOriginal}>Reset to Original</Button>
+                  <Button variant="surface" onClick={() => setShowDocsHelper(v => !v)}>{showDocsHelper ? 'Hide Docs Helper' : 'Docs Helper'}</Button>
                 </Box>
+                {showDocsHelper && (
+                  <Box mt="3">
+                    <DocsTable markdownUrl="/test/cad-doc/oc-apis.md" height={360} />
+                    <Box mt="2" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Button variant="ghost" onClick={() => setShowDocsHelper(false)}>Close Docs Helper</Button>
+                    </Box>
+                  </Box>
+                )}
               </Box>
             </Card>
           </Box>
