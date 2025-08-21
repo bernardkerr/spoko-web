@@ -2,12 +2,14 @@
 
 This page demonstrates using cadjs code blocks inside pure Markdown.
 
-## Example A: Simple Box (v1.1-compatible)
+## Example A: Cylinder (v1.1-compatible)
 
 ```cadjs
 export function buildModel(oc) {
-  // v1.1: pure sizes constructor is MakeBox_1(dx, dy, dz)
-  return new oc.BRepPrimAPI_MakeBox_1(40, 20, 10).Shape()
+  // v1.1: cylinder overloads
+  // MakeCylinder_1(radius, height)
+  // MakeCylinder_2(Ax2, radius, height)
+  return new oc.BRepPrimAPI_MakeCylinder_1(10, 30).Shape()
 }
 ```
 
@@ -22,3 +24,4 @@ export function buildModel(oc) {
   return fused
 }
 ```
+
