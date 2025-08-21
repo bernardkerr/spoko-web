@@ -24,6 +24,22 @@ export default function TestPage() {
 
         <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
           <DocCard>
+            <Heading size="4" mb="1">CAD Playground</Heading>
+            <Text color="gray" size="2" mb="3">Interactive CAD viewer with sample shapes and operations.</Text>
+            <Button asChild>
+              <NextLink href="/test/cad">Open CAD</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">CAD in Markdown</Heading>
+            <Text color="gray" size="2" mb="3">Markdown pages that embed live CAD workbenches via <Code>```cadjs</Code> blocks.</Text>
+            <Button asChild>
+              <NextLink href="/test/cad-md">Browse CAD-MD</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
             <Heading size="4" mb="1">Three.js Examples</Heading>
             <Text color="gray" size="2" mb="3">Interactive 3D graphics and animations powered by Three.js and React Three Fiber.</Text>
             <Button asChild>

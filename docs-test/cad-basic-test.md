@@ -2,25 +2,31 @@
 
 This page demonstrates using cadjs code blocks inside pure Markdown.
 
-## Example A: Cylinder (v1.1-compatible)
+## Example A: Simple Box (v2)
 
 ```cadjs
 export function buildModel(oc) {
-  // v1.1: cylinder overloads
-  // MakeCylinder_1(radius, height)
-  // MakeCylinder_2(Ax2, radius, height)
-  return new oc.BRepPrimAPI_MakeCylinder_1(10, 30).Shape()
+  // ocjs Hello World pattern: constructor overload with dimensions
+  const box = new oc.BRepPrimAPI_MakeBox_2(20, 15, 10)
+  return box.Shape()
 }
 ```
 
-## Example B: Two Boxes Union
+## Example B: Visible Boolean Cut
 
 ```cadjs
 export function buildModel(oc) {
-  // v1.1: two-corner constructor is MakeBox_3(Pnt, Pnt)
-  const a = new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0,0,0), new oc.gp_Pnt_3(20,20,20)).Shape()
-  const b = new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(10,10,0), new oc.gp_Pnt_3(30,30,20)).Shape()
-  const fused = new oc.BRepAlgoAPI_Fuse_3(a, b).Shape()
-  return fused
+  // Box minus a larger sphere so the cut is visible from outside
+  const box = new oc.BRepPrimAPI_MakeBox_2(20, 20, 20)
+  const sphere = new oc.BRepPrimAPI_MakeSphere_5(new oc.gp_Pnt_3(10, 10, 10), 12)
+
+  const cut = new oc.BRepAlgoAPI_Cut_3(
+    box.Shape(),
+    sphere.Shape(),
+    new oc.Message_ProgressRange_1()
+  )
+  // Perform the boolean with its own progress range
+  cut.Build(new oc.Message_ProgressRange_1())
+  return cut.Shape()
 }
 ```

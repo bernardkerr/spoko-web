@@ -176,9 +176,9 @@ Resin printing with a nylon-like resin has been found to give the best overall r
 
 ```cadjs
 export function buildModel(oc) {
-  // v1.1: cylinder overloads
-  // MakeCylinder_1(radius, height)
-  // MakeCylinder_2(Ax2, radius, height)
+  // ocjs v2: cylinder constructor overloads
+  // BRepPrimAPI_MakeCylinder_1(radius, height)
+  // BRepPrimAPI_MakeCylinder_2(Ax2, radius, height)
   return new oc.BRepPrimAPI_MakeCylinder_1(10, 30).Shape()
 }
 ```

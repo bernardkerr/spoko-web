@@ -17,27 +17,27 @@ function buildModel(oc) {
 
   // Bottom frame - four walls
   components.push(
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(0, 0, 0), outerW, wall, frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(0, outerH - wall, 0), outerW, wall, frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(0, wall, 0), wall, outerH - 2*wall, frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(outerW - wall, wall, 0), wall, outerH - 2*wall, frameZ).Shape()
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0, 0, 0), outerW, wall, frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0, outerH - wall, 0), outerW, wall, frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0, wall, 0), wall, outerH - 2*wall, frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(outerW - wall, wall, 0), wall, outerH - 2*wall, frameZ).Shape()
   );
 
   // Top frame - translated up by height
   const topZ = height;
   components.push(
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(0, 0, topZ), outerW, wall, frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(0, outerH - wall, topZ), outerW, wall, frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(0, wall, topZ), wall, outerH - 2*wall, frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(outerW - wall, wall, topZ), wall, outerH - 2*wall, frameZ).Shape()
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0, 0, topZ), outerW, wall, frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0, outerH - wall, topZ), outerW, wall, frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0, wall, topZ), wall, outerH - 2*wall, frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(outerW - wall, wall, topZ), wall, outerH - 2*wall, frameZ).Shape()
   );
 
   // Four vertical corner beams
   components.push(
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(0, 0, frameZ), beamW, beamW, height - frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(outerW - beamW, 0, frameZ), beamW, beamW, height - frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(0, outerH - beamW, frameZ), beamW, beamW, height - frameZ).Shape(),
-    new oc.BRepPrimAPI_MakeBox_2(new oc.gp_Pnt_3(outerW - beamW, outerH - beamW, frameZ), beamW, beamW, height - frameZ).Shape()
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0, 0, frameZ), beamW, beamW, height - frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(outerW - beamW, 0, frameZ), beamW, beamW, height - frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(0, outerH - beamW, frameZ), beamW, beamW, height - frameZ).Shape(),
+    new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(outerW - beamW, outerH - beamW, frameZ), beamW, beamW, height - frameZ).Shape()
   );
 
   // Compound all components into one shape

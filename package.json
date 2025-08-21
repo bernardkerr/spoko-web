@@ -45,7 +45,8 @@
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.0",
     "remark-rehype": "^11.1.2",
-    "three": "^0.179.1"
+    "three": "^0.179.1",
+    "opencascade.js": "beta"
   },
   "devDependencies": {
     "@mdx-js/loader": "^3.1.0",
@@ -59,6 +60,7 @@
     "prettier": "^3.0.0",
     "puppeteer": "^24.16.0",
     "remark-frontmatter": "^5.0.0",
-    "serve": "^14.2.1"
+    "serve": "^14.2.1",
+    "file-loader": "^6.2.0"
   }
 }

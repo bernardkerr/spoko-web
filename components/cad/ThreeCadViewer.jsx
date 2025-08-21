@@ -26,6 +26,11 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     const container = containerRef.current
     if (!container) return
 
+    // Defensive: clear any existing children/canvas to avoid multiple contexts (HMR/remounts)
+    while (container.firstChild) {
+      try { container.removeChild(container.firstChild) } catch {}
+    }
+
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0xf3f4f6)
 

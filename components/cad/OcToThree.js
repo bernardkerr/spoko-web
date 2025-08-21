@@ -7,7 +7,8 @@ export function shapeToGeometry(oc, shape) {
 
   // Mesh with reasonable defaults (linear deflection 0.1, angle 0.5 rad)
   const mesher = new oc.BRepMesh_IncrementalMesh_2(shape, 0.1, false, 0.5, false)
-  mesher.Perform()
+  // ocjs v2 requires a progress range argument for Perform
+  mesher.Perform(new oc.Message_ProgressRange_1())
   if (!mesher.IsDone()) throw new Error('OpenCascade meshing failed')
 
   const vertices = []
@@ -24,7 +25,9 @@ export function shapeToGeometry(oc, shape) {
   while (faceExplorer.More()) {
     const face = oc.TopoDS.Face_1(faceExplorer.Current())
     const location = new oc.TopLoc_Location_1()
-    const triangulation = oc.BRep_Tool.Triangulation(face, location)
+    // ocjs v2: Triangulation requires a third argument: Poly_MeshPurpose
+    const purpose = oc.Poly_MeshPurpose?.Poly_MeshPurpose_SHADING ?? oc.Poly_MeshPurpose_SHADING ?? 0
+    const triangulation = oc.BRep_Tool.Triangulation(face, location, purpose)
 
     if (!triangulation.IsNull()) {
       const transform = location.Transformation()

@@ -16,6 +16,31 @@ const nextConfig = {
     unoptimized: true,
   },
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+  webpack: (config) => {
+    // Load .wasm files as URLs so they can be cached and loaded by the browser
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'javascript/auto',
+      loader: 'file-loader',
+      options: {
+        name: 'static/media/[name].[contenthash].[ext]',
+      },
+    })
+
+    // Webpack 5 fallbacks (Next.js) recommended by ocjs docs
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      fs: false,
+      perf_hooks: false,
+      os: false,
+      worker_threads: false,
+      crypto: false,
+      stream: false,
+      path: false,
+    }
+
+    return config
+  },
   async redirects() {
     return [
       {

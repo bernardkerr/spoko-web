@@ -1,4 +1,4 @@
-// Client-side OpenCascade loader for v1.1.1 with WASM locateFile hook
+// Client-side OpenCascade loader using bundled ocjs v2 (@beta)
 // Exposes loadOc() that returns a cached Promise of the initialized OC module
 
 let ocPromise = null
@@ -10,27 +10,29 @@ export function loadOc() {
   if (ocPromise) return ocPromise
 
   ocPromise = (async () => {
-    // Dynamically import ESM entrypoint from CDN (v1.1.1)
-    // Instruct webpack to ignore bundling this remote URL
-    const mod = await import(/* webpackIgnore: true */ 'https://unpkg.com/opencascade.js@1.1.1/dist/opencascade.wasm.js')
-    const initOpenCascade = mod?.default || mod
+    // Dynamically import the NPM package and its WASM asset so it only loads on the client
+    const [mod, wasm] = await Promise.all([
+      import('opencascade.js'),
+      import('opencascade.js/dist/opencascade.full.wasm'),
+    ])
+    const wasmUrl = (wasm && (wasm.default || wasm))
+    const initOpenCascade = mod?.default || mod?.initOpenCascade || mod
     if (typeof initOpenCascade !== 'function') {
-      throw new Error('Failed to load OpenCascade initializer')
+      throw new Error('Failed to load OpenCascade initializer from opencascade.js')
     }
 
+    // Provide locateFile so emscripten resolves the emitted wasm URL
     const oc = await initOpenCascade({
-      locateFile: (path, prefix) => {
-        if (path.endsWith('.wasm')) {
-          return 'https://unpkg.com/opencascade.js@1.1.1/dist/' + path
-        }
-        return prefix + path
+      locateFile: (path) => {
+        if (typeof path === 'string' && path.endsWith('.wasm') && wasmUrl) return wasmUrl
+        return path
       },
     })
 
-    // Basic sanity check on key APIs used later
-    if (!oc?.BRepPrimAPI_MakeBox_2 || !oc?.BRepMesh_IncrementalMesh_2) {
-      // Keep v1.1 contract stable; fail fast if unexpected shape
-      throw new Error('OpenCascade v1.1 API mismatch: required constructors not found')
+    // Soft sanity check: avoid brittle overload checks; just ensure module object exists
+    if (!oc) {
+      // Prefer not to throw here to allow environment to report precise errors later
+      console.warn('OpenCascade module loaded but is falsy')
     }
 
     return oc

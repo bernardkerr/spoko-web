@@ -54,22 +54,26 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   const runBuild = async () => {
     setBusy(true)
     setError(null)
-    setStatus('Loading OpenCascade…')
-    onStatus?.('Loading OpenCascade…')
+    let phase = 'Loading OpenCascade…'
+    setStatus(phase)
+    onStatus?.(phase)
     try {
       const oc = await loadOc()
       lastOcRef.current = oc
       const src = resolveSource(() => editorRef.current?.getValue?.()) || ''
-      setStatus('Building model…')
-      onStatus?.('Building model…')
+      phase = 'Building model…'
+      setStatus(phase)
+      onStatus?.(phase)
       const shape = runBuildModel(oc, src)
       lastShapeRef.current = shape
-      setStatus('Meshing and converting…')
-      onStatus?.('Meshing and converting…')
+      phase = 'Meshing and converting…'
+      setStatus(phase)
+      onStatus?.(phase)
       const geometry = await Promise.resolve(shapeToGeometry(oc, shape))
       lastGeometryRef.current = geometry
-      setStatus('Rendering…')
-      onStatus?.('Rendering…')
+      phase = 'Rendering…'
+      setStatus(phase)
+      onStatus?.(phase)
       viewerRef.current?.setGeometry?.(geometry)
       // persist last good
       writeLastGood(src)
@@ -78,9 +82,11 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
     } catch (e) {
       console.error(e)
       const msg = e?.message || String(e)
-      setError(msg)
+      // Include phase and stack for easier debugging
+      const detailed = `${msg}${phase ? `\nPhase: ${phase}` : ''}${e?.stack ? `\n${e.stack}` : ''}`
+      setError(detailed)
       setStatus('Error')
-      onError?.(msg)
+      onError?.(detailed)
     } finally {
       setBusy(false)
     }
@@ -111,9 +117,10 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       exportSTEP(lastOcRef.current, lastShapeRef.current, `${id}.step`)
     } catch (e) {
       const msg = e?.message || String(e)
-      setError(msg)
+      const detailed = `${msg}\nPhase: Export STEP${e?.stack ? `\n${e.stack}` : ''}`
+      setError(detailed)
       setStatus('Error')
-      onError?.(msg)
+      onError?.(detailed)
     }
   }
   const doExportSTL = () => {
@@ -121,9 +128,10 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       exportSTL(lastGeometryRef.current, `${id}.stl`, true)
     } catch (e) {
       const msg = e?.message || String(e)
-      setError(msg)
+      const detailed = `${msg}\nPhase: Export STL${e?.stack ? `\n${e.stack}` : ''}`
+      setError(detailed)
       setStatus('Error')
-      onError?.(msg)
+      onError?.(detailed)
     }
   }
   const doExportGLB = async () => {
@@ -131,16 +139,20 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       await exportGLTF(lastGeometryRef.current, `${id}.glb`, true)
     } catch (e) {
       const msg = e?.message || String(e)
-      setError(msg)
+      const detailed = `${msg}\nPhase: Export GLB${e?.stack ? `\n${e.stack}` : ''}`
+      setError(detailed)
       setStatus('Error')
-      onError?.(msg)
+      onError?.(detailed)
     }
   }
 
   const resetEditorToOriginal = () => {
-    const def = initialValuesRef.current?.code ?? initialCode ?? ''
+    // Use the page-supplied code (MDX cadjs block or getDefaultModelCode())
+    const def = initialCode ?? ''
     editorRef.current?.setValue?.(def)
+    // Persist as both current code and last-good so resolveSource() uses it "this time"
     writeCode(def)
+    writeLastGood(def)
   }
   const resetEditorToLastRunning = () => {
     const last = initialValuesRef.current?.lastGood ?? ''
