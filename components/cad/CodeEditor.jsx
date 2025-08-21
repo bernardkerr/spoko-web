@@ -33,7 +33,9 @@ export const CodeEditor = forwardRef(function CodeEditor(
         await ensureScript('https://cdn.jsdelivr.net/npm/ace-builds@1.32.3/src-min-noconflict/ace.js')
         await ensureScript('https://cdn.jsdelivr.net/npm/ace-builds@1.32.3/src-min-noconflict/ext-language_tools.js')
         await ensureScript('https://cdn.jsdelivr.net/npm/ace-builds@1.32.3/src-min-noconflict/mode-javascript.js')
+        // Themes for dark/light
         await ensureScript('https://cdn.jsdelivr.net/npm/ace-builds@1.32.3/src-min-noconflict/theme-monokai.js')
+        await ensureScript('https://cdn.jsdelivr.net/npm/ace-builds@1.32.3/src-min-noconflict/theme-chrome.js')
         if (cancelled) return
         setReady(true)
       } catch (e) {
@@ -52,7 +54,17 @@ export const CodeEditor = forwardRef(function CodeEditor(
     if (!ace) return
 
     const editor = ace.edit(containerRef.current)
-    editor.setTheme('ace/theme/monokai')
+    const applyTheme = (themeStr) => {
+      try {
+        editor.setTheme(themeStr)
+      } catch (e) {
+        // no-op if theme not loaded yet
+      }
+    }
+    // Choose theme from localStorage 'theme' (dark|light). Default: light
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('theme') : null
+    const isDark = saved === 'dark'
+    applyTheme(isDark ? 'ace/theme/monokai' : 'ace/theme/chrome')
     editor.session.setMode('ace/mode/javascript')
     editor.setOptions({
       enableBasicAutocompletion: true,
@@ -73,10 +85,18 @@ export const CodeEditor = forwardRef(function CodeEditor(
     }
     editor.session.on('change', onChangeEditor)
 
+    // Respond to global theme changes (from ThemeToggle via 'theme-change')
+    const onThemeChange = (e) => {
+      const next = e?.detail?.theme === 'dark' ? 'dark' : 'light'
+      applyTheme(next === 'dark' ? 'ace/theme/monokai' : 'ace/theme/chrome')
+    }
+    window.addEventListener('theme-change', onThemeChange)
+
     editorRef.current = editor
 
     return () => {
       editor.session.off('change', onChangeEditor)
+      window.removeEventListener('theme-change', onThemeChange)
       editor.destroy()
       editorRef.current = null
     }

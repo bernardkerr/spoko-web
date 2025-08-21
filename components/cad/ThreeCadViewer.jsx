@@ -18,6 +18,7 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
   const rafRef = useRef(0)
   const modelGroupRef = useRef(null) // holds polygon model
   const wireframeRef = useRef(null)  // holds wireframe overlay
+  const spinRef = useRef(spinEnabled)
 
   // init Three
   useEffect(() => {
@@ -87,7 +88,7 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
 
     // animation loop
     const tick = () => {
-      if (spinEnabled) {
+      if (spinRef.current) {
         if (modelGroupRef.current) {
           modelGroupRef.current.rotation.y += 0.01
         }
@@ -119,9 +120,9 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // respond to spin toggle (handled in loop using prop)
+  // respond to spin toggle by updating a ref read in the loop
   useEffect(() => {
-    // no-op here; loop reads spinEnabled
+    spinRef.current = spinEnabled
   }, [spinEnabled])
 
   // respond to frame mode
