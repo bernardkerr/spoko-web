@@ -9,6 +9,8 @@ const readyPromise = new Promise((res) => { readyResolve = res })
 const readyListeners = new Set()
 
 function ensureWorker() {
+  // Do not construct workers on the server
+  if (typeof window === 'undefined') return null
   if (worker) return worker
   const g = typeof globalThis !== 'undefined' ? globalThis : {}
   if (g.__spoko_oc_worker) {
@@ -59,6 +61,7 @@ export function getOcWorker() {
 
 export function callOcWorker(type, payload = {}) {
   const w = ensureWorker()
+  if (!w) return Promise.reject(new Error('OC worker is not available on the server'))
   const id = `${Date.now()}-${reqId++}`
   const msg = { id, type, ...payload }
   return new Promise((resolve, reject) => {
@@ -68,16 +71,19 @@ export function callOcWorker(type, payload = {}) {
 }
 
 export function isOcWorkerReady() {
+  if (typeof window === 'undefined') return false
   ensureWorker()
   return ready
 }
 
 export function waitForOcWorkerReady() {
+  if (typeof window === 'undefined') return Promise.resolve()
   ensureWorker()
   return ready ? Promise.resolve() : readyPromise
 }
 
 export function onOcWorkerReady(cb) {
+  if (typeof window === 'undefined') return () => {}
   ensureWorker()
   if (ready) {
     queueMicrotask(() => cb())
