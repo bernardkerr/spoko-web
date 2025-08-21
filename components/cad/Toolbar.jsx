@@ -6,9 +6,11 @@ export function Toolbar({
   spinEnabled,
   frameMode,
   shadingMode,
+  originVisible,
   onToggleSpin,
   onToggleFrame,
   onToggleShading,
+  onToggleOrigin,
 }) {
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -20,6 +22,9 @@ export function Toolbar({
       </Button>
       <Button onClick={onToggleShading}>
         SHADING: {shadingMode}
+      </Button>
+      <Button onClick={onToggleOrigin}>
+        ORIGIN: {originVisible ? 'ON' : 'OFF'}
       </Button>
     </div>
   )

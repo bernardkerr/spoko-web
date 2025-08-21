@@ -7,7 +7,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 // frameMode: 'HIDE' | 'LIGHT' | 'DARK'
 // shadingMode: 'GRAY' | 'BLACK' | 'OFF'
 export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
-  { spinEnabled = true, frameMode = 'HIDE', shadingMode = 'GRAY' },
+  { spinEnabled = true, frameMode = 'HIDE', shadingMode = 'GRAY', originVisible = false },
   ref
 ) {
   const containerRef = useRef(null)
@@ -19,6 +19,7 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
   const modelGroupRef = useRef(null) // holds polygon model
   const wireframeRef = useRef(null)  // holds wireframe overlay
   const spinRef = useRef(spinEnabled)
+  const axesRef = useRef(null) // origin axes helper
 
   // init Three
   useEffect(() => {
@@ -47,6 +48,12 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     const dir = new THREE.DirectionalLight(0xffffff, 0.8)
     dir.position.set(5, 10, 7)
     scene.add(dir)
+
+    // origin axes helper
+    const axes = new THREE.AxesHelper(20)
+    axes.visible = !!originVisible
+    scene.add(axes)
+    axesRef.current = axes
 
     // groups
     const modelGroup = new THREE.Group()
@@ -149,6 +156,11 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
       })
     }
   }, [frameMode])
+
+  // respond to origin visibility
+  useEffect(() => {
+    if (axesRef.current) axesRef.current.visible = !!originVisible
+  }, [originVisible])
 
   // respond to shading mode
   useEffect(() => {
