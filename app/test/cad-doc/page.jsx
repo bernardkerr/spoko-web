@@ -12,7 +12,7 @@ export default function CadDocsPage() {
       <Box mt="3">
         <Card>
           <Box p="4">
-            <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} height={480} />
+            <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} />
           </Box>
         </Card>
       </Box>

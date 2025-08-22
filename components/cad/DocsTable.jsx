@@ -78,7 +78,7 @@ function normalizeRows(rows) {
   }))
 }
 
-export function DocsTable({ markdownUrl, height = 360 }) {
+export function DocsTable({ markdownUrl, height }) {
   const [text, setText] = useState('')
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
@@ -172,7 +172,7 @@ export function DocsTable({ markdownUrl, height = 360 }) {
             <Text color="red" size="2">{error}</Text>
           </Box>
         )}
-        <Box mt="3" style={{ height, overflow: 'auto', border: '1px solid var(--gray-a6)', borderRadius: 8 }}>
+        <Box mt="3" style={{ ...(height ? { height, overflow: 'auto' } : {}), border: '1px solid var(--gray-a6)', borderRadius: 8 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
