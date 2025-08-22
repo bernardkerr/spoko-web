@@ -577,6 +577,8 @@ useEffect(() => {
       }
       // Resize and re-center the grid to match the new model footprint (if GRID mode is active)
       syncGridToModel()
+      // Ensure far plane covers grid/floor
+      adjustCameraPlanes()
     },
     fitView: () => {
       const group = modelGroupRef.current
@@ -588,7 +590,7 @@ useEffect(() => {
       const controls = controlsRef.current
       if (camera && controls) {
         controls.target.copy(center)
-        const distance = size * 1.5 / Math.tan((camera.fov * Math.PI) / 360)
+        const distance = size * 1.2 / Math.tan((camera.fov * Math.PI) / 360)
         const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize()
         camera.position.copy(dir.multiplyScalar(distance).add(controls.target))
         camera.near = size / 100
@@ -596,6 +598,8 @@ useEffect(() => {
         camera.updateProjectionMatrix()
         controls.update()
       }
+      // Ensure far plane covers grid/floor
+      adjustCameraPlanes()
     },
     reset: () => {
       const group = modelGroupRef.current
@@ -840,6 +844,22 @@ useEffect(() => {
     grid.position.set(center.x, y, center.z)
   }
 
+  // Ensure camera near/far planes encompass both model and background extents (grid/floor)
+  const adjustCameraPlanes = () => {
+    const camera = cameraRef.current
+    const group = modelGroupRef.current
+    const r = bgRef.current || {}
+    if (!camera || !group) return
+    const box = new THREE.Box3().setFromObject(group)
+    const size = box.getSize(new THREE.Vector3())
+    const span = Math.max(1, Math.max(size.x, size.y, size.z))
+    const floorSize = (typeof r.floorSize === 'number' && r.floorSize > 0) ? r.floorSize : 0
+    const safety = 100
+    camera.near = Math.max(0.01, span / 100)
+    camera.far = Math.max(span * 10, floorSize * 2) + safety
+    camera.updateProjectionMatrix()
+  }
+
   const createVerticalGradientTexture = (topHex, bottomHex) => {
     const canvas = document.createElement('canvas')
     canvas.width = 2
@@ -873,7 +893,7 @@ useEffect(() => {
         break
       }
       case 'GRADIENT': {
-        const top = dark ? 0x0f0f12 : 0xf6f7fb
+        const top = dark ? 0x0f0f0f : 0xf6f7fb
         const bottom = dark ? 0x2a2a2e : 0xdfe3ee
         const tex = createVerticalGradientTexture(top, bottom)
         scene.background = tex
@@ -903,6 +923,8 @@ useEffect(() => {
         scene.fog = null
         // size/position grid under current model
         syncGridToModel()
+        // ensure camera planes cover the floor/grid extents right away
+        adjustCameraPlanes()
         break
       }
       case 'HORIZON': {
