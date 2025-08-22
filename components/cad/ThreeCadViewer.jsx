@@ -14,7 +14,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 // frameMode: 'HIDE' | 'LIGHT' | 'DARK'
 // shadingMode: 'GRAY' | 'WHITE' | 'BLACK' | 'OFF'
 export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
-  { spinEnabled = true, spinMode = 'auto', frameMode = 'HIDE', shadingMode = 'GRAY', originVisible = false, resize, styleMode = 'BASIC', outlineThreshold = 45, outlineScale = 1.02, edgesMode = 'AUTO', outlineColorMode = 'AUTO' },
+  { spinEnabled = true, spinMode = 'auto', frameMode = 'HIDE', shadingMode = 'GRAY', originVisible = false, resize, styleMode = 'BASIC', backgroundMode = 'WHITE', outlineThreshold = 45, outlineScale = 1.02, edgesMode = 'AUTO', outlineColorMode = 'AUTO', edgesLineWidth = 2, ambientLevel = 2.0, directionalLevel = 2.0 },
   ref
 ) {
   const containerRef = useRef(null)
@@ -42,6 +42,7 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
   const composerRef = useRef(null)   // post-processing composer
   const smaaPassRef = useRef(null)   // SMAA pass
   const lineResolutionRef = useRef(new THREE.Vector2(1, 1)) // for LineMaterial
+  const bgRef = useRef({})           // background resources for cleanup
 
   // helper to apply shading to current model group
   const applyShading = (mode) => {
@@ -56,6 +57,8 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
       while (p) { if (p === ancestor) return true; p = p.parent }
       return false
     }
+
+    // (moved edgesLineWidth effect out of this function; hooks cannot be called here)
     // For OFF: hide only base meshes so adorners can remain visible
     if (mode === 'OFF') {
       // Force outline hidden when shading is OFF
@@ -111,14 +114,15 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     }
 
     const scene = new THREE.Scene()
-    // background set in applyStyle based on theme
+    // background set in applyStyle + applyBackground
 
     const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000)
     camera.position.set(6, 6, 6)
     camera.lookAt(0, 0, 0)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    // Allow higher device pixel ratio to improve visual quality on dense displays
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3))
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.0
@@ -136,6 +140,14 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
       // override typography rules like .prose canvas { max-width: 900px; margin: 16px auto }
       renderer.domElement.style.maxWidth = 'none'
       renderer.domElement.style.margin = '0'
+    }
+
+    // Initialize line resolution immediately to avoid first-frame fat-quad artifacts
+    {
+      const w = Math.max(1, container.clientWidth)
+      const h = Math.max(1, container.clientHeight)
+      const pr = renderer.getPixelRatio ? renderer.getPixelRatio() : (window.devicePixelRatio || 1)
+      lineResolutionRef.current.set(w * pr, h * pr)
     }
 
     // Enforce normal block layout and ensure stretching inside flex parents
@@ -204,8 +216,12 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     // ---- Post-processing (SMAA + MSAA when available) ----
     // Prefer MSAA with SMAA in the post-processing pipeline on WebGL2 for crisper lines.
     let composer
-    if (renderer.capabilities && renderer.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget) {
-      const msaaRT = new THREE.WebGLMultisampleRenderTarget(container.clientWidth || 1, container.clientHeight || 1, { samples: 4 })
+    if (renderer.capabilities && renderer.capabilities.isWebGL2) {
+      // Use highest supported MSAA samples up to 8 for sharper lines
+      const gl = renderer.getContext()
+      const maxSamples = (gl && gl.getParameter) ? (gl.getParameter(gl.MAX_SAMPLES) || 4) : 4
+      const samples = Math.min(8, Math.max(1, maxSamples))
+      const msaaRT = new THREE.WebGLRenderTarget(container.clientWidth || 1, container.clientHeight || 1, { samples })
       composer = new EffectComposer(renderer, msaaRT)
     } else {
       composer = new EffectComposer(renderer)
@@ -295,7 +311,10 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
         }
       }
       if (spinRef.current && modelGroupRef.current) {
-        modelGroupRef.current.rotation.y += 0.01
+        const dTheta = 0.01
+        modelGroupRef.current.rotation.y += dTheta
+        // spin origin axes helper with the model
+        if (axesRef.current) axesRef.current.rotation.y += dTheta
       }
       controls.update()
       const composer = composerRef.current
@@ -403,16 +422,21 @@ useEffect(() => {
     if (outlineGroup) outlineGroup.visible = (shadingMode === 'OFF') ? false : ((styleMode === 'OUTLINE' || styleMode === 'TOON') && (outlineColorMode !== 'OFF'))
   }, [shadingMode])
 
-  // placeholder for future style-driven changes; BASIC is the current look
+  // React to style changes only (do not re-apply style when only background changes)
   useEffect(() => {
     // Apply or switch visual style
     applyStyle(styleMode)
-    // Also refresh adorners to reflect style-driven changes immediately
+    // Refresh adorners to reflect style-driven changes immediately
     rebuildAdorners()
     // Ensure outline visibility respects outlineColorMode
     const outlineGroup = outlineRef.current
     if (outlineGroup) outlineGroup.visible = (shadingMode === 'OFF') ? false : ((styleMode === 'OUTLINE' || styleMode === 'TOON') && (outlineColorMode !== 'OFF'))
   }, [styleMode])
+
+  // respond to background mode changes
+  useEffect(() => {
+    applyBackground(backgroundMode)
+  }, [backgroundMode])
 
   // respond to edges mode: affects edges overlay visibility across all styles
   useEffect(() => {
@@ -435,6 +459,38 @@ useEffect(() => {
     rebuildAdorners()
   }, [outlineThreshold, outlineScale])
 
+  // React to edgesLineWidth changes by updating existing edge materials
+  useEffect(() => {
+    const edgesGroup = edgesRef.current
+    if (!edgesGroup) return
+    const lw = Math.min(3, Math.max(1, Number(edgesLineWidth) || 2))
+    edgesGroup.traverse((obj) => {
+      const mat = obj.material
+      if (mat && (mat instanceof LineMaterial)) {
+        mat.linewidth = lw
+        mat.needsUpdate = true
+      }
+    })
+  }, [edgesLineWidth])
+
+  // React to lighting level changes by updating current rig intensities
+  useEffect(() => {
+    const rig = lightRigRef.current || []
+    if (!rig.length) return
+    rig.forEach((l) => {
+      if (!l || !('intensity' in l)) return
+      if (l.isAmbientLight) {
+        l.intensity = Math.max(0, Number(ambientLevel) || 0)
+      } else {
+        const base = (l.userData && typeof l.userData.baseIntensity === 'number') ? l.userData.baseIntensity : l.intensity
+        // Store base if missing so subsequent updates are stable
+        if (!l.userData) l.userData = {}
+        if (typeof l.userData.baseIntensity !== 'number') l.userData.baseIntensity = base
+        l.intensity = Math.max(0, (Number(directionalLevel) || 0) * base)
+      }
+    })
+  }, [ambientLevel, directionalLevel])
+
   useImperativeHandle(ref, () => ({
     // Replace the current model geometry with a given BufferGeometry
     // Accepts THREE.BufferGeometry and optional material
@@ -455,6 +511,15 @@ useEffect(() => {
           else child.material?.dispose?.()
         }
       }
+
+      // clear previous wireframe lines (remove placeholder cube wire)
+      for (let i = wire.children.length - 1; i >= 0; i--) {
+        const c = wire.children[i]
+        wire.remove(c)
+        c.geometry?.dispose?.()
+        c.material?.dispose?.()
+      }
+
       for (let i = wire.children.length - 1; i >= 0; i--) {
         const child = wire.children[i]
         wire.remove(child)
@@ -510,6 +575,8 @@ useEffect(() => {
         camera.updateProjectionMatrix()
         controls.update()
       }
+      // Resize and re-center the grid to match the new model footprint (if GRID mode is active)
+      syncGridToModel()
     },
     fitView: () => {
       const group = modelGroupRef.current
@@ -533,8 +600,10 @@ useEffect(() => {
     reset: () => {
       const group = modelGroupRef.current
       const wire = wireframeRef.current
+      const axes = axesRef.current
       if (group) group.rotation.set(0, 0, 0)
       if (wire) wire.rotation.set(0, 0, 0)
+      if (axes) axes.rotation.set(0, 0, 0)
       const camera = cameraRef.current
       const controls = controlsRef.current
       if (camera && controls) {
@@ -565,8 +634,10 @@ useEffect(() => {
         // hidden elsewhere; color irrelevant
         return 0x000000
       case 'DK GRAY':
+      case 'DARK GRAY':
         return 0x4a4a4a
       case 'LGT GRAY':
+      case 'LIGHT GRAY':
         return 0xbfbfbf
       case 'WHITE':
         return 0xffffff
@@ -586,8 +657,12 @@ useEffect(() => {
   // Map an explicit outline color mode to a hex color
   const getColorFromMode = (mode) => {
     switch ((mode || 'AUTO').toUpperCase()) {
-      case 'DK GRAY': return 0x4a4a4a
-      case 'LGT GRAY': return 0xbfbfbf
+      case 'DK GRAY':
+      case 'DARK GRAY':
+        return 0x4a4a4a
+      case 'LGT GRAY':
+      case 'LIGHT GRAY':
+        return 0xbfbfbf
       case 'WHITE': return 0xffffff
       case 'BLACK': return 0x000000
       default: return null
@@ -601,6 +676,100 @@ useEffect(() => {
     if (m === 'AUTO') return getAdornerColor(shading, eMode)
     const c = getColorFromMode(m)
     return (c == null) ? getAdornerColor(shading, eMode) : c
+  }
+
+  // Build edges and silhouette adorners from current base model meshes
+  const rebuildAdorners = () => {
+    const group = modelGroupRef.current
+    const edgesGroup = edgesRef.current
+    const outlineGroup = outlineRef.current
+    const wireGroup = wireframeRef.current
+    if (!group || !edgesGroup || !outlineGroup) return
+    const edgesColor = getAdornerColor(shadingMode, edgesMode)
+    const outlineColor = getOutlineColor(shadingMode, edgesMode, outlineColorMode)
+    // clear existing adorners
+    for (let i = edgesGroup.children.length - 1; i >= 0; i--) {
+      const c = edgesGroup.children[i]
+      edgesGroup.remove(c)
+      c.geometry?.dispose?.()
+      c.material?.dispose?.()
+    }
+    for (let i = outlineGroup.children.length - 1; i >= 0; i--) {
+      const c = outlineGroup.children[i]
+      outlineGroup.remove(c)
+      c.geometry?.dispose?.()
+      c.material?.dispose?.()
+    }
+    // Helper to test ancestry
+    const isUnder = (node, ancestor) => {
+      if (!node || !ancestor) return false
+      let p = node.parent
+      while (p) { if (p === ancestor) return true; p = p.parent }
+      return false
+    }
+    // Collect base meshes first to avoid traversing newly added silhouette meshes
+    const baseMeshes = []
+    group.traverse((obj) => {
+      if (!obj.isMesh || !obj.geometry) return
+      if (isUnder(obj, wireGroup) || isUnder(obj, edgesGroup) || isUnder(obj, outlineGroup)) return
+      baseMeshes.push(obj)
+    })
+
+    // add adorners per collected base mesh
+    baseMeshes.forEach((obj) => {
+      const geometry = obj.geometry
+      // edges
+      const edgeGeom = new THREE.EdgesGeometry(geometry, outlineThreshold || 45)
+      const edgeSegGeom = new LineSegmentsGeometry()
+      edgeSegGeom.setPositions(edgeGeom.attributes.position.array)
+      const edgeMat = new LineMaterial({
+        color: edgesColor,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false,
+        depthTest: true,
+        linewidth: Math.min(3, Math.max(1, Number(edgesLineWidth) || 2)),
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
+      })
+      edgeMat.resolution.copy(lineResolutionRef.current)
+      const edgeLines = new LineSegments2(edgeSegGeom, edgeMat)
+      edgeLines.renderOrder = 2
+      edgesGroup.add(edgeLines)
+      edgeGeom.dispose?.()
+      // silhouette
+      const silhouetteMat = new THREE.MeshBasicMaterial({
+        color: outlineColor ?? 0x000000,
+        side: THREE.BackSide,
+        depthWrite: false,
+        depthTest: true,
+        transparent: false,
+        opacity: 1.0,
+      })
+      if (outlineColor != null) {
+        const silhouette = new THREE.Mesh(geometry.clone(), silhouetteMat)
+        silhouette.scale.multiplyScalar(outlineScale || 1.02)
+        silhouette.renderOrder = -1
+        outlineGroup.add(silhouette)
+      }
+      // Soft outer silhouette for faux anti-aliasing
+      const softMat = new THREE.MeshBasicMaterial({
+        color: outlineColor ?? 0x000000,
+        side: THREE.BackSide,
+        depthWrite: false,
+        depthTest: true,
+        transparent: true,
+        opacity: 0.25,
+      })
+      if (outlineColor != null) {
+        const soft = new THREE.Mesh(geometry.clone(), softMat)
+        const baseScale = (outlineScale || 1.02)
+        soft.scale.multiplyScalar(baseScale * 1.004)
+        soft.renderOrder = -2
+        outlineGroup.add(soft)
+      }
+    })
   }
 
   const ensurePMREM = () => {
@@ -623,6 +792,143 @@ useEffect(() => {
       envRTRef.current = null
     }
     // Do not clear edges/silhouette here; they are rebuilt on geometry changes
+  }
+
+  // ---- Background presets ----
+  const clearBackground = () => {
+    const scene = sceneRef.current
+    const r = bgRef.current || {}
+    if (!scene) return
+    // remove helpers/meshes
+    if (r.grid) { scene.remove(r.grid); r.grid.geometry?.dispose?.(); r.grid.material?.dispose?.() }
+    if (r.ground) { scene.remove(r.ground); r.ground.geometry?.dispose?.(); r.ground.material?.dispose?.() }
+    if (r.sky) { scene.remove(r.sky); r.sky.geometry?.dispose?.(); r.sky.material?.dispose?.() }
+    // dispose textures
+    if (r.gradientTex) { r.gradientTex.dispose?.() }
+    // clear fog
+    scene.fog = null
+    // clear background to default; applyStyle will set a base, applyBackground will override
+    r.grid = r.ground = r.sky = null
+    r.gradientTex = null
+    bgRef.current = r
+  }
+
+  // Match the grid helper to the model's footprint and center in XZ
+  const syncGridToModel = () => {
+    const scene = sceneRef.current
+    const r = bgRef.current || {}
+    const grid = r.grid
+    const group = modelGroupRef.current
+    if (!scene || !grid || !group) return
+    const box = new THREE.Box3().setFromObject(group)
+    const size = box.getSize(new THREE.Vector3())
+    const center = box.getCenter(new THREE.Vector3())
+    const span = Math.max(1, Math.max(size.x, size.z))
+    // Prefer floor unit size if available; else match model span
+    const target = (typeof r.floorSize === 'number' && r.floorSize > 0) ? r.floorSize : span
+    // Base GridHelper was created with size 200; scale uniformly to reach target size
+    const scale = target / 200
+    grid.scale.setScalar(scale)
+    // Prefer aligning grid just above the background ground plane when present
+    let y
+    if (r.ground && typeof r.ground.position?.y === 'number') {
+      y = r.ground.position.y + 0.05 // slightly above floor plane for visibility
+    } else {
+      // Fallback: place just under the model's lowest point
+      y = (isFinite(box.min.y) ? box.min.y : 0) - 0.001
+    }
+    grid.position.set(center.x, y, center.z)
+  }
+
+  const createVerticalGradientTexture = (topHex, bottomHex) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 2
+    canvas.height = 256
+    const ctx = canvas.getContext('2d')
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height)
+    const toRGB = (hex) => `rgb(${(hex>>16)&255},${(hex>>8)&255},${hex&255})`
+    grad.addColorStop(0, toRGB(topHex))
+    grad.addColorStop(1, toRGB(bottomHex))
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.minFilter = THREE.LinearFilter
+    tex.magFilter = THREE.LinearFilter
+    tex.wrapS = THREE.ClampToEdgeWrapping
+    tex.wrapT = THREE.ClampToEdgeWrapping
+    return tex
+  }
+
+  const applyBackground = (mode) => {
+    const scene = sceneRef.current
+    const renderer = rendererRef.current
+    if (!scene || !renderer) return
+    clearBackground()
+    const dark = isDarkTheme()
+    const r = bgRef.current || {}
+    switch ((mode || 'WHITE').toUpperCase()) {
+      case 'WHITE': {
+        scene.background = new THREE.Color(0xffffff)
+        break
+      }
+      case 'GRADIENT': {
+        const top = dark ? 0x0f0f12 : 0xf6f7fb
+        const bottom = dark ? 0x2a2a2e : 0xdfe3ee
+        const tex = createVerticalGradientTexture(top, bottom)
+        scene.background = tex
+        r.gradientTex = tex
+        break
+      }
+      case 'GRID': {
+        // Coarser grid helper; keep white-ish background for contrast, no fog
+        const grid = new THREE.GridHelper(200, 20, dark ? 0x666666 : 0x999999, dark ? 0x333333 : 0xbbbbbb)
+        grid.material.opacity = 0.35
+        grid.material.transparent = true
+        grid.position.y = -100
+        scene.add(grid)
+        r.grid = grid
+        const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(1000, 1000),
+          new THREE.MeshBasicMaterial({ color: dark ? 0x0e0e10 : 0xf8f8f8 })
+        )
+        ground.rotation.x = -Math.PI / 2
+        ground.position.y = -100
+        ground.renderOrder = -10
+        scene.add(ground)
+        r.ground = ground
+        // Record floor unit size to scale grid accordingly
+        r.floorSize = 1000
+        scene.background = new THREE.Color(dark ? 0x0b0b0c : 0xffffff)
+        scene.fog = null
+        // size/position grid under current model
+        syncGridToModel()
+        break
+      }
+      case 'HORIZON': {
+        const top = dark ? 0x1a2a44 : 0xcfe7ff
+        const bottom = dark ? 0x2b2b2b : 0xe9e4d8
+        const tex = createVerticalGradientTexture(top, bottom)
+        scene.background = tex
+        r.gradientTex = tex
+        // optional faint ground to anchor horizon
+        const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(1000, 1000),
+          new THREE.MeshBasicMaterial({ color: bottom })
+        )
+        ground.rotation.x = -Math.PI / 2
+        ground.position.y = -100
+        ground.renderOrder = -10
+        scene.add(ground)
+        r.ground = ground
+        scene.fog = new THREE.Fog(bottom, 80, 220)
+        break
+      }
+      default: {
+        scene.background = new THREE.Color(0xffffff)
+      }
+    }
+    bgRef.current = r
   }
 
   const createToonGradient = (steps = 5, dark = false) => {
@@ -713,88 +1019,6 @@ useEffect(() => {
     }
   }
 
-  // Build edges and silhouette adorners from current base model meshes
-  const rebuildAdorners = () => {
-    const group = modelGroupRef.current
-    const edgesGroup = edgesRef.current
-    const outlineGroup = outlineRef.current
-    if (!group || !edgesGroup || !outlineGroup) return
-    const edgesColor = getAdornerColor(shadingMode, edgesMode)
-    const outlineColor = getOutlineColor(shadingMode, edgesMode, outlineColorMode)
-    // clear existing adorners
-    for (let i = edgesGroup.children.length - 1; i >= 0; i--) {
-      const c = edgesGroup.children[i]
-      edgesGroup.remove(c)
-      c.geometry?.dispose?.()
-      c.material?.dispose?.()
-    }
-    for (let i = outlineGroup.children.length - 1; i >= 0; i--) {
-      const c = outlineGroup.children[i]
-      outlineGroup.remove(c)
-      c.geometry?.dispose?.()
-      c.material?.dispose?.()
-    }
-    // add adorners per mesh
-    group.traverse((obj) => {
-      if (!obj.isMesh || !obj.geometry) return
-      const geometry = obj.geometry
-      // edges
-      const edgeGeom = new THREE.EdgesGeometry(geometry, outlineThreshold || 45)
-      const edgeSegGeom = new LineSegmentsGeometry()
-      edgeSegGeom.setPositions(edgeGeom.attributes.position.array)
-      // Use depthTest so hidden edges are occluded; disable depthWrite to avoid affecting depth buffer
-      const edgeMat = new LineMaterial({
-        color: edgesColor,
-        transparent: true,
-        opacity: 0.95,
-        depthWrite: false,
-        depthTest: true,
-        linewidth: 1.35,
-        polygonOffset: true,
-        polygonOffsetFactor: -1,
-        polygonOffsetUnits: -1,
-      })
-      edgeMat.resolution.copy(lineResolutionRef.current)
-      const edgeLines = new LineSegments2(edgeSegGeom, edgeMat)
-      edgeLines.renderOrder = 2
-      edgesGroup.add(edgeLines)
-      // silhouette
-      const silhouetteMat = new THREE.MeshBasicMaterial({
-        color: outlineColor ?? 0x000000,
-        side: THREE.BackSide,
-        depthWrite: false,
-        depthTest: true,
-        transparent: false,
-        opacity: 1.0,
-      })
-      if (outlineColor != null) {
-        const silhouette = new THREE.Mesh(geometry.clone(), silhouetteMat)
-        silhouette.scale.multiplyScalar(outlineScale || 1.02)
-        // Render BEFORE base mesh so front faces naturally occlude the backface silhouette
-        silhouette.renderOrder = -1
-        outlineGroup.add(silhouette)
-      }
-
-      // Soft outer silhouette for faux anti-aliasing (slightly larger, lower opacity)
-      const softMat = new THREE.MeshBasicMaterial({
-        color: outlineColor ?? 0x000000,
-        side: THREE.BackSide,
-        depthWrite: false,
-        depthTest: true,
-        transparent: true,
-        opacity: 0.25,
-      })
-      if (outlineColor != null) {
-        const soft = new THREE.Mesh(geometry.clone(), softMat)
-        const baseScale = (outlineScale || 1.02)
-        soft.scale.multiplyScalar(baseScale * 1.004)
-        soft.renderOrder = -2
-        outlineGroup.add(soft)
-      }
-    })
-    const mode = styleMode
-  }
-
   const applyStyle = (mode) => {
     const scene = sceneRef.current
     const renderer = rendererRef.current
@@ -803,9 +1027,9 @@ useEffect(() => {
     const outlineGroup = outlineRef.current
     if (!renderer || !scene || !modelGroup || !edgesGroup || !outlineGroup) return
 
-    // base background by theme
+    // base background by theme (pure white for light theme to match prior UI)
     const dark = isDarkTheme()
-    scene.background = new THREE.Color(dark ? 0x0b0b0c : 0xf7f7f8)
+    scene.background = new THREE.Color(dark ? 0x0b0b0c : 0xffffff)
 
     // Clear previous style lights/env/edges
     clearStyle()
@@ -818,16 +1042,20 @@ useEffect(() => {
 
     // Lights and environment per style
     if (mode === 'BASIC') {
-      // simple ambient + directional, no env
-      const amb = new THREE.AmbientLight(0xffffff, 0.5)
-      const dir = new THREE.DirectionalLight(0xffffff, 0.8)
+      // simple ambient + directional, no env (brighter)
+      const amb = new THREE.AmbientLight(0xffffff, Math.max(0, Number(ambientLevel) || 0))
+      const dir = new THREE.DirectionalLight(0xffffff, 1.0)
+      // store baseIntensity so directionalLevel scales it
+      dir.userData = { ...(dir.userData||{}), baseIntensity: 1.2 }
+      dir.intensity = Math.max(0, (Number(directionalLevel) || 0) * dir.userData.baseIntensity)
       dir.position.set(3, 4, 5)
       scene.add(amb, dir)
       lightRigRef.current = [amb, dir]
       scene.environment = null
-      // outlines off in BASIC
-      if (edgesRef.current) edgesRef.current.visible = false
-      if (outlineRef.current) outlineRef.current.visible = false
+      // Slightly boost exposure for BASIC to lift midtones
+      renderer.toneMappingExposure = 1.15
+      // Do not force-hide edges; let edges visibility be controlled by edgesMode
+      // Outline visibility is handled outside based on styleMode and outlineColorMode
     } else if (mode === 'STUDIO' || mode === 'OUTLINE') {
       // three-point light rig + room environment
       const key = new THREE.DirectionalLight(0xffffff, 1.0)
@@ -836,7 +1064,15 @@ useEffect(() => {
       fill.position.set(-6, 3, 2)
       const rim = new THREE.DirectionalLight(0xffffff, 0.6)
       rim.position.set(0, 4, -6)
-      const amb = new THREE.AmbientLight(0xffffff, 0.2)
+      const amb = new THREE.AmbientLight(0xffffff, Math.max(0, Number(ambientLevel) || 0))
+      // record base intensities and apply directionalLevel scale
+      key.userData = { ...(key.userData||{}), baseIntensity: 1.0 }
+      fill.userData = { ...(fill.userData||{}), baseIntensity: 0.4 }
+      rim.userData = { ...(rim.userData||{}), baseIntensity: 0.6 }
+      const dlev = Math.max(0, Number(directionalLevel) || 0)
+      key.intensity = dlev * key.userData.baseIntensity
+      fill.intensity = dlev * fill.userData.baseIntensity
+      rim.intensity = dlev * rim.userData.baseIntensity
       scene.add(key, fill, rim, amb)
       lightRigRef.current = [key, fill, rim, amb]
       // Neutral room environment
@@ -855,7 +1091,15 @@ useEffect(() => {
       fill.position.set(-5, 2.5, 3)
       const rim = new THREE.DirectionalLight(0xffffff, 0.7)
       rim.position.set(-1, 4, -6)
-      const amb = new THREE.AmbientLight(0xffffff, 0.15)
+      const amb = new THREE.AmbientLight(0xffffff, Math.max(0, Number(ambientLevel) || 0))
+      // base intensities and scale
+      key.userData = { ...(key.userData||{}), baseIntensity: 1.0 }
+      fill.userData = { ...(fill.userData||{}), baseIntensity: 0.35 }
+      rim.userData = { ...(rim.userData||{}), baseIntensity: 0.7 }
+      const dlev2 = Math.max(0, Number(directionalLevel) || 0)
+      key.intensity = dlev2 * key.userData.baseIntensity
+      fill.intensity = dlev2 * fill.userData.baseIntensity
+      rim.intensity = dlev2 * rim.userData.baseIntensity
       scene.add(key, fill, rim, amb)
       lightRigRef.current = [key, fill, rim, amb]
       scene.environment = null
@@ -890,11 +1134,11 @@ useEffect(() => {
     })
     // Reapply current shading choice
     applyShading(shadingMode)
-
-    // Toggle adorner visibility for the selected style immediately
-    outlineGroup.visible = (mode === 'OUTLINE' || mode === 'TOON')
+    // Ensure outline visibility aligns with style and outlineColorMode when shading not OFF
+    if (outlineGroup) outlineGroup.visible = (shadingMode === 'OFF') ? false : ((mode === 'OUTLINE' || mode === 'TOON') && (outlineColorMode !== 'OFF'))
   }
 
+  // Final render output
   return (
     <div
       ref={containerRef}

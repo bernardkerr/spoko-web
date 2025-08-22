@@ -13,6 +13,8 @@ export function Toolbar({
   onToggleOrigin,
   styleMode,
   onCycleStyle,
+  backgroundMode,
+  onCycleBackground,
   outlineThreshold,
   onCycleOutlineThreshold,
   outlineScale,
@@ -21,11 +23,26 @@ export function Toolbar({
   onCycleEdges,
   outlineColorMode,
   onCycleOutlineColor,
+  edgesLineWidth,
+  onCycleEdgesLineWidth,
+  ambientLevel,
+  directionalLevel,
+  onCycleAmbientLevel,
+  onCycleDirectionalLevel,
 }) {
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+      <Button onClick={onCycleAmbientLevel}>
+        AMB: {ambientLevel === 0 ? 'OFF' : ambientLevel.toFixed(1)}
+      </Button>
+      <Button onClick={onCycleDirectionalLevel}>
+        DIR: {directionalLevel === 0 ? 'OFF' : directionalLevel.toFixed(1)}
+      </Button>
       <Button onClick={onCycleStyle}>
         STYLE: {styleMode || 'BASIC'}
+      </Button>
+      <Button onClick={onCycleBackground}>
+        BACK: {backgroundMode || 'WHITE'}
       </Button>
       <Button onClick={onCycleEdges}>
         EDGES: {edgesMode || 'AUTO'}
@@ -33,6 +50,11 @@ export function Toolbar({
       {edgesMode !== 'OFF' && (
         <Button onClick={onCycleOutlineThreshold}>
           EDGE THR: {outlineThreshold}{'\u00B0'}
+        </Button>
+      )}
+      {edgesMode !== 'OFF' && (
+        <Button onClick={onCycleEdgesLineWidth}>
+          EDGE W: {(Number(edgesLineWidth ?? 2)).toFixed(2)}
         </Button>
       )}
       {(styleMode === 'OUTLINE' || styleMode === 'TOON') && (
