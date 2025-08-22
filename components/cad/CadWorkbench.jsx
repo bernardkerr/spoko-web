@@ -14,6 +14,7 @@ import { exportSTL, exportGLTF, downloadBlob, saveBlobWithPicker } from '@/compo
 import { useLastGoodCode } from '@/components/cad/hooks/useLastGoodCode'
 import { useOcWarmupWorker } from '@/components/cad/hooks/useOcWarmupWorker'
 import { DocsTable } from '@/components/cad/DocsTable'
+import { getAssetPath } from '@/lib/paths'
 
 export const CadWorkbench = forwardRef(function CadWorkbench(
   {
@@ -115,7 +116,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
           console.log('[CAD][model] Begin load', { src })
         }
         const isHttp = /^https?:\/\//i.test(src)
-        const url = isHttp ? src : `/api/test-models/${src}`
+        const url = isHttp ? src : getAssetPath(`/api/test-models/${src}`)
         if (/\.(stl)$/i.test(src)) {
           const mod = await import('three/examples/jsm/loaders/STLLoader.js')
           const STLLoader = mod.STLLoader || mod.default || mod
@@ -534,7 +535,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
                 </Box>
                 {showDocsHelper && (
                   <Box mt="3">
-                    <DocsTable markdownUrl="/test/cad-doc/oc-apis.md" height={360} />
+                    <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} height={360} />
                     <Box mt="2" style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <Button variant="ghost" onClick={() => setShowDocsHelper(false)}>Close Docs Helper</Button>
                     </Box>

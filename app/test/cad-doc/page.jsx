@@ -1,6 +1,7 @@
 'use client'
 
 import { Box, Card, Heading, Text } from '@radix-ui/themes'
+import { getAssetPath } from '@/lib/paths'
 import { DocsTable } from '@/components/cad/DocsTable'
 
 export default function CadDocsPage() {
@@ -11,7 +12,7 @@ export default function CadDocsPage() {
       <Box mt="3">
         <Card>
           <Box p="4">
-            <DocsTable markdownUrl="/test/cad-doc/oc-apis.md" height={480} />
+            <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} height={480} />
           </Box>
         </Card>
       </Box>
