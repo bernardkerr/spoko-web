@@ -50,6 +50,13 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
     return initialViewer?.shadingMode || 'GRAY'
   })
   const [originVisible, setOriginVisible] = useState(!!initialViewer?.originVisible)
+  const [styleMode, setStyleMode] = useState('BASIC')
+  const [outlineThreshold, setOutlineThreshold] = useState(45)
+  const [outlineScale, setOutlineScale] = useState(1.02)
+  // OFF - AUTO - DK GRAY - LGT GRAY - WHITE - BLACK
+  const [edgesMode, setEdgesMode] = useState('AUTO')
+  // Outline color can be AUTO (follow edges) or explicit; supports OFF to hide
+  const [outlineColorMode, setOutlineColorMode] = useState('AUTO')
 
   // Preserve previous viewer settings when collapsing to viewer-only
   const prevViewerStateRef = useRef({
@@ -149,8 +156,10 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
           if (!res || res.type !== 'buildResult') throw new Error('Unexpected worker response for loadStep')
           const geometry = new THREE.BufferGeometry()
           geometry.setAttribute('position', new THREE.Float32BufferAttribute(res.positions, 3))
-          geometry.setAttribute('normal', new THREE.Float32BufferAttribute(res.normals, 3))
+          // Use index ordering from worker (handles reversed faces) and compute normals here
           geometry.setIndex(new THREE.Uint32BufferAttribute(res.indices, 1))
+          geometry.computeVertexNormals()
+          geometry.normalizeNormals()
           geometry.computeBoundingSphere()
           geometry.computeBoundingBox()
           lastGeometryRef.current = geometry
@@ -267,8 +276,10 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       console.time('[CAD] reconstruct')
       const geometry = new THREE.BufferGeometry()
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(res.positions, 3))
-      geometry.setAttribute('normal', new THREE.Float32BufferAttribute(res.normals, 3))
+      // Use index ordering from worker (handles reversed faces) and compute normals here
       geometry.setIndex(new THREE.Uint32BufferAttribute(res.indices, 1))
+      geometry.computeVertexNormals()
+      geometry.normalizeNormals()
       geometry.computeBoundingSphere()
       geometry.computeBoundingBox()
       console.timeEnd('[CAD] reconstruct')
@@ -415,6 +426,11 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
             frameMode={frameMode}
             shadingMode={shadingMode}
             originVisible={originVisible}
+            styleMode={styleMode}
+            outlineThreshold={outlineThreshold}
+            outlineScale={outlineScale}
+            edgesMode={edgesMode}
+            outlineColorMode={outlineColorMode}
             onCycleSpin={() => setSpinMode(prev => prev === 'off' ? 'on' : prev === 'on' ? 'auto' : 'off')}
             onToggleFrame={() => setFrameMode(prev => prev === 'HIDE' ? 'LIGHT' : prev === 'LIGHT' ? 'DARK' : 'HIDE')}
             onToggleShading={() => setShadingMode(prev => (
@@ -424,6 +440,31 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
               'GRAY'
             ))}
             onToggleOrigin={() => setOriginVisible(v => !v)}
+            onCycleStyle={() => setStyleMode(prev => {
+              const order = ['BASIC','STUDIO','TOON','MATCAP','OUTLINE']
+              const idx = order.indexOf(prev)
+              return order[(idx + 1 + order.length) % order.length]
+            })}
+            onCycleEdges={() => setEdgesMode(prev => {
+              const order = ['OFF','AUTO','DK GRAY','LGT GRAY','WHITE','BLACK']
+              const idx = order.indexOf(prev)
+              return order[(idx + 1 + order.length) % order.length]
+            })}
+            onCycleOutlineColor={() => setOutlineColorMode(prev => {
+              const order = ['AUTO','DK GRAY','LGT GRAY','WHITE','BLACK','OFF']
+              const idx = order.indexOf(prev)
+              return order[(idx + 1 + order.length) % order.length]
+            })}
+            onCycleOutlineThreshold={() => setOutlineThreshold(prev => {
+              const opts = [20, 30, 45, 60, 90]
+              const i = opts.indexOf(prev)
+              return opts[(i + 1 + opts.length) % opts.length]
+            })}
+            onCycleOutlineScale={() => setOutlineScale(prev => {
+              const opts = [1.005, 1.01, 1.02, 1.03, 1.05]
+              const i = opts.indexOf(Number(prev.toFixed ? Number(prev.toFixed(3)) : prev))
+              return opts[(i + 1 + opts.length) % opts.length]
+            })}
           />
         )}
 
@@ -436,6 +477,11 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
               frameMode={frameMode}
               shadingMode={shadingMode}
               originVisible={originVisible}
+              styleMode={styleMode}
+              outlineThreshold={outlineThreshold}
+              outlineScale={outlineScale}
+              edgesMode={edgesMode}
+              outlineColorMode={outlineColorMode}
               resize={ui?.resize}
             />
           </Box>

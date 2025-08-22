@@ -13,7 +13,6 @@ export function shapeToGeometry(oc, shape) {
 
   const vertices = []
   const indices = []
-  const normals = []
 
   const faceExplorer = new oc.TopExp_Explorer_2(
     shape,
@@ -56,11 +55,6 @@ export function shapeToGeometry(oc, shape) {
         const v2 = tri.Node(n2).Transformed(transform)
         const v3 = tri.Node(n3).Transformed(transform)
 
-        // face normal via cross product
-        const edge1 = new THREE.Vector3(v2.X() - v1.X(), v2.Y() - v1.Y(), v2.Z() - v1.Z())
-        const edge2 = new THREE.Vector3(v3.X() - v1.X(), v3.Y() - v1.Y(), v3.Z() - v1.Z())
-        const normal = edge1.cross(edge2).normalize()
-
         if (isReversed) {
           // flip winding
           indices.push(
@@ -68,14 +62,12 @@ export function shapeToGeometry(oc, shape) {
             vertexOffset + n3 - 1,
             vertexOffset + n2 - 1
           )
-          normals.push(normal.x, normal.y, normal.z, normal.x, normal.y, normal.z, normal.x, normal.y, normal.z)
         } else {
           indices.push(
             vertexOffset + n1 - 1,
             vertexOffset + n2 - 1,
             vertexOffset + n3 - 1
           )
-          normals.push(normal.x, normal.y, normal.z, normal.x, normal.y, normal.z, normal.x, normal.y, normal.z)
         }
       }
 
@@ -90,8 +82,9 @@ export function shapeToGeometry(oc, shape) {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
   geometry.setIndex(indices)
-  // Provide per-vertex normals (flat)
-  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
+  // Let Three.js generate consistent vertex normals from indices
+  geometry.computeVertexNormals()
+  geometry.normalizeNormals()
   geometry.computeBoundingSphere()
   geometry.computeBoundingBox()
 
