@@ -26,6 +26,36 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
   const lastSizeRef = useRef({ w: 0, h: 0 })
   const debounceRef = useRef(0)
 
+  // helper to apply shading to current model group
+  const applyShading = (mode) => {
+    const group = modelGroupRef.current
+    if (!group) return
+    if (mode === 'OFF') {
+      group.visible = false
+      return
+    }
+    group.visible = true
+    group.traverse((obj) => {
+      if (obj.isMesh && obj.material) { 
+        const mat = obj.material
+        if (mode === 'BLACK') {
+          mat.color.setHex(0x202020)
+          mat.opacity = 1
+          mat.transparent = false
+        } else if (mode === 'WHITE') {
+          mat.color.setHex(0xffffff)
+          mat.opacity = 1
+          mat.transparent = false
+        } else { // GRAY
+          mat.color.setHex(0xe0e0e0)
+          mat.opacity = 1
+          mat.transparent = false
+        }
+        mat.needsUpdate = true
+      }
+    })
+  }
+
   // init Three
   useEffect(() => {
     const container = containerRef.current
@@ -251,32 +281,7 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
 
   // respond to shading mode
   useEffect(() => {
-    const group = modelGroupRef.current
-    if (!group) return
-    if (shadingMode === 'OFF') {
-      group.visible = false
-      return
-    }
-    group.visible = true
-    group.traverse((obj) => {
-      if (obj.isMesh && obj.material) {
-        const mat = obj.material
-        if (shadingMode === 'BLACK') {
-          mat.color.setHex(0x202020)
-          mat.opacity = 1
-          mat.transparent = false
-        } else if (shadingMode === 'WHITE') {
-          mat.color.setHex(0xffffff)
-          mat.opacity = 1
-          mat.transparent = false
-        } else { // GRAY
-          mat.color.setHex(0xe0e0e0)
-          mat.opacity = 1
-          mat.transparent = false
-        }
-        mat.needsUpdate = true
-      }
-    })
+    applyShading(shadingMode)
   }, [shadingMode])
 
   useImperativeHandle(ref, () => ({
@@ -307,6 +312,9 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
       const mat = material || new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.1, roughness: 0.8 })
       const mesh = new THREE.Mesh(geometry, mat)
       group.add(mesh)
+
+      // ensure current shading is applied immediately to the new material
+      applyShading(shadingMode)
 
       const wireMesh = new THREE.LineSegments(
         new THREE.WireframeGeometry(geometry),

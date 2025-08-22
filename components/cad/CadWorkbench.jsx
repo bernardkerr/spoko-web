@@ -42,7 +42,12 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
     return 'auto'
   })
   const [frameMode, setFrameMode] = useState(initialViewer?.frameMode || 'HIDE')
-  const [shadingMode, setShadingMode] = useState(initialViewer?.shadingMode || 'GRAY')
+  const [shadingMode, setShadingMode] = useState(() => {
+    const raw = (typeof ui?.shadingMode === 'string' ? ui.shadingMode : ui?.shading)
+    const s = typeof raw === 'string' ? raw.trim().toUpperCase() : ''
+    if (s === 'GRAY' || s === 'WHITE' || s === 'BLACK' || s === 'OFF') return s
+    return initialViewer?.shadingMode || 'GRAY'
+  })
   const [originVisible, setOriginVisible] = useState(!!initialViewer?.originVisible)
 
   // Preserve previous viewer settings when collapsing to viewer-only
@@ -51,7 +56,12 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       ? initialViewer?.spinMode
       : (typeof initialViewer?.spinEnabled === 'boolean' ? (initialViewer.spinEnabled ? 'on' : 'off') : 'auto'),
     frameMode: initialViewer?.frameMode || 'HIDE',
-    shadingMode: initialViewer?.shadingMode || 'GRAY',
+    shadingMode: (() => {
+      const raw = (typeof ui?.shadingMode === 'string' ? ui.shadingMode : ui?.shading)
+      const s = typeof raw === 'string' ? raw.trim().toUpperCase() : ''
+      if (s === 'GRAY' || s === 'WHITE' || s === 'BLACK' || s === 'OFF') return s
+      return initialViewer?.shadingMode || 'GRAY'
+    })(),
     originVisible: !!initialViewer?.originVisible,
   })
 

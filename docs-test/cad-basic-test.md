@@ -38,6 +38,6 @@ export function buildModel(oc) {
 
 ## Example D: Load External STEP (viewer-only)
 
-```js cad {"name":"Robody Frame 48x48x48 STEP","model":"models/Robody_Frame_48x48x48.step"}
+```js cad {"name":"Robody Frame 48x48x48 STEP","model":"models/Robody_Frame_48x48x48.step", "shadingMode":"black" }
 // No code needed: STEP is meshed by the OpenCascade worker and displayed; controls are hidden.
 ```
