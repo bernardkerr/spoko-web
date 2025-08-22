@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 // Client-side detection to avoid SSR issues
 const useIsClient = () => {
@@ -66,7 +66,7 @@ export function Mermaid({ code, className, autoRender = false }) {
     }
   }
 
-  const initializeMermaid = async () => {
+  const initializeMermaid = useCallback(async () => {
     const mermaid = (await import('mermaid')).default
     const theme = readTheme()
 
@@ -180,7 +180,7 @@ export function Mermaid({ code, className, autoRender = false }) {
     })
 
     return mermaid
-  }
+  }, [themeVersion])
 
   useEffect(() => {
     if (!isClient) return
@@ -236,7 +236,7 @@ export function Mermaid({ code, className, autoRender = false }) {
     }
 
     renderDiagram()
-  }, [code, isClient, themeVersion, autoRender])
+  }, [code, isClient, autoRender, initializeMermaid])
 
   // Re-render on custom theme change events from Radix provider
   useEffect(() => {

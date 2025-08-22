@@ -212,11 +212,15 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     }
     rafRef.current = requestAnimationFrame(tick)
 
+    // Snapshot timers to avoid reading changing refs in cleanup
+    const cleanupDebounce = debounceRef.current
+    const cleanupPauseTimer = pauseTimerRef.current
+
     return () => {
       cancelAnimationFrame(rafRef.current)
       ro.disconnect()
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current)
+      if (cleanupDebounce) clearTimeout(cleanupDebounce)
+      if (cleanupPauseTimer) clearTimeout(cleanupPauseTimer)
       controls.removeEventListener('start', onUserInteracted)
       INTERACTION_EVENTS.forEach((ev) => renderer.domElement.removeEventListener(ev, onUserInteracted))
       controls.dispose()

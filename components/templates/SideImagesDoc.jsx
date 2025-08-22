@@ -46,6 +46,7 @@ export default function SideImagesDoc({ title, description, html, originPath }) 
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               {...cleanRest}
+                              alt={alt}
                               style={{
                                 display: 'block',
                                 maxWidth: '100%',
@@ -93,6 +94,7 @@ export default function SideImagesDoc({ title, description, html, originPath }) 
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               {...cleanRest}
+                              alt={alt}
                               style={{
                                 display: 'block',
                                 maxWidth: '100%',

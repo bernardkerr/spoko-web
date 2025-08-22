@@ -3,13 +3,30 @@ import fs from 'fs'
 import path from 'path'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-static'
+export const revalidate = 3600
 
 // Serve files only from docs-test/models directory
 const BASE_DIR = path.join(process.cwd(), 'docs-test', 'models')
 
+// Enumerate all static params so this API route can be exported with output: 'export'
+export async function generateStaticParams() {
+  try {
+    const entries = await fs.promises.readdir(BASE_DIR)
+    // Only include files we intend to serve
+    const allowed = new Set(['.stl', '.step', '.stp'])
+    return entries
+      .filter((name) => allowed.has(path.extname(name).toLowerCase()))
+      .map((name) => ({ path: ['models', name] }))
+  } catch {
+    return []
+  }
+}
+
 export async function GET(req, { params }) {
   try {
-    const segs = Array.isArray(params?.path) ? params.path : []
+    const p = await params
+    const segs = Array.isArray(p?.path) ? p.path : []
     // Require first segment to be 'models'
     if (segs.length === 0 || segs[0] !== 'models') {
       return new NextResponse('Not Found', { status: 404 })
