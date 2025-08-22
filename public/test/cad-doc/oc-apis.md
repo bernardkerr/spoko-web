@@ -66,6 +66,11 @@ Make sure the output is RAW markdown, so the user can copy the contents easily
 
 | Base | Description | Signature | JS Docs | C++ Docs |
 |---|---|---|---|---|
+| BRepAlgoAPI_Cut | Boolean cut operation between two shapes | BRepAlgoAPI_Cut() | https://ocjs.org/reference-docs/classes/BRepAlgoAPI_Cut | https://dev.opencascade.org/doc/refman/html/class_b_rep_algo_a_p_i___cut.html |
+| BRepAlgoAPI_Cut_1 | Constructor with two shapes | BRepAlgoAPI_Cut_1(S1: TopoDS_Shape, S2: TopoDS_Shape) | https://ocjs.org/reference-docs/classes/BRepAlgoAPI_Cut_1 | - |
+| BRepAlgoAPI_Cut_2 | Constructor with shapes and parallel processing flag | BRepAlgoAPI_Cut_2(S1: TopoDS_Shape, S2: TopoDS_Shape, theRunParallel: boolean) | https://ocjs.org/reference-docs/classes/BRepAlgoAPI_Cut_2 | - |
+| BRepAlgoAPI_Cut_3 | Constructor with shapes and progress range | BRepAlgoAPI_Cut_3(S1: TopoDS_Shape, S2: TopoDS_Shape, theRange: Message_ProgressRange) | https://ocjs.org/reference-docs/classes/BRepAlgoAPI_Cut_3 | - |
+| BRep_Builder | Basic topology builder for creating and modifying shapes | BRep_Builder() | https://ocjs.org/reference-docs/classes/BRep_Builder | https://dev.opencascade.org/doc/refman/html/class_b_rep___builder.html |
 | BRepPrimAPI_MakeBox | Create a box primitive. | BRepPrimAPI_MakeBox() | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeBox | https://dev.opencascade.org/doc/refman/html/class_b_rep_prim_a_p_i___make_box.html |
 | BRepPrimAPI_MakeBox_1 | Box by dimensions aligned to axes. | BRepPrimAPI_MakeBox_1(dx, dy, dz) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeBox_1 | - |
 | BRepPrimAPI_MakeBox_2 | Box by two opposite corner points. | BRepPrimAPI_MakeBox_2(gp_Pnt(p1), gp_Pnt(p2)) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeBox_2 | - |
@@ -78,6 +83,12 @@ Make sure the output is RAW markdown, so the user can copy the contents easily
 | BRepPrimAPI_MakePrism | Creates linear swept topologies (prisms) by extruding a base shape along a vector or direction | BRepPrimAPI_MakePrism() | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakePrism | https://dev.opencascade.org/doc/refman/html/class_b_rep_prim_a_p_i___make_prism.html |
 | BRepPrimAPI_MakePrism_1 | Constructor with base shape and vector (S, V, Copy, Canonize) | BRepPrimAPI_MakePrism_1(shape, vector, copy?, canonize?) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakePrism_1 | - |
 | BRepPrimAPI_MakePrism_2 | Constructor with base shape and direction for infinite/semi-infinite prism (S, D, Inf, Copy, Canonize) | BRepPrimAPI_MakePrism_2(shape, direction, inf, copy?, canonize?) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakePrism_2 | - |
+| BRepPrimAPI_MakeSphere | Creates spherical primitives or portions of spheres | BRepPrimAPI_MakeSphere() | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeSphere | https://dev.opencascade.org/doc/refman/html/class_b_rep_prim_a_p_i___make_sphere.html |
+| BRepPrimAPI_MakeSphere_1 | Constructor with radius only (full sphere) | BRepPrimAPI_MakeSphere_1(R: number) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeSphere_1 | - |
+| BRepPrimAPI_MakeSphere_2 | Constructor with radius and angle (lune/digon) | BRepPrimAPI_MakeSphere_2(R: number, angle: number) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeSphere_2 | - |
+| BRepPrimAPI_MakeSphere_3 | Constructor with radius and two angles (spherical segment) | BRepPrimAPI_MakeSphere_3(R: number, angle1: number, angle2: number) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeSphere_3 | - |
+| BRepPrimAPI_MakeSphere_4 | Constructor with radius and three angles (portion of segment) | BRepPrimAPI_MakeSphere_4(R: number, angle1: number, angle2: number, angle3: number) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeSphere_4 | - |
+| BRepPrimAPI_MakeSphere_5 | Constructor with center point and radius | BRepPrimAPI_MakeSphere_5(Center: gp_Pnt, R: number) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeSphere_5 | - |
 | BRepPrimAPI_MakeWedge | Creates wedges (boxes with inclined faces) - can create pyramids using xmin=xmax=dx/2, zmin=zmax=dz/2 | BRepPrimAPI_MakeWedge() | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeWedge | https://dev.opencascade.org/doc/refman/html/class_b_rep_prim_a_p_i___make_wedge.html |
 | BRepPrimAPI_MakeWedge_1 | Constructor with dimensions (dx, dy, dz, ltx) for right angular wedge | BRepPrimAPI_MakeWedge_1(dx, dy, dz, ltx) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeWedge_1 | - |
 | BRepPrimAPI_MakeWedge_2 | Constructor with coordinate system and dimensions (Axes, dx, dy, dz, ltx) | BRepPrimAPI_MakeWedge_2(gp_Ax2, dx, dy, dz, ltx) | https://ocjs.org/reference-docs/classes/BRepPrimAPI_MakeWedge_2 | - |
@@ -95,6 +106,7 @@ Make sure the output is RAW markdown, so the user can copy the contents easily
 | TopExp_Explorer_2 | Explorer with filters for shape kinds to find/avoid. | TopExp_Explorer_2(shape, TopAbs_ShapeEnum.TopAbs_FACE, TopAbs_ShapeEnum.TopAbs_SHAPE) | https://ocjs.org/reference-docs/classes/TopExp_Explorer_2 | - |
 | TopAbs_ShapeEnum | Enumerates topological shape kinds. |  | https://ocjs.org/reference-docs/enums/TopAbs_ShapeEnum | https://dev.opencascade.org/doc/refman/html/namespace_top_abs.html |
 | TopAbs_Orientation | Orientation of a topological entity. |  | https://ocjs.org/reference-docs/enums/TopAbs_Orientation | https://dev.opencascade.org/doc/refman/html/namespace_top_abs.html |
+| TopoDS_Compound | Compound topological shape containing other shapes | TopoDS_Compound() | https://ocjs.org/reference-docs/classes/TopoDS_Compound | https://dev.opencascade.org/doc/refman/html/class_topo_d_s___compound.html |
 | TopoDS | Casting utilities for topological shapes. | TopoDS() | https://ocjs.org/reference-docs/classes/TopoDS | https://dev.opencascade.org/doc/refman/html/class_topo_d_s.html |
 | TopoDS.Face_1 | Cast a generic shape handle to a face. | TopoDS.Face_1(shape) | https://ocjs.org/reference-docs/classes/TopoDS#Face_1 | - |
 | TopoDS_Compound | Container shape type for compounds. | TopoDS_Compound() | https://ocjs.org/reference-docs/classes/TopoDS_Compound | https://dev.opencascade.org/doc/refman/html/class_topo_d_s___compound.html |
