@@ -212,22 +212,65 @@ function ThreeCanvasImpl({
   className = ''
 }) {
   const [error, setError] = useState(null)
+  const [mountId, setMountId] = useState(0) // force remounts on failure/retry
+  const [attempts, setAttempts] = useState(0)
   const isClient = useIsClient()
   const containerRef = useRef(null)
   const themeColors = useRadixThemeColors(containerRef)
 
+  // Diagnostics: track mounts/unmounts and theme color changes
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug('[ThreeCanvas] mount', { mountId, attempts })
+    return () => {
+      // eslint-disable-next-line no-console
+      console.debug('[ThreeCanvas] unmount', { mountId })
+    }
+  }, [mountId])
+
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug('[ThreeCanvas] themeColors', themeColors)
+  }, [themeColors])
+
   // Memoize camera and gl options so Canvas doesn't recreate renderer/context
   const cameraOptions = useMemo(() => ({ position: [5, 5, 5], fov: 60 }), [])
-  const glOptions = useMemo(() => ({ antialias: true, alpha: false, powerPreference: 'default' }), [])
+  const glAttributes = useMemo(
+    () => ({
+      // Relaxed, compatible defaults to improve first-load context creation reliability
+      antialias: false,
+      alpha: true,
+      powerPreference: 'high-performance',
+      failIfMajorPerformanceCaveat: false,
+      depth: true,
+      stencil: false,
+      preserveDrawingBuffer: false,
+      desynchronized: true,
+    }),
+    []
+  )
+  // Note: We previously experimented with an explicit WebGL context factory.
+  // We're reverting to passing attributes directly to Canvas for now to match prior behavior.
   const canvasStyle = useMemo(() => ({ width: '100%', height: '100%' }), [])
 
   const handleError = (error) => {
     console.error('Three.js Canvas Error:', error)
+    // eslint-disable-next-line no-console
+    console.debug('[ThreeCanvas] error encountered', { attempts, mountId, message: error?.message })
+    // First creation sometimes fails on slower GPUs/browsers. Retry once.
+    if (attempts < 1) {
+      setAttempts((a) => a + 1)
+      // Small delay to give the browser a chance to settle layout/GPU
+      setTimeout(() => setMountId((k) => k + 1), 50)
+      return
+    }
     setError(error)
   }
 
   const resetError = () => {
     setError(null)
+    setAttempts(0)
+    setMountId((k) => k + 1)
   }
 
   // Don't render on server side
@@ -255,13 +298,39 @@ function ThreeCanvasImpl({
       ref={containerRef}
     >
       <Canvas
+        key={mountId}
         camera={cameraOptions}
-        // Known-good stable attributes (memoized)
-        gl={glOptions}
+        // Pass attributes directly; avoids custom context factory during diagnostics
+        gl={glAttributes}
         dpr={[1, 2]}
         onPointerEnter={(e) => e.stopPropagation()}
         onPointerLeave={(e) => e.stopPropagation()}
         onError={handleError}
+        onCreated={({ gl: renderer }) => {
+          // renderer here is THREE.WebGLRenderer
+          const canvas = renderer.domElement
+          try {
+            const ctx = renderer.getContext()
+            // eslint-disable-next-line no-console
+            console.debug('[ThreeCanvas] onCreated', {
+              contextType: ctx?.constructor?.name,
+              attributes: ctx?.getContextAttributes?.(),
+              dpr: typeof window !== 'undefined' ? window.devicePixelRatio : 'n/a',
+            })
+          } catch (e) {
+            // ignore
+          }
+          const onLost = (e) => {
+            e.preventDefault()
+            console.warn('[ThreeCanvas] WebGL context lost, remounting...')
+            setMountId((k) => k + 1)
+          }
+          const onRestored = () => {
+            console.info('[ThreeCanvas] WebGL context restored')
+          }
+          canvas.addEventListener('webglcontextlost', onLost, { passive: false })
+          canvas.addEventListener('webglcontextrestored', onRestored)
+        }}
         // Avoid CSS background to prevent any secondary 2D draws; background is set via gl.clearColor
         style={canvasStyle}
       >

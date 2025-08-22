@@ -31,7 +31,7 @@ export default function ThreePage() {
             <Tabs.Trigger value="embedded">Embedded Viewer</Tabs.Trigger>
             <Tabs.Trigger value="fullscreen">
               <Button asChild variant="soft">
-                <NextLink href="/three/full">Full Screen</NextLink>
+                <NextLink href="/test/three/full">Full Screen</NextLink>
               </Button>
             </Tabs.Trigger>
           </Tabs.List>

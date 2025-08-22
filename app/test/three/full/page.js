@@ -29,7 +29,7 @@ export default function ThreeFullPage() {
         }}
       >
         <Button asChild variant="soft" size="2">
-          <NextLink href="/three">Back</NextLink>
+          <NextLink href="/test/three">Back</NextLink>
         </Button>
         <Button size="2" onClick={() => setSpinning(!spinning)}>
           {spinning ? 'Stop' : 'Spin'}
