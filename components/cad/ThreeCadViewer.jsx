@@ -5,9 +5,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 // frameMode: 'HIDE' | 'LIGHT' | 'DARK'
-// shadingMode: 'GRAY' | 'BLACK' | 'OFF'
+// shadingMode: 'GRAY' | 'WHITE' | 'BLACK' | 'OFF'
 export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
-  { spinEnabled = true, frameMode = 'HIDE', shadingMode = 'GRAY', originVisible = false },
+  { spinEnabled = true, spinMode = 'auto', frameMode = 'HIDE', shadingMode = 'GRAY', originVisible = false, resize },
   ref
 ) {
   const containerRef = useRef(null)
@@ -19,7 +19,12 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
   const modelGroupRef = useRef(null) // holds polygon model
   const wireframeRef = useRef(null)  // holds wireframe overlay
   const spinRef = useRef(spinEnabled)
+  const spinModeRef = useRef(spinMode || (spinEnabled ? 'on' : 'off'))
+  const pauseUntilRef = useRef(0)
+  const pauseTimerRef = useRef(null)
   const axesRef = useRef(null) // origin axes helper
+  const lastSizeRef = useRef({ w: 0, h: 0 })
+  const debounceRef = useRef(0)
 
   // init Three
   useEffect(() => {
@@ -40,8 +45,31 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.setSize(container.clientWidth, container.clientHeight)
+    // Size the drawing buffer and CSS style to match container
+    renderer.setSize(container.clientWidth, container.clientHeight, true)
     container.appendChild(renderer.domElement)
+    // Force canvas to stretch to container both width and height
+    if (renderer.domElement && renderer.domElement.style) {
+      renderer.domElement.style.width = '100%'
+      renderer.domElement.style.height = '100%'
+      renderer.domElement.style.display = 'block'
+      renderer.domElement.style.position = 'absolute'
+      // ensure full fill regardless of other CSS
+      renderer.domElement.style.inset = '0'
+      // override typography rules like .prose canvas { max-width: 900px; margin: 16px auto }
+      renderer.domElement.style.maxWidth = 'none'
+      renderer.domElement.style.margin = '0'
+    }
+
+    // Enforce normal block layout and ensure stretching inside flex parents
+    container.style.display = 'block'
+    container.style.position = 'relative'
+    container.style.width = '100%'
+    container.style.height = '100%'
+    container.style.minWidth = '0'
+    container.style.minHeight = '0'
+    container.style.flex = '1 1 auto'
+    container.style.alignSelf = 'stretch'
 
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
@@ -87,19 +115,59 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     wireframeRef.current = wireGroup
 
     // resize
+    const resizeNow = (w, h) => {
+      const renderer = rendererRef.current
+      const camera = cameraRef.current
+      if (!renderer || !camera) return
+      // Avoid zero sizes
+      if (w <= 0 || h <= 0) return
+      // Update drawing buffer and CSS size to match container exactly
+      renderer.setSize(w, h, true)
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      lastSizeRef.current = { w, h }
+    }
+
     const onResize = () => {
-      if (!container || !rendererRef.current || !cameraRef.current) return
+      if (!container) return
       const w = container.clientWidth
       const h = container.clientHeight
-      rendererRef.current.setSize(w, h)
-      cameraRef.current.aspect = w / h
-      cameraRef.current.updateProjectionMatrix()
+      resizeNow(w, h)
     }
     const ro = new ResizeObserver(onResize)
     ro.observe(container)
+    // Ensure we sync size immediately after mount
+    onResize()
+
+    // interaction handling for auto spin pause
+    const INTERACTION_EVENTS = ['pointerdown', 'wheel', 'touchstart']
+    const onUserInteracted = () => {
+      if (spinModeRef.current !== 'auto') return
+      // pause spinning for 20s from last interaction
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+      pauseUntilRef.current = now + 20000
+      spinRef.current = false
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current)
+      const delay = Math.max(0, pauseUntilRef.current - now)
+      pauseTimerRef.current = setTimeout(() => {
+        // resume if still in auto and pause elapsed
+        if (spinModeRef.current === 'auto') {
+          spinRef.current = true
+        }
+      }, delay)
+    }
+    controls.addEventListener('start', onUserInteracted)
+    INTERACTION_EVENTS.forEach((ev) => renderer.domElement.addEventListener(ev, onUserInteracted, { passive: true }))
 
     // animation loop
     const tick = () => {
+      // Auto mode guard: if we are in auto and pause is active, ensure spin is off
+      if (spinModeRef.current === 'auto') {
+        const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+        if (now < pauseUntilRef.current) {
+          spinRef.current = false
+        }
+      }
       if (spinRef.current) {
         if (modelGroupRef.current) {
           modelGroupRef.current.rotation.y += 0.01
@@ -117,6 +185,10 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     return () => {
       cancelAnimationFrame(rafRef.current)
       ro.disconnect()
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current)
+      controls.removeEventListener('start', onUserInteracted)
+      INTERACTION_EVENTS.forEach((ev) => renderer.domElement.removeEventListener(ev, onUserInteracted))
       controls.dispose()
       renderer.dispose()
       container.removeChild(renderer.domElement)
@@ -132,10 +204,20 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // respond to spin toggle by updating a ref read in the loop
+  // respond to spin inputs: prefer spinMode if provided
   useEffect(() => {
-    spinRef.current = spinEnabled
-  }, [spinEnabled])
+    const mode = spinMode || (spinEnabled ? 'on' : 'off')
+    spinModeRef.current = mode
+    if (mode === 'on') {
+      spinRef.current = true
+    } else if (mode === 'off') {
+      spinRef.current = false
+    } else if (mode === 'auto') {
+      // start spinning unless paused
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+      spinRef.current = now >= pauseUntilRef.current
+    }
+  }, [spinEnabled, spinMode])
 
   // respond to frame mode
   useEffect(() => {
@@ -181,6 +263,10 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
         const mat = obj.material
         if (shadingMode === 'BLACK') {
           mat.color.setHex(0x202020)
+          mat.opacity = 1
+          mat.transparent = false
+        } else if (shadingMode === 'WHITE') {
+          mat.color.setHex(0xffffff)
           mat.opacity = 1
           mat.transparent = false
         } else { // GRAY
@@ -280,5 +366,19 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     },
   }))
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'block',
+        position: 'relative',
+        minWidth: 0,
+        minHeight: 0,
+        flex: '1 1 auto',
+        alignSelf: 'stretch',
+      }}
+    />
+  )
 })

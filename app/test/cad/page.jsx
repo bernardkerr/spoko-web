@@ -26,8 +26,8 @@ export default function CadTestPage() {
           initialCode={getDefaultModelCode()}
           autoRun={true}
           showEditorDefault={false}
-          initialViewer={{ spinEnabled: true, frameMode: 'HIDE', shadingMode: 'GRAY', originVisible: false }}
-          ui={{name:"CrudeFrame"}}
+          initialViewer={{ spinMode: 'auto', frameMode: 'HIDE', shadingMode: 'GRAY', originVisible: false }}
+          ui={{ name: "CrudeFrame", workbench: true }}
         />
       </Box>
     </Section>

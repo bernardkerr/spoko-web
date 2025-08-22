@@ -174,6 +174,39 @@ self.addEventListener('message', async (ev) => {
       self.postMessage({ type: 'exportStepResult', id: msg.id, filename, data: buf }, [buf])
       return
     }
+    if (msg.type === 'loadStep') {
+      const oc = await ensureOc()
+      if (!msg.data || !(msg.data instanceof ArrayBuffer)) throw new Error('loadStep requires ArrayBuffer in msg.data')
+      const filename = msg.filename || 'input.step'
+      // write bytes to OC FS
+      try { oc.FS.unlink(filename) } catch {}
+      const uint8 = new Uint8Array(msg.data)
+      oc.FS.writeFile(filename, uint8)
+      try { console.log('[OC][worker] loadStep wrote', filename, 'bytes=', uint8.byteLength) } catch {}
+
+      const reader = new oc.STEPControl_Reader_1()
+      const IFSelect = oc.IFSelect_ReturnStatus ?? {}
+      const RetDone = IFSelect.IFSelect_RetDone ?? 1
+      const readStatus = reader.ReadFile(filename)
+      const readOk = (readStatus === true) || (readStatus === RetDone) || (readStatus === 1)
+      if (!readOk) throw new Error(`STEP read failed: status=${readStatus}`)
+      const transferred = reader.TransferRoots(new oc.Message_ProgressRange_1())
+      const transferredCount = (typeof transferred === 'number') ? transferred : (transferred === true ? 1 : 0)
+      try { console.log('[OC][worker] TransferRoots returned', transferred, '=> count=', transferredCount) } catch {}
+      if (transferredCount <= 0) throw new Error(`STEP transfer produced no roots`)
+      const shape = reader.OneShape()
+      if (!shape || shape.IsNull?.()) throw new Error('STEP yielded no shape')
+      // cache for export
+      lastShape = shape
+      const { positions, normals, indices } = shapeToBuffers(oc, shape)
+      if (!positions || positions.length === 0) throw new Error('Meshing produced no vertices')
+      try { console.log('[OC][worker] loadStep meshed', { verts: positions.length/3, tris: indices.length/3 }) } catch {}
+      self.postMessage(
+        { type: 'buildResult', id: msg.id, positions, normals, indices },
+        [positions.buffer, normals.buffer, indices.buffer]
+      )
+      return
+    }
   } catch (e) {
     const message = e?.message || String(e)
     self.postMessage({ type: 'error', id: msg.id, message })

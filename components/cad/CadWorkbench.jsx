@@ -31,16 +31,25 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   if (!id) throw new Error('CadWorkbench requires a unique id')
 
   // Workbench vs. viewer-only mode
-  const [workbenchVisible, setWorkbenchVisible] = useState(!!ui?.workbench)
+  const modelPath = ui?.model && typeof ui.model === 'string' ? ui.model.trim() : ''
+  const isModelMode = !!modelPath
+  const [workbenchVisible, setWorkbenchVisible] = useState(() => isModelMode ? false : !!ui?.workbench)
 
-  const [spinEnabled, setSpinEnabled] = useState(!!initialViewer?.spinEnabled)
+  const [spinMode, setSpinMode] = useState(() => {
+    const im = initialViewer?.spinMode
+    if (im === 'on' || im === 'off' || im === 'auto') return im
+    if (typeof initialViewer?.spinEnabled === 'boolean') return initialViewer.spinEnabled ? 'on' : 'off'
+    return 'auto'
+  })
   const [frameMode, setFrameMode] = useState(initialViewer?.frameMode || 'HIDE')
   const [shadingMode, setShadingMode] = useState(initialViewer?.shadingMode || 'GRAY')
   const [originVisible, setOriginVisible] = useState(!!initialViewer?.originVisible)
 
   // Preserve previous viewer settings when collapsing to viewer-only
   const prevViewerStateRef = useRef({
-    spinEnabled: !!initialViewer?.spinEnabled,
+    spinMode: (initialViewer?.spinMode === 'on' || initialViewer?.spinMode === 'off' || initialViewer?.spinMode === 'auto')
+      ? initialViewer?.spinMode
+      : (typeof initialViewer?.spinEnabled === 'boolean' ? (initialViewer.spinEnabled ? 'on' : 'off') : 'auto'),
     frameMode: initialViewer?.frameMode || 'HIDE',
     shadingMode: initialViewer?.shadingMode || 'GRAY',
     originVisible: !!initialViewer?.originVisible,
@@ -51,19 +60,18 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
     if (!workbenchVisible) {
       // save previous state once when switching off
       prevViewerStateRef.current = {
-        spinEnabled,
+        spinMode,
         frameMode,
         shadingMode,
         originVisible,
       }
-      setSpinEnabled(false)
       setFrameMode('HIDE')
       // keep shading as-is (GRAY by default) for pleasant fill
       setOriginVisible(false)
     } else {
       // restore previous state when returning to workbench
       const p = prevViewerStateRef.current
-      setSpinEnabled(!!p.spinEnabled)
+      setSpinMode(p.spinMode || 'off')
       setFrameMode(p.frameMode || 'HIDE')
       setShadingMode(p.shadingMode || 'GRAY')
       setOriginVisible(!!p.originVisible)
@@ -82,6 +90,84 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   const lastOcRef = useRef(null)
   const lastShapeRef = useRef(null)
   const lastGeometryRef = useRef(null)
+
+  // Load external model if provided (viewer-only mode)
+  useEffect(() => {
+    if (!isModelMode) return
+    let cancelled = false
+    const load = async () => {
+      try {
+        setBusy(true)
+        setError(null)
+        setStatus('Loading model…')
+        const src = modelPath
+        if (typeof window !== 'undefined') {
+          console.log('[CAD][model] Begin load', { src })
+        }
+        const isHttp = /^https?:\/\//i.test(src)
+        const url = isHttp ? src : `/api/test-models/${src}`
+        if (/\.(stl)$/i.test(src)) {
+          const mod = await import('three/examples/jsm/loaders/STLLoader.js')
+          const STLLoader = mod.STLLoader || mod.default || mod
+          const loader = new STLLoader()
+          const geometry = await loader.loadAsync(url)
+          if (cancelled) return
+          geometry.computeBoundingBox()
+          geometry.computeBoundingSphere()
+          lastGeometryRef.current = geometry
+          viewerRef.current?.setGeometry?.(geometry)
+          setStatus('Done')
+          if (typeof window !== 'undefined') {
+            console.log('[CAD][model] STL loaded', { bbox: geometry.boundingBox?.getSize(new THREE.Vector3()) })
+          }
+        } else if (/\.(step|stp)$/i.test(src)) {
+          // Fetch as ArrayBuffer and hand to OC worker for meshing
+          setStatus('Initializing OpenCascade…')
+          await waitForOcWorkerReady()
+          setStatus('Reading STEP…')
+          const resp = await fetch(url)
+          if (!resp.ok) {
+            const txt = await resp.text().catch(() => '')
+            throw new Error(`Failed to fetch STEP: ${resp.status} ${txt ? '- ' + txt : ''}`)
+          }
+          const buf = await resp.arrayBuffer()
+          if (typeof window !== 'undefined') {
+            console.log('[CAD][model] STEP bytes fetched', { bytes: buf.byteLength })
+          }
+          const res = await callOcWorker('loadStep', { filename: src.split('/').pop() || 'model.step', data: buf })
+          if (!res || res.type !== 'buildResult') throw new Error('Unexpected worker response for loadStep')
+          const geometry = new THREE.BufferGeometry()
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(res.positions, 3))
+          geometry.setAttribute('normal', new THREE.Float32BufferAttribute(res.normals, 3))
+          geometry.setIndex(new THREE.Uint32BufferAttribute(res.indices, 1))
+          geometry.computeBoundingSphere()
+          geometry.computeBoundingBox()
+          lastGeometryRef.current = geometry
+          viewerRef.current?.setGeometry?.(geometry)
+          setStatus('Done')
+          if (typeof window !== 'undefined') {
+            console.log('[CAD][model] STEP meshed', { verts: res.positions?.length/3, tris: res.indices?.length/3 })
+          }
+        } else {
+          throw new Error(`Unsupported model extension for: ${src}`)
+        }
+      } catch (e) {
+        const msg = e?.message || String(e)
+        const detailed = `${msg}\nPhase: Load Model${e?.stack ? `\n${e.stack}` : ''}`
+        if (typeof window !== 'undefined') {
+          console.error('[CAD][model] Error loading model', detailed)
+        }
+        setError(detailed)
+        setStatus('Error')
+        onError?.(detailed)
+      } finally {
+        setBusy(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModelMode, modelPath])
 
   // Track OC worker readiness to adjust UI labels
   const [ocReady, setOcReady] = useState(() => isOcWorkerReady())
@@ -216,6 +302,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   // auto run once: wait for worker ready to avoid long first-run wait perception
   useEffect(() => {
     if (!autoRun) return
+    if (isModelMode) return // model mode does not run builds
     let cancelled = false
     const kick = async () => {
       try {
@@ -313,27 +400,49 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       <Box p="4">
         {workbenchVisible && (
           <Toolbar
-            spinEnabled={spinEnabled}
+            spinMode={spinMode}
             frameMode={frameMode}
             shadingMode={shadingMode}
             originVisible={originVisible}
-            onToggleSpin={() => setSpinEnabled(v => !v)}
+            onCycleSpin={() => setSpinMode(prev => prev === 'off' ? 'on' : prev === 'on' ? 'auto' : 'off')}
             onToggleFrame={() => setFrameMode(prev => prev === 'HIDE' ? 'LIGHT' : prev === 'LIGHT' ? 'DARK' : 'HIDE')}
-            onToggleShading={() => setShadingMode(prev => prev === 'GRAY' ? 'BLACK' : prev === 'BLACK' ? 'OFF' : 'GRAY')}
+            onToggleShading={() => setShadingMode(prev => (
+              prev === 'GRAY' ? 'WHITE' :
+              prev === 'WHITE' ? 'BLACK' :
+              prev === 'BLACK' ? 'OFF' :
+              'GRAY'
+            ))}
             onToggleOrigin={() => setOriginVisible(v => !v)}
           />
         )}
 
         <Box mt="3" style={{ position: 'relative' }}>
-          <Box style={{ height: 480, width: '100%', borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden' }}>
+          <Box style={{ height: (ui?.height ?? 480), width: '100%', borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden' }}>
             <ThreeCadViewer
               ref={viewerRef}
-              spinEnabled={spinEnabled}
+              spinEnabled={spinMode === 'on'}
+              spinMode={spinMode}
               frameMode={frameMode}
               shadingMode={shadingMode}
               originVisible={originVisible}
+              resize={ui?.resize}
             />
           </Box>
+        {/* Minimal diagnostics for model mode */}
+        {isModelMode && (
+          <Box mt="2">
+            <Text size="2" color={error ? 'red' : 'gray'}>
+              Status: {status}
+            </Text>
+            {error && (
+              <Box mt="1">
+                <Callout.Root color="red">
+                  <Callout.Text>{error}</Callout.Text>
+                </Callout.Root>
+              </Box>
+            )}
+          </Box>
+        )}
           {!workbenchVisible && (
             <Button
               size="1"
@@ -360,7 +469,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
           )}
         </Box>
 
-        {workbenchVisible && (
+        {workbenchVisible && !isModelMode && (
           <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <Button variant="surface" onClick={() => viewerRef.current?.fitView?.()}>Fit View</Button>
             <Button variant="surface" onClick={() => viewerRef.current?.reset?.()}>Reset</Button>
@@ -374,7 +483,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
           </Box>
         )}
 
-        {workbenchVisible && (
+        {workbenchVisible && !isModelMode && (
           <>
             <Box mt="3">
               <Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>
@@ -389,7 +498,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
           </>
         )}
 
-        {workbenchVisible && showEditor && (
+        {workbenchVisible && showEditor && !isModelMode && (
           <Box mt="6">
             <Card>
               <Box p="4">

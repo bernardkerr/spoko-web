@@ -20,17 +20,19 @@ export default function CadBlock({ code = '', idPrefix = 'mdx-cad', initialViewe
     .replace(/^\s*export\s+function\s+buildModel/m, 'function buildModel')
   const id = `${idPrefix}-${hashString(sanitized)}`
   return (
-    <CadWorkbench
-      id={id}
-      initialCode={sanitized}
-      autoRun={true}
-      showEditorDefault={false}
-      initialViewer={initialViewer || { spinEnabled: true, frameMode: 'HIDE', shadingMode: 'GRAY', originVisible: false }}
-      ui={{
-        ...(params || {}),
-        // Prefer explicit fence name as exportName if present
-        ...(params?.name ? { exportName: params.name } : {}),
-      }}
-    />
+    <div className="not-prose" style={{ display: 'block', width: '100%', minWidth: 0 }}>
+      <CadWorkbench
+        id={id}
+        initialCode={sanitized}
+        autoRun={true}
+        showEditorDefault={false}
+        initialViewer={initialViewer || { spinMode: 'auto', frameMode: 'HIDE', shadingMode: 'GRAY', originVisible: false }}
+        ui={{
+          ...(params || {}),
+          // Prefer explicit fence name as exportName if present
+          ...(params?.name ? { exportName: params.name } : {}),
+        }}
+      />
+    </div>
   )
 }
