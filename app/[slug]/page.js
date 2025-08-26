@@ -1,5 +1,6 @@
 import { Section, Box, Heading, Text } from '@radix-ui/themes'
 import { Mdx } from '@/lib/mdx'
+import { Mermaid } from '@/components/Mermaid'
 import MDXImage from '@/components/MDXImage'
 import { getTopLevelContentSlugs } from '@/lib/markdown'
 import { notFound } from 'next/navigation'
@@ -73,6 +74,7 @@ export default async function TopLevelContentPage({ params }) {
                 }}
               />
             </div>
+            <Mermaid autoRender={true} />
           </Box>
         </Section>
         <FloatingTOC />
