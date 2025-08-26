@@ -138,7 +138,7 @@ return () => { running = false }
 
 ## Example D: Expandable SVG Node
 
-```js d3 {"name":"Expandable Node","workbench": true, "viewerHeight": 300}
+```js d3 {"name":"Expandable Node","workbench": true, "viewerHeight": 340}
 const svg = d3.select(el).append('svg')
   .attr('viewBox', [0,0,width,height])
   .style('display','block')
@@ -147,8 +147,8 @@ const svg = d3.select(el).append('svg')
 
 const g = svg.append('g')
 
-const nodeW = 160
-const nodeH = 90
+const nodeW = 200
+const nodeH = 110
 const rootX = (width - nodeW)/2
 const rootY = 20
 
@@ -186,7 +186,7 @@ parent.append('rect')
 parent.append('circle')
   .attr('cx', 20)
   .attr('cy', 46)
-  .attr('r', 8)
+  .attr('r', 10)
   .attr('fill', 'var(--accent-9)')
 
 parent.append('text')
@@ -194,7 +194,7 @@ parent.append('text')
   .attr('y', 50)
   .attr('fill', 'var(--gray-12)')
   .attr('font-family', 'ui-sans-serif, system-ui, -apple-system')
-  .attr('font-size', 14)
+  .attr('font-size', 16)
   .text('Composite Object')
 
 // Children layout
@@ -204,10 +204,10 @@ const children = [
   { id: 'C' },
   { id: 'D' },
 ]
-const childSize = 56
-const gap = 12
+const childSize = 72
+const gap = 16
 
-const childrenY = rootY + nodeH + 24
+const childrenY = rootY + nodeH + 28
 function childX(i, n) {
   const totalW = n*childSize + (n-1)*gap
   return (width - totalW)/2 + i*(childSize + gap)
@@ -230,39 +230,86 @@ function renderChildren() {
     .attr('fill', 'white')
     .attr('stroke', 'var(--gray-7)')
 
-  // Icon group and renderer: car for A (toggleable), generic block for others
+  // Icon renderer with shape morph using path-length sampling (Observable technique)
+  // Helpers
+  function pathFromPoints(pts) {
+    return 'M' + pts.map(p => `${p[0]},${p[1]}`).join(' L ') + ' Z'
+  }
+  function samplePathPoints(d, N = 160) {
+    const temp = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    temp.setAttribute('d', d)
+    const L = temp.getTotalLength()
+    const pts = []
+    for (let i = 0; i < N; i++) {
+      const p = temp.getPointAtLength((i/(N-1)) * L)
+      pts.push([p.x, p.y])
+    }
+    return pts
+  }
+
+  const CAR_PATH = 'M10,46 L50,46 L50,28 L42,26 L34,18 L22,18 L14,26 L10,28 Z'
+  // Parametric banana crescent generator (returns a path string)
+  // cx, cy: center; rx, ry: outer radii; t: thickness; tip: small cap length; bend: curvature factor (0..1)
+  function bananaPath({cx=36, cy=36, rx=28, ry=18, t=7, tip=4, bend=0.5}={}) {
+    // Clamp bend to sane range
+    bend = Math.max(0.1, Math.min(0.9, bend))
+    // Outer arc start/end
+    const sx = cx - rx * 0.95
+    const sy = cy + ry * 1.05
+    const ex = cx + rx * 0.95
+    const ey = cy - ry * bend
+    // Inner radii (thinner inner arc)
+    const rx2 = Math.max(4, rx - t)
+    const ry2 = Math.max(3, ry - t * 0.9)
+    // Inner start near base
+    const isx = cx - rx2 * 0.78
+    const isy = cy + ry2 * 0.58
+    // Path: outer arc -> tip cap -> inner arc back -> base cap
+    const outer = `M${sx.toFixed(1)},${sy.toFixed(1)} A${rx.toFixed(1)},${ry.toFixed(1)} 0 0 1 ${ex.toFixed(1)},${ey.toFixed(1)}`
+    const capTip = ` Q${(ex+tip).toFixed(1)},${(ey+1).toFixed(1)} ${ex.toFixed(1)},${(ey+tip).toFixed(1)}`
+    const inner = ` A${rx2.toFixed(1)},${ry2.toFixed(1)} 0 0 0 ${isx.toFixed(1)},${isy.toFixed(1)}`
+    const capBase = ` Q${(sx+2).toFixed(1)},${(sy-2).toFixed(1)} ${sx.toFixed(1)},${sy.toFixed(1)} Z`
+    return outer + capTip + inner + capBase
+  }
+
+  // Tuned banana parameters for a longer, thinner, more curved crescent
+  const bananaParams = {cx: 36, cy: 36, rx: 34, ry: 12, t: 6, tip: 6, bend: 0.75}
+
   function paintIcon(icon, d) {
     icon.selectAll('*').remove()
     if (d.id === 'A') {
+      const path = icon.append('path').attr('class', 'icon-shape')
+      const wheels = icon.append('g').attr('class', 'wheels')
+      wheels.append('circle').attr('cx', 20).attr('cy', 50).attr('r', 6).attr('fill', 'var(--gray-11)')
+      wheels.append('circle').attr('cx', 44).attr('cy', 50).attr('r', 6).attr('fill', 'var(--gray-11)')
+      wheels.append('circle').attr('cx', 20).attr('cy', 50).attr('r', 2.6).attr('fill', 'white')
+      wheels.append('circle').attr('cx', 44).attr('cy', 50).attr('r', 2.6).attr('fill', 'white')
+      // Small stem near the tip for banana mode
+      const stem = icon.append('path').attr('class', 'stem')
+        .attr('d', 'M64,32 l5,2 -2,6 -5,-2 Z')
+        .attr('fill', 'var(--yellow-11, #946300)')
+        .attr('opacity', 0)
+
+      const dInit = d.mode === 'banana' ? bananaPath(bananaParams) : CAR_PATH
+      path
+        .attr('d', dInit)
+        .attr('fill', d.mode === 'banana' ? 'var(--yellow-9, #f5d90a)' : 'var(--accent-9)')
+        .attr('stroke', d.mode === 'banana' ? 'var(--yellow-11, #946300)' : 'none')
+        .attr('stroke-width', d.mode === 'banana' ? 1.1 : 0)
+        .attr('stroke-linecap', 'round')
+        .attr('stroke-linejoin', 'round')
+        .attr('transform', d.mode === 'banana' ? 'rotate(-20,36,36)' : null)
+      // Position stem at the computed tip
       if (d.mode === 'banana') {
-        // Banana
-        icon.append('path')
-          .attr('d', 'M14,28 C20,18 36,18 42,30 C36,42 20,42 14,32 Z')
-          .attr('fill', 'var(--yellow-9, #f5d90a)')
-          .attr('stroke', 'var(--yellow-11, #946300)')
-          .attr('stroke-width', 1)
-        icon.append('circle').attr('cx', 16).attr('cy', 29).attr('r', 1.6).attr('fill', 'var(--yellow-11, #946300)')
-        icon.append('circle').attr('cx', 40).attr('cy', 33).attr('r', 1.6).attr('fill', 'var(--yellow-11, #946300)')
-      } else {
-        // Car
-        icon.append('rect')
-          .attr('x', 8)
-          .attr('y', 26)
-          .attr('width', 40)
-          .attr('height', 16)
-          .attr('rx', 3)
-          .attr('fill', 'var(--accent-9)')
-        icon.append('path')
-          .attr('d', 'M14,26 L22,18 H34 L42,26 Z')
-          .attr('fill', 'var(--accent-9)')
-        icon.append('circle').attr('cx', 18).attr('cy', 46).attr('r', 5).attr('fill', 'var(--gray-11)')
-        icon.append('circle').attr('cx', 42).attr('cy', 46).attr('r', 5).attr('fill', 'var(--gray-11)')
-        icon.append('circle').attr('cx', 18).attr('cy', 46).attr('r', 2.2).attr('fill', 'white')
-        icon.append('circle').attr('cx', 42).attr('cy', 46).attr('r', 2.2).attr('fill', 'white')
+        const ex = bananaParams.cx + bananaParams.rx * 0.95
+        const ey = bananaParams.cy - bananaParams.ry * bananaParams.bend
+        stem.attr('d', `M${ex.toFixed(1)},${ey.toFixed(1)} l5,2 -2,6 -5,-2 Z`)
       }
+      wheels.attr('opacity', d.mode === 'car' ? 1 : 0)
+      stem.attr('opacity', d.mode === 'banana' ? 1 : 0)
     } else {
       icon.append('path')
-        .attr('d', `M10,22 h36 v12 h-36 Z`)
+        .attr('d', `M12,24 h40 v14 h-40 Z`)
         .attr('fill', 'var(--accent-9)')
         .attr('opacity', 0.9)
     }
@@ -274,17 +321,38 @@ function renderChildren() {
       const g = d3.select(this)
       const icon = g.append('g').attr('class', 'icon')
       paintIcon(icon, d)
-      // Click to toggle only for A
+      // Click to toggle only for A with shape morph via path-length sampling
       g.on('click', (event) => {
         if (d.id !== 'A') return
-        // Prevent parent click handlers from firing
         event.stopPropagation()
-        const icon = d3.select(event.currentTarget).select('.icon')
-        icon.transition().duration(120).attr('opacity', 0).on('end', () => {
-          d.mode = d.mode === 'banana' ? 'car' : 'banana'
-          paintIcon(icon, d)
-          icon.attr('opacity', 0).transition().duration(180).attr('opacity', 1)
-        })
+        const iconG = d3.select(event.currentTarget).select('.icon')
+        const path = iconG.select('path.icon-shape')
+        const wheels = iconG.select('.wheels')
+        const stem = iconG.select('.stem')
+        const fromD = path.attr('d')
+        d.mode = d.mode === 'banana' ? 'car' : 'banana'
+        const toD = d.mode === 'banana' ? bananaPath(bananaParams) : CAR_PATH
+        const fromPts = samplePathPoints(fromD, 220)
+        const toPts = samplePathPoints(toD, 220)
+        const interp = d3.interpolateArray(fromPts, toPts)
+        path
+          .transition()
+          .duration(700)
+          .ease(d3.easeCubicInOut)
+          .attrTween('d', () => t => pathFromPoints(interp(t)))
+          .attr('fill', d.mode === 'banana' ? 'var(--yellow-9, #f5d90a)' : 'var(--accent-9)')
+          .attr('stroke', d.mode === 'banana' ? 'var(--yellow-11, #946300)' : 'none')
+          .attr('stroke-width', d.mode === 'banana' ? 1.1 : 0)
+          .attr('stroke-linecap', 'round')
+          .attr('stroke-linejoin', 'round')
+          .attr('transform', d.mode === 'banana' ? 'rotate(-20,36,36)' : null)
+        if (d.mode === 'banana') {
+          const ex = bananaParams.cx + bananaParams.rx * 0.95
+          const ey = bananaParams.cy - bananaParams.ry * bananaParams.bend
+          stem.transition().duration(300).attr('d', `M${ex.toFixed(1)},${ey.toFixed(1)} l5,2 -2,6 -5,-2 Z`)
+        }
+        wheels.transition().duration(400).ease(d3.easeCubicInOut).attr('opacity', d.mode === 'car' ? 1 : 0)
+        stem.transition().duration(400).ease(d3.easeCubicInOut).attr('opacity', d.mode === 'banana' ? 1 : 0)
       })
     })
 
@@ -293,7 +361,7 @@ function renderChildren() {
     .attr('y', childSize - 8)
     .attr('text-anchor', 'middle')
     .attr('fill', 'var(--gray-11)')
-    .attr('font-size', 12)
+    .attr('font-size', 14)
     .attr('font-family', 'ui-sans-serif, system-ui, -apple-system')
     .text(d => d.id)
 
