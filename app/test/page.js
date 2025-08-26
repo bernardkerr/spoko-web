@@ -54,6 +54,38 @@ export default function TestPage() {
 
         <Separator my="5" size="4" />
 
+        {/* SVG */}
+        <Box mt="6" mb="3">
+          <Heading size="6">SVG</Heading>
+        </Box>
+        <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
+          <DocCard>
+            <Heading size="4" mb="1">SVG.js Playground</Heading>
+            <Text color="gray" size="2" mb="3">Interactive SVG.js workbench for live SVG shapes, text, and animation.</Text>
+            <Button asChild>
+              <NextLink href="/test/svg">Open SVG Workbench</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">SVG in Markdown</Heading>
+            <Text color="gray" size="2" mb="3">Markdown pages that embed live SVG.js workbenches via <Code>```svg</Code> or <Code>```js svg</Code> blocks.</Text>
+            <Button asChild>
+              <NextLink href="/test/docs/svg-basic-test">Open SVG-MD</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">SVG Docs Helper</Heading>
+            <Text color="gray" size="2" mb="3">Quick local API notes and examples for SVG.js used by the editor.</Text>
+            <Button asChild>
+              <NextLink href="/test/svg-doc">Open SVG Docs</NextLink>
+            </Button>
+          </DocCard>
+        </Grid>
+
+        <Separator my="5" size="4" />
+
         {/* D3 */}
         <Box mt="6" mb="3">
           <Heading size="6">D3</Heading>

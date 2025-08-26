@@ -175,6 +175,40 @@ body {
   z-index: 50;
 }
 
+/* Radix Card: match homepage FeatureBox (thin line, same radius, no shadow) */
+.rt-BaseCard {
+  /* Clear any default ring/shadow/border Radix applies at the base layer */
+  box-shadow: none !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+.rt-Card {
+  border: none !important; /* remove any outer line completely */
+  box-shadow: inset 0 0 0 1px var(--gray-a6) !important; /* single crisp line */
+  background-color: transparent !important;
+  border-radius: var(--radius-3) !important;
+  background-clip: padding-box;
+}
+
+/* Remove any variant-driven rings/outlines */
+.rt-Card.rt-variant-surface,
+.rt-BaseCard.rt-variant-surface {
+  /* keep the single crisp inset ring for variants too */
+  box-shadow: inset 0 0 0 1px var(--gray-a6) !important;
+  outline: none !important;
+}
+
+/* Disable pseudo-element borders/rings some themes add */
+.rt-Card::before,
+.rt-Card::after,
+.rt-BaseCard::before,
+.rt-BaseCard::after {
+  content: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
 /* Layout helpers replacing Tailwind utilities */
 .app-root {
   position: relative;
