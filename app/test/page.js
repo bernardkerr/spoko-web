@@ -22,6 +22,10 @@ export default function TestPage() {
           <Text as="p" color="gray" size="4">These pages highlight the capabilities of the site.</Text>
         </Box>
 
+        {/* CAD */}
+        <Box mt="6" mb="3">
+          <Heading size="6">CAD</Heading>
+        </Box>
         <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
           <DocCard>
             <Heading size="4" mb="1">CAD Playground</Heading>
@@ -46,7 +50,71 @@ export default function TestPage() {
               <NextLink href="/test/cad-doc">Open Docs</NextLink>
             </Button>
           </DocCard>
+        </Grid>
 
+        <Separator my="5" size="4" />
+
+        {/* D3 */}
+        <Box mt="6" mb="3">
+          <Heading size="6">D3</Heading>
+        </Box>
+        <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
+          <DocCard>
+            <Heading size="4" mb="1">D3 Playground</Heading>
+            <Text color="gray" size="2" mb="3">Interactive D3 + ElkJS workbench for live SVG experiments.</Text>
+            <Button asChild>
+              <NextLink href="/test/d3">Open D3 Workbench</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">D3 in Markdown</Heading>
+            <Text color="gray" size="2" mb="3">Markdown pages that embed live D3 workbenches via <Code>```d3</Code> or <Code>```js d3</Code> blocks.</Text>
+            <Button asChild>
+              <NextLink href="/test/docs/d3-basic-test">Open D3-MD</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">D3 Doc</Heading>
+            <Text color="gray" size="2" mb="3">Searchable D3 reference table used by the D3 editor.</Text>
+            <Button asChild>
+              <NextLink href="/test/d3-doc">Open D3 Doc</NextLink>
+            </Button>
+          </DocCard>
+        </Grid>
+
+        <Separator my="5" size="4" />
+
+        {/* Theme (formerly Figma) */}
+        <Box mt="6" mb="3">
+          <Heading size="6">Theme</Heading>
+        </Box>
+        <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
+          <DocCard>
+            <Heading size="4" mb="1">Style Inspector</Heading>
+            <Text color="gray" size="2" mb="3">Inspect exported design tokens from figma/exports and plan curated views.</Text>
+            <Button asChild>
+              <NextLink href="/test/styles">Open Inspector</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">Radix Design Showcase</Heading>
+            <Text color="gray" size="2" mb="3">Components built with @radix-ui/themes demonstrating the site theme.</Text>
+            <Button asChild>
+              <NextLink href="/test/radix">View Showcase</NextLink>
+            </Button>
+          </DocCard>
+        </Grid>
+
+        <Separator my="5" size="4" />
+
+        {/* Misc */}
+        <Box mt="6" mb="3">
+          <Heading size="6">Misc</Heading>
+        </Box>
+        <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
           <DocCard>
             <Heading size="4" mb="1">Three.js Examples</Heading>
             <Text color="gray" size="2" mb="3">Interactive 3D graphics and animations powered by Three.js and React Three Fiber.</Text>
@@ -70,23 +138,32 @@ export default function TestPage() {
               <NextLink href="/test/docs">Read Docs</NextLink>
             </Button>
           </DocCard>
+        </Grid>
 
+        <Separator my="5" size="4" />
+
+        {/* D2 */}
+        <Box mt="6" mb="3">
+          <Heading size="6">D2</Heading>
+        </Box>
+        <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
           <DocCard>
-            <Heading size="4" mb="1">Radix Design Showcase</Heading>
-            <Text color="gray" size="2" mb="3">Components built with @radix-ui/themes demonstrating the site theme.</Text>
+            <Heading size="4" mb="1">D2 Diagrams</Heading>
+            <Text color="gray" size="2" mb="3">Live-coded D2 diagrams with themed rendering via the D2 Workbench.</Text>
             <Button asChild>
-              <NextLink href="/test/radix">View Showcase</NextLink>
+              <NextLink href="/test/d2">Open D2 Workbench</NextLink>
             </Button>
           </DocCard>
 
           <DocCard>
-            <Heading size="4" mb="1">Style Inspector</Heading>
-            <Text color="gray" size="2" mb="3">Inspect exported design tokens from figma/exports and plan curated views.</Text>
+            <Heading size="4" mb="1">D2 in Markdown</Heading>
+            <Text color="gray" size="2" mb="3">Markdown pages that embed live D2 workbenches via <Code>```d2</Code> blocks.</Text>
             <Button asChild>
-              <NextLink href="/test/styles">Open Inspector</NextLink>
+              <NextLink href="/test/docs/d2-basic-test">Open D2-MD</NextLink>
             </Button>
           </DocCard>
         </Grid>
+
       </Box>
     </Section>
   )

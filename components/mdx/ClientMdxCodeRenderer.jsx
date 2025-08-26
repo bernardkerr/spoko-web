@@ -3,6 +3,8 @@
 import dynamic from 'next/dynamic'
 
 const CadBlock = dynamic(() => import('@/components/cad/CadBlock'), { ssr: false })
+const D2Block = dynamic(() => import('@/components/d2/D2Block'), { ssr: false })
+const D3Block = dynamic(() => import('@/components/d3/D3Block'), { ssr: false })
 
 export default function ClientMdxCodeRenderer(props) {
   const { className, children, metastring, ...rest } = props || {}
@@ -39,6 +41,55 @@ export default function ClientMdxCodeRenderer(props) {
     return out
   }
 
+  // Helper: parse parameters for D3 fences; supports JSON object or key=value pairs
+  function parseD3Params(meta) {
+    if (!meta || typeof meta !== 'string') return {}
+    const trimmed = meta.trim()
+    const jsonMatch = trimmed.match(/^\{[\s\S]*\}$/)
+    if (jsonMatch) {
+      try { return JSON.parse(jsonMatch[0]) } catch {}
+    }
+    const out = {}
+    const kvRe = /(\w+)=(("[^"]*")|('[^']*')|([^\s]+))/g
+    let mm
+    while ((mm = kvRe.exec(trimmed))) {
+      const k = mm[1]
+      let v = mm[3] || mm[4] || mm[5] || ''
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+        v = v.slice(1, -1)
+      }
+      out[k] = v
+    }
+    return out
+  }
+
+  // Helper: parse parameters for D2 from metastring of a ```d2 fence.
+  // Supports either a JSON object or key=value pairs.
+  function parseD2Params(meta) {
+    if (!meta || typeof meta !== 'string') return {}
+    const trimmed = meta.trim()
+    // JSON object style
+    const jsonMatch = trimmed.match(/^\{[\s\S]*\}$/)
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[0])
+      } catch {}
+    }
+    // Fallback: key=value pairs (quoted or unquoted)
+    const out = {}
+    const kvRe = /(\w+)=(("[^"]*")|('[^']*')|([^\s]+))/g
+    let mm
+    while ((mm = kvRe.exec(trimmed))) {
+      const k = mm[1]
+      let v = mm[3] || mm[4] || mm[5] || ''
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+        v = v.slice(1, -1)
+      }
+      out[k] = v
+    }
+    return out
+  }
+
   // Back-compat: ```cadjs fences
   if (lang === 'cadjs') {
     return <CadBlock code={code} />
@@ -48,6 +99,30 @@ export default function ClientMdxCodeRenderer(props) {
   if (lang === 'js' && typeof metastring === 'string' && /(?:^|\s)cad(?:\s|$)/i.test(metastring)) {
     const params = parseCadParams(metastring)
     return <CadBlock code={code} params={params} />
+  }
+
+  // New: ```d2 {...}
+  if (lang === 'd2') {
+    const params = parseD2Params(metastring)
+    return <D2Block code={code} params={params} />
+  }
+
+  // New: ```js d2 {...}
+  if (lang === 'js' && typeof metastring === 'string' && /(?:^|\s)d2(?:\s|$)/i.test(metastring)) {
+    const params = parseD2Params(metastring.replace(/(?:^|\s)d2(?:\s|$)/i, '').trim())
+    return <D2Block code={code} params={params} />
+  }
+
+  // New: ```d3 {...}
+  if (lang === 'd3') {
+    const params = parseD3Params(metastring)
+    return <D3Block code={code} params={params} />
+  }
+
+  // New: ```js d3 {...}
+  if (lang === 'js' && typeof metastring === 'string' && /(?:^|\s)d3(?:\s|$)/i.test(metastring)) {
+    const params = parseD3Params(metastring.replace(/(?:^|\s)d3(?:\s|$)/i, '').trim())
+    return <D3Block code={code} params={params} />
   }
 
   return <code className={className} {...rest}>{children}</code>
