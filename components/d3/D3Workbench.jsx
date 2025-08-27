@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
-import { Box, Card, Heading, Text, Button, Callout } from '@radix-ui/themes'
-import { Wrench, Eye, Download, Play } from 'lucide-react'
+import { Box, Text, Button } from '@radix-ui/themes'
+import { Download, Play } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
 // Docs helper: use shared panel + common table
@@ -12,6 +12,8 @@ import { getAssetPath } from '@/lib/paths'
 import { downloadText } from '@/lib/downloads'
 import { WorkbenchShell } from '@/components/common/WorkbenchShell'
 import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
+import { ViewerChrome } from '@/components/common/ViewerChrome'
+import { EditorPanel } from '@/components/common/EditorPanel'
 
 export const D3Workbench = forwardRef(function D3Workbench(
   {
@@ -171,18 +173,14 @@ export const D3Workbench = forwardRef(function D3Workbench(
   return (
     <WorkbenchShell
       viewer={(
-        <>
-          {!workbenchVisible ? (
-            <Button size="1" variant="ghost" onClick={() => setWorkbenchVisible(true)} style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }} aria-label="Open workbench" title="Open workbench">
-              <Wrench width={28} height={28} />
-            </Button>
-          ) : (
-            <Button size="1" variant="ghost" onClick={() => setWorkbenchVisible(false)} style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }} aria-label="Viewer only" title="Viewer only">
-              <Eye width={28} height={28} />
-            </Button>
-          )}
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <ViewerChrome
+            visible={workbenchVisible}
+            onOpen={() => setWorkbenchVisible(true)}
+            onClose={() => setWorkbenchVisible(false)}
+          />
           <div ref={containerRef} style={{ width: '100%', height: '100%', padding: 8, boxSizing: 'border-box' }} />
-        </>
+        </div>
       )}
       toolbar={workbenchVisible ? (
         <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -202,31 +200,28 @@ export const D3Workbench = forwardRef(function D3Workbench(
       status={workbenchVisible ? (<Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>) : null}
       error={workbenchVisible && error ? (<pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>) : null}
       editor={workbenchVisible && showEditor ? (
-        <Card>
-          <Box p="4">
-            <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Heading size="6">Editor</Heading>
-              <Button variant="ghost" onClick={() => setShowEditor(false)}>Close</Button>
-            </Box>
-            <Text as="p" color="gray" size="2">Write D3 + ELKJS code and click RUN.</Text>
-            <Box mt="3">
-              <CodeEditor
-                ref={editorRef}
-                initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
-                storageKey={`d3:${id}:code`}
-                height={360}
-                language="javascript"
-                onChange={handleEditorChange}
-              />
-            </Box>
-            <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <EditorPanel
+          title="Editor"
+          onClose={() => setShowEditor(false)}
+          description={<Text as="span" color="gray" size="2">Write D3 + ELKJS code and click RUN.</Text>}
+          actions={(
+            <>
               <Button onClick={doRun} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
               <Button variant="soft" onClick={resetEditorToLastRunning}>Reset to Last Running</Button>
               <Button variant="soft" onClick={resetEditorToOriginal}>Reset to Original</Button>
               <Button variant="surface" onClick={() => setShowDocsHelper(v => !v)}>{showDocsHelper ? 'Hide D3 Doc' : 'D3 Doc'}</Button>
-            </Box>
-          </Box>
-        </Card>
+            </>
+          )}
+        >
+          <CodeEditor
+            ref={editorRef}
+            initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
+            storageKey={`d3:${id}:code`}
+            height={360}
+            language="javascript"
+            onChange={handleEditorChange}
+          />
+        </EditorPanel>
       ) : null}
       docs={workbenchVisible && showDocsHelper ? (
         <DocsPanel title="D3 Docs" source="d3-apis.md" height={360} onClose={() => setShowDocsHelper(false)}>

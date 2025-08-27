@@ -1,13 +1,15 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
-import { Box, Card, Heading, Text, Button, Callout, Flex, TextField, Switch } from '@radix-ui/themes'
-import { Download, Play, Wrench, Eye } from 'lucide-react'
+import { Box, Text, Button, Flex, TextField, Switch } from '@radix-ui/themes'
+import { Download, Play } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
 import { WorkbenchShell } from '@/components/common/WorkbenchShell'
 import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
 import { downloadText } from '@/lib/downloads'
+import { ViewerChrome } from '@/components/common/ViewerChrome'
+import { EditorPanel } from '@/components/common/EditorPanel'
 import { D2 } from '@terrastruct/d2'
 
 // Try to turn D2 compile/render errors (which can be JSON arrays) into readable text
@@ -251,30 +253,11 @@ export const D2Workbench = forwardRef(function D2Workbench(
 
   const viewerNode = (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Toggle inside the viewer to preserve original UX */}
-      {!workbenchVisible ? (
-        <Button
-          size="1"
-          variant="ghost"
-          onClick={() => setWorkbenchVisible(true)}
-          style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }}
-          aria-label="Open workbench"
-          title="Open workbench"
-        >
-          <Wrench width={28} height={28} strokeWidth={2} />
-        </Button>
-      ) : (
-        <Button
-          size="1"
-          variant="ghost"
-          onClick={() => setWorkbenchVisible(false)}
-          style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }}
-          aria-label="Viewer only"
-          title="Viewer only"
-        >
-          <Eye width={28} height={28} strokeWidth={2} />
-        </Button>
-      )}
+      <ViewerChrome
+        visible={workbenchVisible}
+        onOpen={() => setWorkbenchVisible(true)}
+        onClose={() => setWorkbenchVisible(false)}
+      />
       <div ref={svgContainerRef} style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 8, boxSizing: 'border-box' }} />
     </div>
   )
@@ -316,28 +299,21 @@ export const D2Workbench = forwardRef(function D2Workbench(
   ) : null
 
   const editorNode = (workbenchVisible && showEditor) ? (
-    <Card>
-      <Box p="4">
-        <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Heading size="6">Editor</Heading>
-          <Button variant="ghost" onClick={() => setShowEditor(false)}>Close</Button>
-        </Box>
-        <Text as="p" color="gray" size="2">Edit the D2 source and click RUN to re-render.</Text>
-        <Box mt="3">
-          <CodeEditor
-            ref={editorRef}
-            initialCode={initialValuesRef.current?.code ?? (initialCode || '')}
-            storageKey={CODE_KEY}
-            height={360}
-            language="text"
-            onChange={(val) => writeCode(val)}
-          />
-        </Box>
-        <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button onClick={doCompile} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
-        </Box>
-      </Box>
-    </Card>
+    <EditorPanel
+      title="Editor"
+      onClose={() => setShowEditor(false)}
+      description={<Text as="span" color="gray" size="2">Edit the D2 source and click RUN to re-render.</Text>}
+      actions={<Button onClick={doCompile} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>}
+    >
+      <CodeEditor
+        ref={editorRef}
+        initialCode={initialValuesRef.current?.code ?? (initialCode || '')}
+        storageKey={CODE_KEY}
+        height={360}
+        language="text"
+        onChange={(val) => writeCode(val)}
+      />
+    </EditorPanel>
   ) : null
 
   // viewer height mirrors original behavior: taller when workbench hidden
