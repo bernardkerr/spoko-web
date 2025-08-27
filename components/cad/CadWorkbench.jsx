@@ -13,7 +13,8 @@ import { exportSTL, exportGLTF, downloadBlob, saveBlobWithPicker } from '@/compo
 // import { useOcModuleCache } from '@/components/cad/hooks/useOcModuleCache'
 import { useLastGoodCode } from '@/components/cad/hooks/useLastGoodCode'
 import { useOcWarmupWorker } from '@/components/cad/hooks/useOcWarmupWorker'
-import { DocsTable } from '@/components/cad/DocsTable'
+import { DocsPanel } from '@/components/common/DocsPanel'
+import { DocsTable } from '@/components/common/DocsTable'
 import { getAssetPath } from '@/lib/paths'
 
 export const CadWorkbench = forwardRef(function CadWorkbench(
@@ -626,10 +627,14 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
                     </Box>
                     {showDocsHelper && (
                       <Box mt="3">
-                        <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} height={360} />
-                        <Box mt="2" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                          <Button variant="ghost" onClick={() => setShowDocsHelper(false)}>Close Docs Helper</Button>
-                        </Box>
+                        <DocsPanel
+                          title="OCJS Docs Helper"
+                          source={getAssetPath('/test/cad-doc/oc-apis.md')}
+                          height={360}
+                          onClose={() => setShowDocsHelper(false)}
+                        >
+                          <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} variant="cad" showSearch />
+                        </DocsPanel>
                       </Box>
                     )}
                   </Box>

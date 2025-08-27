@@ -3,10 +3,14 @@
 import React, { useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react'
 import { Box, Card, Heading, Text, Button, Callout } from '@radix-ui/themes'
 import { Wrench, Eye, Download, Play } from 'lucide-react'
-import { CodeEditor } from '@/components/cad/CodeEditor'
-import { useLastGoodCode } from '@/components/svg/hooks/useLastGoodCode'
-import { DocsTable as SVGDocsTable } from '@/components/svg/DocsTable'
+import { CodeEditor } from '@/components/common/CodeEditor'
+import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
+// Docs helper: use shared panel + common table
+import { DocsPanel } from '@/components/common/DocsPanel'
+import { DocsTable as CommonDocsTable } from '@/components/common/DocsTable'
 import { getAssetPath } from '@/lib/paths'
+import { downloadText } from '@/lib/downloads'
+import { WorkbenchShell } from '@/components/common/WorkbenchShell'
 
 export const SVGWorkbench = forwardRef(function SVGWorkbench(
   {
@@ -35,7 +39,7 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
   const cleanupRef = useRef(null)
   const libsRef = useRef({ SVG: null, ELK: null })
 
-  const { read, writeCode, writeLastGood, resolveSource } = useLastGoodCode(id, initialCode || '')
+  const { read, writeCode, writeLastGood, resolveSource } = useLastGoodCode('svg', id, initialCode || '')
   const initialValuesRef = useRef(null)
   useEffect(() => {
     initialValuesRef.current = read()
@@ -152,22 +156,15 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
     if (!el) return
     const svg = el.querySelector('svg')
     if (!svg) return
-    const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    const base = (ui?.exportName || ui?.name || id || 'svg').toString().trim().replace(/\s+/g, '-').replace(/[^\w.-]+/g, '_') || 'svg'
-    a.href = url
-    a.download = `${base}.svg`
-    a.click()
-    URL.revokeObjectURL(url)
+    const base = (ui?.exportName || ui?.name || id || 'svg')
+      .toString().trim().replace(/\s+/g, '-').replace(/[^\w.-]+/g, '_') || 'svg'
+    downloadText(`${base}.svg`, svg.outerHTML, 'image/svg+xml')
   }
 
   return (
-    <Card variant="ghost">
-      <Box p="4" style={{ position: 'relative' }}>
-        {/* Viewer */}
-        <Box className="viewer-shell" style={{ position: 'relative', width: '100%', height: viewerHeight, minHeight: 280, borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden', background: 'var(--color-panel-solid)' }}>
-          {/* Toggle inside viewer */}
+    <WorkbenchShell
+      viewer={(
+        <>
           {!workbenchVisible ? (
             <Button size="1" variant="ghost" onClick={() => setWorkbenchVisible(true)} style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }} aria-label="Open workbench" title="Open workbench">
               <Wrench width={28} height={28} />
@@ -178,80 +175,58 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
             </Button>
           )}
           <div ref={containerRef} style={{ width: '100%', height: '100%', padding: 8, boxSizing: 'border-box' }} />
+        </>
+      )}
+      toolbar={workbenchVisible ? (
+        <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Button onClick={doRun} disabled={busy}>
+            <Play width={18} height={18} style={{ marginRight: 6 }} />
+            {busy ? 'Working…' : 'Run'}
+          </Button>
+          <Button variant="soft" onClick={doDownloadSVG}>
+            <Download width={18} height={18} style={{ marginRight: 6 }} />
+            Export SVG
+          </Button>
+          {!showEditor && (
+            <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
+          )}
         </Box>
-
-        {workbenchVisible && (
-          <>
-            {/* Toolbar */}
-            <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Button onClick={doRun} disabled={busy}>
-                <Play width={18} height={18} style={{ marginRight: 6 }} />
-                {busy ? 'Working…' : 'Run'}
-              </Button>
-              <Button variant="soft" onClick={doDownloadSVG}>
-                <Download width={18} height={18} style={{ marginRight: 6 }} />
-                Export SVG
-              </Button>
-              {!showEditor && (
-                <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
-              )}
+      ) : null}
+      status={workbenchVisible ? (<Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>) : null}
+      error={workbenchVisible && error ? (<pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>) : null}
+      editor={workbenchVisible && showEditor ? (
+        <Card>
+          <Box p="4">
+            <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Heading size="6">Editor</Heading>
+              <Button variant="ghost" onClick={() => setShowEditor(false)}>Close</Button>
             </Box>
-
-            {/* Status + Error */}
+            <Text as="p" color="gray" size="2">Write SVG.js + ELKJS code and click RUN.</Text>
             <Box mt="3">
-              <Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>
+              <CodeEditor
+                ref={editorRef}
+                initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
+                storageKey={`svg:${id}:code`}
+                height={360}
+                language="javascript"
+                onChange={handleEditorChange}
+              />
             </Box>
-            {error && (
-              <Box mt="2">
-                <Callout.Root color="red">
-                  <Callout.Text>
-                    <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>
-                  </Callout.Text>
-                </Callout.Root>
-              </Box>
-            )}
-
-            {/* Editor */}
-            {showEditor && (
-              <Box mt="6">
-                <Card>
-                  <Box p="4">
-                    <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Heading size="6">Editor</Heading>
-                      <Button variant="ghost" onClick={() => setShowEditor(false)}>Close</Button>
-                    </Box>
-                    <Text as="p" color="gray" size="2">Write SVG.js code and click RUN.</Text>
-                    <Box mt="3">
-                      <CodeEditor
-                        ref={editorRef}
-                        initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
-                        storageKey={`svg:${id}:code`}
-                        height={360}
-                        language="javascript"
-                        onChange={handleEditorChange}
-                      />
-                    </Box>
-                    <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <Button onClick={doRun} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
-                      <Button variant="soft" onClick={resetEditorToLastRunning}>Reset to Last Running</Button>
-                      <Button variant="soft" onClick={resetEditorToOriginal}>Reset to Original</Button>
-                      <Button variant="surface" onClick={() => setShowDocsHelper(v => !v)}>{showDocsHelper ? 'Hide SVG Doc' : 'SVG Doc'}</Button>
-                    </Box>
-                    {showDocsHelper && (
-                      <Box mt="3">
-                        <SVGDocsTable markdownUrl={getAssetPath('/test/svg-doc/svg-apis.md')} height={360} />
-                        <Box mt="2" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                          <Button variant="ghost" onClick={() => setShowDocsHelper(false)}>Close SVG Doc</Button>
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                </Card>
-              </Box>
-            )}
-          </>
-        )}
-      </Box>
-    </Card>
+            <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button onClick={doRun} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
+              <Button variant="soft" onClick={resetEditorToLastRunning}>Reset to Last Running</Button>
+              <Button variant="soft" onClick={resetEditorToOriginal}>Reset to Original</Button>
+              <Button variant="surface" onClick={() => setShowDocsHelper(v => !v)}>{showDocsHelper ? 'Hide SVG Doc' : 'SVG Doc'}</Button>
+            </Box>
+          </Box>
+        </Card>
+      ) : null}
+      docs={workbenchVisible && showDocsHelper ? (
+        <DocsPanel title="SVG.js Docs" source="svg-apis.md" height={360} onClose={() => setShowDocsHelper(false)}>
+          <CommonDocsTable markdownUrl={getAssetPath('/test/svg-doc/svg-apis.md')} />
+        </DocsPanel>
+      ) : null}
+      viewerHeight={viewerHeight}
+    />
   )
 })

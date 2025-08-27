@@ -2,7 +2,7 @@
 
 import { Box, Card, Heading, Text } from '@radix-ui/themes'
 import { getAssetPath } from '@/lib/paths'
-import { DocsTable } from '@/components/cad/DocsTable'
+import { DocsTable } from '@/components/common/DocsTable'
 
 export default function CadDocsPage() {
   return (
@@ -12,7 +12,7 @@ export default function CadDocsPage() {
       <Box mt="3">
         <Card>
           <Box p="4">
-            <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} />
+            <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} variant="cad" showSearch />
           </Box>
         </Card>
       </Box>
