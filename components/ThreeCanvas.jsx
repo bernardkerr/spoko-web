@@ -5,8 +5,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { Color } from 'three'
 
-// Animated cube component
-function AnimatedCube({ spinning, wireframe, color }) {
+// Animated object component supporting multiple geometry types
+function AnimatedObject({ geometry = 'cube', spinning, wireframe, color }) {
   const meshRef = useRef()
   
   useFrame((state, delta) => {
@@ -18,7 +18,13 @@ function AnimatedCube({ spinning, wireframe, color }) {
 
   return (
     <mesh ref={meshRef} position={[0, 0, 0]}>
-      <boxGeometry args={[2, 2, 2]} />
+      {geometry === 'torusKnot' ? (
+        <torusKnotGeometry args={[1.2, 0.35, 150, 20]} />
+      ) : geometry === 'icosahedron' ? (
+        <icosahedronGeometry args={[1.6, 0]} />
+      ) : (
+        <boxGeometry args={[2, 2, 2]} />
+      )}
       <meshStandardMaterial color={color} wireframe={wireframe} toneMapped={false} />
     </mesh>
   )
@@ -31,6 +37,7 @@ export const ThreeCanvas = memo(
     prev.spinning === next.spinning &&
     prev.wireframe === next.wireframe &&
     prev.showBackground === next.showBackground &&
+    prev.geometry === next.geometry &&
     prev.fullscreen === next.fullscreen &&
     prev.className === next.className
   )
@@ -49,7 +56,7 @@ function BackgroundPlane({ showBackground, color }) {
 }
 
 // Scene setup component
-function Scene({ spinning, wireframe, showBackground, colors }) {
+function Scene({ spinning, wireframe, showBackground, geometry, colors }) {
   const { camera, gl } = useThree()
   
   useEffect(() => {
@@ -77,7 +84,7 @@ function Scene({ spinning, wireframe, showBackground, colors }) {
       <pointLight position={[10, 10, 10]} intensity={1} />
       
       {/* 3D Objects */}
-      <AnimatedCube spinning={spinning} wireframe={wireframe} color={colors?.accent} />
+      <AnimatedObject geometry={geometry} spinning={spinning} wireframe={wireframe} color={colors?.accent} />
       <BackgroundPlane showBackground={showBackground} color={colors?.panel} />
 
       {/* Controls */}
@@ -208,6 +215,7 @@ function ThreeCanvasImpl({
   spinning = true, 
   wireframe = false, 
   showBackground = true,
+  geometry = 'cube',
   fullscreen = false,
   className = ''
 }) {
@@ -294,7 +302,7 @@ function ThreeCanvasImpl({
   return (
     <div 
       className={`three-canvas ${fullscreen ? 'three-fullscreen' : ''} ${className}`}
-      style={{ width: '100%', height: '400px', position: 'relative' }}
+      style={{ width: '100%', height: fullscreen ? '100%' : '400px', position: 'relative' }}
       ref={containerRef}
     >
       <Canvas
@@ -340,6 +348,7 @@ function ThreeCanvasImpl({
             spinning={spinning} 
             wireframe={wireframe} 
             showBackground={showBackground} 
+            geometry={geometry}
             colors={themeColors}
           />
           {/* Apply Radix theme-driven colors by mutating materials each frame */}

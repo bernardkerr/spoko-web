@@ -1,17 +1,15 @@
 'use client'
 
-import { useState } from 'react'
 import NextLink from 'next/link'
-import { ThreeCanvas } from '@/components/ThreeCanvas'
-import { Box, Button, Heading, Text } from '@radix-ui/themes'
+import { Box, Button } from '@radix-ui/themes'
+import { ThreeWorkbench } from '@/components/three/ThreeWorkbench'
 
 export default function ThreeFullPage() {
-  const [spinning, setSpinning] = useState(true)
-  const [wireframe, setWireframe] = useState(false)
+  const initialCode = `// Fullscreen Three Workbench\n// Return props to configure the scene.\nreturn {\n  spinning: true,\n  wireframe: false,\n  showBackground: true,\n}`
 
   return (
     <Box style={{ position: 'relative', height: '100vh', width: '100vw' }}>
-      {/* Controls overlay */}
+      {/* Back overlay */}
       <Box
         style={{
           position: 'absolute',
@@ -31,21 +29,18 @@ export default function ThreeFullPage() {
         <Button asChild variant="soft" size="2">
           <NextLink href="/test/three">Back</NextLink>
         </Button>
-        <Button size="2" onClick={() => setSpinning(!spinning)}>
-          {spinning ? 'Stop' : 'Spin'}
-        </Button>
-        <Button size="2" onClick={() => setWireframe(!wireframe)}>
-          {wireframe ? 'Solid' : 'Wire'}
-        </Button>
       </Box>
 
-      {/* Full-screen canvas */}
-      <ThreeCanvas
-        spinning={spinning}
-        wireframe={wireframe}
-        showBackground={true}
-        fullscreen={true}
-      />
+      {/* Full-screen workbench viewer */}
+      <div style={{ position: 'absolute', inset: 0 }}>
+        <ThreeWorkbench
+          id="three-full"
+          initialCode={initialCode}
+          autoRun={true}
+          showEditorDefault={false}
+          ui={{ workbench: true, viewerHeight: 720 }}
+        />
+      </div>
     </Box>
   )
 }

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import NextLink from 'next/link'
-import { ThreeCanvas } from '@/components/ThreeCanvas'
+import { ThreeWorkbench } from '@/components/three/ThreeWorkbench'
 import {
   Section,
   Box,
@@ -14,9 +13,7 @@ import {
 } from '@radix-ui/themes'
 
 export default function ThreePage() {
-  const [spinning, setSpinning] = useState(false)
-  const [wireframe, setWireframe] = useState(false)
-  const [showBackground, setShowBackground] = useState(true)
+  const initialCode = `// Three.js Workbench demo\n// Return an object to control the scene.\nreturn {\n  spinning: true,\n  wireframe: false,\n  showBackground: true,\n}`
 
   return (
     <Section size="4">
@@ -39,26 +36,15 @@ export default function ThreePage() {
           <Tabs.Content value="embedded">
             <Card>
               <Box p="4">
-                <Heading size="4" mb="2">Interactive 3D Cube</Heading>
-                <Text color="gray" size="2" mb="3">Use the controls below to modify the 3D scene. Click and drag to rotate the view.</Text>
-                <Box mb="3" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  <Button onClick={() => setSpinning(!spinning)}>
-                    {spinning ? 'Stop Spinning' : 'Start Spinning'}
-                  </Button>
-                  <Button onClick={() => setWireframe(!wireframe)}>
-                    {wireframe ? 'Solid' : 'Wireframe'}
-                  </Button>
-                  <Button onClick={() => setShowBackground(!showBackground)}>
-                    {showBackground ? 'Hide Background' : 'Show Background'}
-                  </Button>
-                </Box>
-                <Box style={{ height: 384, width: '100%', borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden' }}>
-                  <ThreeCanvas
-                    spinning={spinning}
-                    wireframe={wireframe}
-                    showBackground={showBackground}
-                  />
-                </Box>
+                <Heading size="4" mb="2">Interactive 3D Cube (Workbench)</Heading>
+                <Text color="gray" size="2" mb="3">Edit and run code to control the scene props. Click and drag to rotate the view.</Text>
+                <ThreeWorkbench
+                  id="three-embedded"
+                  initialCode={initialCode}
+                  autoRun={true}
+                  showEditorDefault={false}
+                  ui={{ workbench: true, viewerHeight: 384 }}
+                />
               </Box>
             </Card>
           </Tabs.Content>

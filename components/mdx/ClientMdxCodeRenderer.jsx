@@ -6,6 +6,7 @@ const CadBlock = dynamic(() => import('@/components/cad/CadBlock'), { ssr: false
 const D2Block = dynamic(() => import('@/components/d2/D2Block'), { ssr: false })
 const D3Block = dynamic(() => import('@/components/d3/D3Block'), { ssr: false })
 const SVGBlock = dynamic(() => import('@/components/svg/SVGBlock'), { ssr: false })
+const ThreeBlock = dynamic(() => import('@/components/three/ThreeBlock'), { ssr: false })
 
 export default function ClientMdxCodeRenderer(props) {
   const { className, children, metastring, ...rest } = props || {}
@@ -44,6 +45,28 @@ export default function ClientMdxCodeRenderer(props) {
 
   // Helper: parse parameters for SVG fences; supports JSON object or key=value pairs
   function parseSVGParams(meta) {
+    if (!meta || typeof meta !== 'string') return {}
+    const trimmed = meta.trim()
+    const jsonMatch = trimmed.match(/^\{[\s\S]*\}$/)
+    if (jsonMatch) {
+      try { return JSON.parse(jsonMatch[0]) } catch {}
+    }
+    const out = {}
+    const kvRe = /(\w+)=(("[^"]*")|('[^']*')|([^\s]+))/g
+    let mm
+    while ((mm = kvRe.exec(trimmed))) {
+      const k = mm[1]
+      let v = mm[3] || mm[4] || mm[5] || ''
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+        v = v.slice(1, -1)
+      }
+      out[k] = v
+    }
+    return out
+  }
+
+  // Helper: parse parameters for Three fences; supports JSON object or key=value pairs
+  function parseThreeParams(meta) {
     if (!meta || typeof meta !== 'string') return {}
     const trimmed = meta.trim()
     const jsonMatch = trimmed.match(/^\{[\s\S]*\}$/)
@@ -159,6 +182,18 @@ export default function ClientMdxCodeRenderer(props) {
     if (lang === 'js' && typeof metastring === 'string' && /(?:^|\s)svg(?:\s|$)/i.test(metastring)) {
       const params = parseSVGParams(metastring.replace(/(?:^|\s)svg(?:\s|$)/i, '').trim())
       return <SVGBlock code={code} params={params} />
+    }
+
+    // New: ```three {...}
+    if (lang === 'three') {
+      const params = parseThreeParams(metastring)
+      return <ThreeBlock code={code} params={params} />
+    }
+
+    // New: ```js three {...}
+    if (lang === 'js' && typeof metastring === 'string' && /(?:^|\s)three(?:\s|$)/i.test(metastring)) {
+      const params = parseThreeParams(metastring.replace(/(?:^|\s)three(?:\s|$)/i, '').trim())
+      return <ThreeBlock code={code} params={params} />
     }
   } catch (e) {
     // Swallow and fall back to raw code on any unexpected error

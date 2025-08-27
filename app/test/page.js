@@ -118,6 +118,30 @@ export default function TestPage() {
 
         <Separator my="5" size="4" />
 
+        {/* Three.js */}
+        <Box mt="6" mb="3">
+          <Heading size="6">Three.js</Heading>
+        </Box>
+        <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
+          <DocCard>
+            <Heading size="4" mb="1">Three.js Playground</Heading>
+            <Text color="gray" size="2" mb="3">Interactive 3D graphics playground powered by Three.js and React Three Fiber.</Text>
+            <Button asChild>
+              <NextLink href="/test/three">Open Three.js</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">Three in Markdown</Heading>
+            <Text color="gray" size="2" mb="3">Markdown pages that embed live Three workbenches via <Code>```three</Code> or <Code>```js three</Code> blocks.</Text>
+            <Button asChild>
+              <NextLink href="/test/docs/three-basic-test">Open Three-MD</NextLink>
+            </Button>
+          </DocCard>
+        </Grid>
+
+        <Separator my="5" size="4" />
+
         {/* Theme (formerly Figma) */}
         <Box mt="6" mb="3">
           <Heading size="6">Theme</Heading>
@@ -147,14 +171,6 @@ export default function TestPage() {
           <Heading size="6">Misc</Heading>
         </Box>
         <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
-          <DocCard>
-            <Heading size="4" mb="1">Three.js Examples</Heading>
-            <Text color="gray" size="2" mb="3">Interactive 3D graphics and animations powered by Three.js and React Three Fiber.</Text>
-            <Button asChild>
-              <NextLink href="/test/three">View Examples</NextLink>
-            </Button>
-          </DocCard>
-
           <DocCard>
             <Heading size="4" mb="1">Mermaid Diagrams</Heading>
             <Text color="gray" size="2" mb="3">Beautiful diagrams and flowcharts with site-themed Mermaid integration.</Text>
