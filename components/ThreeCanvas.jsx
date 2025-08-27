@@ -3,19 +3,18 @@
 import { Suspense, useState, useRef, useEffect, useMemo, memo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { Color } from 'three'
+import { Color, Clock, TextureLoader, MeshStandardMaterial, MeshBasicMaterial } from 'three'
+import * as THREE from 'three'
 
 // Animated object component supporting multiple geometry types
 function AnimatedObject({ geometry = 'cube', spinning, wireframe, color }) {
   const meshRef = useRef()
-  
   useFrame((state, delta) => {
     if (spinning && meshRef.current) {
       meshRef.current.rotation.x += delta * 1
       meshRef.current.rotation.y += delta * 0.5
     }
   })
-
   return (
     <mesh ref={meshRef} position={[0, 0, 0]}>
       {geometry === 'torusKnot' ? (
@@ -30,6 +29,103 @@ function AnimatedObject({ geometry = 'cube', spinning, wireframe, color }) {
   )
 }
 
+// Host a user-provided program lifecycle (setup/update/dispose + events)
+function ProgramHost({ program, themeColors }) {
+  const { scene, camera, gl: renderer } = useThree()
+  const clockRef = useRef(new Clock())
+  const texLoaderRef = useRef(null)
+  const handlersRef = useRef({})
+
+  const ctx = useMemo(() => {
+    const add = (obj) => scene.add(obj)
+    const remove = (obj) => scene.remove(obj)
+    const materials = {
+      standard: (opts) => new MeshStandardMaterial(opts),
+      basic: (opts) => new MeshBasicMaterial(opts),
+    }
+    return {
+      scene,
+      camera,
+      renderer,
+      clock: clockRef.current,
+      THREE,
+      add,
+      remove,
+      materials,
+      loaders: {
+        texture: (url) => {
+          if (!texLoaderRef.current) texLoaderRef.current = new TextureLoader()
+          return new Promise((resolve, reject) => {
+            texLoaderRef.current.load(url, resolve, undefined, reject)
+          })
+        },
+      },
+      themeColors,
+    }
+  }, [scene, camera, renderer, themeColors])
+
+  useEffect(() => {
+    let disposed = false
+    ;(async () => {
+      try {
+        await program?.setup?.(ctx)
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[ThreeCanvas] program.setup error', e)
+      }
+    })()
+    return () => {
+      if (disposed) return
+      disposed = true
+      try {
+        program?.dispose?.(ctx)
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[ThreeCanvas] program.dispose error', e)
+      }
+    }
+  }, [program, ctx])
+
+  useFrame(() => {
+    try {
+      const dt = clockRef.current.getDelta()
+      program?.update?.({ ...ctx, dt, elapsed: clockRef.current.elapsedTime })
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[ThreeCanvas] program.update error', e)
+    }
+  })
+
+  useEffect(() => {
+    const canvas = renderer?.domElement
+    if (!canvas) return
+    const onPointerDown = (e) => program?.onPointerDown?.(e, ctx)
+    const onPointerMove = (e) => program?.onPointerMove?.(e, ctx)
+    const onPointerUp = (e) => program?.onPointerUp?.(e, ctx)
+    const onWheel = (e) => program?.onWheel?.(e, ctx)
+    const onKeyDown = (e) => program?.onKeyDown?.(e, ctx)
+    const onKeyUp = (e) => program?.onKeyUp?.(e, ctx)
+    canvas.addEventListener('pointerdown', onPointerDown)
+    canvas.addEventListener('pointermove', onPointerMove)
+    canvas.addEventListener('pointerup', onPointerUp)
+    canvas.addEventListener('wheel', onWheel)
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    handlersRef.current = { onPointerDown, onPointerMove, onPointerUp, onWheel, onKeyDown, onKeyUp }
+    return () => {
+      const h = handlersRef.current
+      canvas.removeEventListener('pointerdown', h.onPointerDown)
+      canvas.removeEventListener('pointermove', h.onPointerMove)
+      canvas.removeEventListener('pointerup', h.onPointerUp)
+      canvas.removeEventListener('wheel', h.onWheel)
+      window.removeEventListener('keydown', h.onKeyDown)
+      window.removeEventListener('keyup', h.onKeyUp)
+    }
+  }, [renderer, program, ctx])
+
+  return null
+}
+
 // Only re-render when actual visual props change. Prevents hover/enter bubbling re-renders.
 export const ThreeCanvas = memo(
   ThreeCanvasImpl,
@@ -39,7 +135,10 @@ export const ThreeCanvas = memo(
     prev.showBackground === next.showBackground &&
     prev.geometry === next.geometry &&
     prev.fullscreen === next.fullscreen &&
-    prev.className === next.className
+    prev.className === next.className &&
+    prev.program === next.program &&
+    prev.lightIntensity === next.lightIntensity &&
+    prev.backgroundColor === next.backgroundColor
   )
 )
 
@@ -55,8 +154,19 @@ function BackgroundPlane({ showBackground, color }) {
   )
 }
 
+// Helper to set the renderer clear color from props/theme
+function ClearColor({ color, fallback }) {
+  const { gl } = useThree()
+  useEffect(() => {
+    const target = color || fallback
+    if (!target) return
+    try { gl.setClearColor(new Color(target)) } catch (_) { gl.setClearColor(target) }
+  }, [gl, color, fallback])
+  return null
+}
+
 // Scene setup component
-function Scene({ spinning, wireframe, showBackground, geometry, colors }) {
+function Scene({ spinning, wireframe, showBackground, geometry, colors, backgroundColor, lightIntensity }) {
   const { camera, gl } = useThree()
   
   useEffect(() => {
@@ -66,26 +176,22 @@ function Scene({ spinning, wireframe, showBackground, geometry, colors }) {
 
   // Bind WebGL clear color to Radix theme without relying on CSS background
   useEffect(() => {
-    if (colors?.background) {
-      try {
-        gl.setClearColor(new Color(colors.background))
-      } catch (_) {
-        // Fallback: try raw string if Color parsing fails
-        gl.setClearColor(colors.background)
-      }
+    const target = backgroundColor || colors?.background
+    if (target) {
+      try { gl.setClearColor(new Color(target)) } catch (_) { gl.setClearColor(target) }
     }
-  }, [gl, colors?.background])
+  }, [gl, colors?.background, backgroundColor])
 
   return (
     <>
       {/* Lighting */}
-      <ambientLight intensity={0.6} />
-      <hemisphereLight skyColor={0xffffff} groundColor={0x444444} intensity={0.4} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
+      <ambientLight intensity={0.6 * lightIntensity} />
+      <hemisphereLight skyColor={0xffffff} groundColor={0x444444} intensity={0.4 * lightIntensity} />
+      <pointLight position={[10, 10, 10]} intensity={1 * lightIntensity} />
       
       {/* 3D Objects */}
       <AnimatedObject geometry={geometry} spinning={spinning} wireframe={wireframe} color={colors?.accent} />
-      <BackgroundPlane showBackground={showBackground} color={colors?.panel} />
+      <BackgroundPlane showBackground={showBackground} color={backgroundColor || colors?.panel} />
 
       {/* Controls */}
       <OrbitControls enableDamping dampingFactor={0.1} rotateSpeed={0.8} />
@@ -217,7 +323,11 @@ function ThreeCanvasImpl({
   showBackground = true,
   geometry = 'cube',
   fullscreen = false,
-  className = ''
+  className = '',
+  program = null,
+  shell = { lights: true, controls: true, background: true },
+  lightIntensity = 1,
+  backgroundColor = null,
 }) {
   const [error, setError] = useState(null)
   const [mountId, setMountId] = useState(0) // force remounts on failure/retry
@@ -343,15 +453,39 @@ function ThreeCanvasImpl({
         style={canvasStyle}
       >
         <Suspense fallback={<LoadingFallback />}>
-          {/* Inject colors via context by setting materials inline below */}
-          <Scene 
-            spinning={spinning} 
-            wireframe={wireframe} 
-            showBackground={showBackground} 
-            geometry={geometry}
-            colors={themeColors}
-          />
-          {/* Apply Radix theme-driven colors by mutating materials each frame */}
+          {program ? (
+            <>
+              {/* Shell: lighting/background/controls */}
+              <ClearColor color={backgroundColor} fallback={themeColors?.background} />
+              {shell?.lights !== false && (
+                <>
+                  <ambientLight intensity={0.6 * (lightIntensity || 1)} />
+                  <hemisphereLight skyColor={0xffffff} groundColor={0x444444} intensity={0.4 * (lightIntensity || 1)} />
+                  <pointLight position={[10, 10, 10]} intensity={1 * (lightIntensity || 1)} />
+                </>
+              )}
+              {shell?.background !== false && (
+                <BackgroundPlane showBackground={showBackground} color={backgroundColor || themeColors?.panel} />
+              )}
+              {shell?.controls !== false && (
+                <OrbitControls enableDamping dampingFactor={0.1} rotateSpeed={0.8} />
+              )}
+              <ProgramHost program={program} themeColors={themeColors} />
+            </>
+          ) : (
+            <>
+              {/* Legacy demo scene for back-compat */}
+              <Scene 
+                spinning={spinning} 
+                wireframe={wireframe} 
+                showBackground={showBackground} 
+                geometry={geometry}
+                colors={themeColors}
+                backgroundColor={backgroundColor}
+                lightIntensity={lightIntensity}
+              />
+            </>
+          )}
         </Suspense>
       </Canvas>
     </div>

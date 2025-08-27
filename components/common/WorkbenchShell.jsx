@@ -27,12 +27,13 @@ export function WorkbenchShell({
   editor = null,
   docs = null,
   viewerHeight = 420,
+  toolbarPosition = 'top',
 }) {
   return (
     <Card variant="ghost">
       <Box p="4" style={{ position: 'relative' }}>
-        {/* Toolbar */}
-        {toolbar ? (
+        {/* Toolbar (top) */}
+        {toolbar && toolbarPosition !== 'bottom' ? (
           <Box mb="3">
             {toolbar}
           </Box>
@@ -54,6 +55,13 @@ export function WorkbenchShell({
         >
           {viewer}
         </Box>
+
+        {/* Toolbar (bottom) */}
+        {toolbar && toolbarPosition === 'bottom' ? (
+          <Box mt="3">
+            {toolbar}
+          </Box>
+        ) : null}
 
         {/* Status / Error */}
         {(status || error) ? (

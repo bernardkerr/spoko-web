@@ -13,7 +13,7 @@ import {
 } from '@radix-ui/themes'
 
 export default function ThreePage() {
-  const initialCode = `// Three.js Workbench demo\n// Return an object to control the scene.\nreturn {\n  spinning: true,\n  wireframe: false,\n  showBackground: true,\n}`
+  const initialCode = `// Three.js Workbench demo (program mode)\n// Optionally return a lifecycle object to create a custom scene.\n// Tip: You can also return legacy props instead.\nreturn {\n  async setup({ THREE, add, materials, themeColors }) {\n    const geo = new THREE.TorusKnotGeometry(1.2, 0.35, 150, 16)\n    const mat = materials.standard({ color: themeColors.accent, roughness: 0.35, metalness: 0.2 })\n    const mesh = new THREE.Mesh(geo, mat)\n    add(mesh)\n    this.mesh = mesh\n  },\n  update({ dt }) { if (this.mesh) this.mesh.rotation.y += dt * 0.8 },\n  dispose({ remove }) { if (this.mesh) { remove(this.mesh); this.mesh.geometry.dispose(); this.mesh.material.dispose(); this.mesh = null } },\n  onPointerDown(e, { THREE, themeColors }) { if (this.mesh) { this.mesh.material.wireframe = !this.mesh.material.wireframe } },\n}`
 
   return (
     <Section size="4">
@@ -36,8 +36,8 @@ export default function ThreePage() {
           <Tabs.Content value="embedded">
             <Card>
               <Box p="4">
-                <Heading size="4" mb="2">Interactive 3D Cube (Workbench)</Heading>
-                <Text color="gray" size="2" mb="3">Edit and run code to control the scene props. Click and drag to rotate the view.</Text>
+                <Heading size="4" mb="2">Three.js Program Workbench</Heading>
+                <Text color="gray" size="2" mb="3">Return legacy props or a program object with setup/update/dispose to build full scenes. Drag to orbit; click toggles wireframe.</Text>
                 <ThreeWorkbench
                   id="three-embedded"
                   initialCode={initialCode}
