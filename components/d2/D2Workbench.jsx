@@ -1,21 +1,14 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react'
+import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
 import { Box, Card, Heading, Text, Button, Callout, Flex, TextField, Switch } from '@radix-ui/themes'
-import { Wrench, Eye, Download, Play } from 'lucide-react'
-import { CodeEditor } from '@/components/cad/CodeEditor'
+import { Download, Play, Wrench, Eye } from 'lucide-react'
+import { CodeEditor } from '@/components/common/CodeEditor'
+import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
+import { WorkbenchShell } from '@/components/common/WorkbenchShell'
+import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
+import { downloadText } from '@/lib/downloads'
 import { D2 } from '@terrastruct/d2'
-
-// Simple helper to download text as a file
-function downloadText(filename, text, mime = 'text/plain') {
-  const blob = new Blob([text], { type: mime })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 // Try to turn D2 compile/render errors (which can be JSON arrays) into readable text
 function formatD2ErrorMessage(msg) {
@@ -62,6 +55,13 @@ export const D2Workbench = forwardRef(function D2Workbench(
   const d2Ref = useRef(null)
   const lastSVGRef = useRef('')
 
+  // unified persistence (align with D3/SVG usage)
+  const { CODE_KEY, read, writeCode, writeLastGood, resolveSource } = useLastGoodCode('d2', id, initialCode || '')
+  const initialValuesRef = useRef(null)
+  useEffect(() => {
+    initialValuesRef.current = read()
+  }, [read])
+
   // Create D2 instance once (client only)
   useEffect(() => {
     d2Ref.current = new D2()
@@ -103,6 +103,11 @@ export const D2Workbench = forwardRef(function D2Workbench(
       }
       setStatus('Done')
       onStatus?.('Done')
+      // Successful render: remember last good code
+      const current = editorRef.current?.getValue?.() ?? ''
+      if (current) {
+        writeLastGood(current)
+      }
     } catch (e) {
       const raw = e?.message || String(e)
       const pretty = formatD2ErrorMessage(raw)
@@ -133,6 +138,10 @@ export const D2Workbench = forwardRef(function D2Workbench(
           onStatus?.('Done')
           setError(null)
           onError?.(null)
+          const current = editorRef.current?.getValue?.() ?? ''
+          if (current) {
+            writeLastGood(current)
+          }
           return
         } catch (_) {
           // fall through
@@ -155,7 +164,7 @@ export const D2Workbench = forwardRef(function D2Workbench(
     setStatus(phase)
     onStatus?.(phase)
     try {
-      const src = editorRef.current?.getValue?.() ?? initialCode ?? ''
+      const src = resolveSource(editorRef.current?.getValue)
       const result = await d2Ref.current.compile(src, {
         // CompileOptions (RenderOptions + layout/fonts)
         layout: 'dagre',
@@ -177,7 +186,7 @@ export const D2Workbench = forwardRef(function D2Workbench(
       // try again without it to avoid a hard failure.
       if (/Invalid color format/i.test(pretty) && darkThemeID !== undefined && darkThemeID !== '') {
         try {
-          const src = editorRef.current?.getValue?.() ?? initialCode ?? ''
+          const src = resolveSource(editorRef.current?.getValue)
           const result = await d2Ref.current.compile(src, {
             layout: 'dagre',
             sketch: !!sketch,
@@ -225,12 +234,11 @@ export const D2Workbench = forwardRef(function D2Workbench(
     return () => window.removeEventListener('theme-change', onThemeChange)
   }, [doRender])
 
-  // Expose controls
-  useImperativeHandle(ref, () => ({
-    run: doCompile,
-    rerender: doRender,
-    getSVG: () => lastSVGRef.current || '',
-  }))
+  // Standardized imperative API
+  useWorkbenchInterface(ref, { run: doCompile })
+
+  // Optional helpers still accessible via closure (not on ref)
+  const getSVG = () => lastSVGRef.current || ''
 
   const doDownloadSVG = () => {
     const svg = lastSVGRef.current || ''
@@ -241,119 +249,108 @@ export const D2Workbench = forwardRef(function D2Workbench(
 
   const handleNumeric = (setter) => (e) => setter(e?.target?.value)
 
-  return (
-    <Card variant="ghost">
-      <Box p="4" style={{ position: 'relative' }}>
+  const viewerNode = (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Toggle inside the viewer to preserve original UX */}
+      {!workbenchVisible ? (
+        <Button
+          size="1"
+          variant="ghost"
+          onClick={() => setWorkbenchVisible(true)}
+          style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }}
+          aria-label="Open workbench"
+          title="Open workbench"
+        >
+          <Wrench width={28} height={28} strokeWidth={2} />
+        </Button>
+      ) : (
+        <Button
+          size="1"
+          variant="ghost"
+          onClick={() => setWorkbenchVisible(false)}
+          style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }}
+          aria-label="Viewer only"
+          title="Viewer only"
+        >
+          <Eye width={28} height={28} strokeWidth={2} />
+        </Button>
+      )}
+      <div ref={svgContainerRef} style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 8, boxSizing: 'border-box' }} />
+    </div>
+  )
 
-        {/* Viewer */}
-        <Box className="viewer-shell" style={{ position: 'relative', width: '100%', height: (ui?.viewerHeight ? Number(ui.viewerHeight) : (workbenchVisible ? 420 : 520)), minHeight: 280, borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden', background: 'var(--color-panel-solid)' }}>
-          {/* Toggle inside the viewer so it appears within the bordered box */}
-          {!workbenchVisible ? (
-            <Button
-              size="1"
-              variant="ghost"
-              onClick={() => setWorkbenchVisible(true)}
-              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }}
-              aria-label="Open workbench"
-              title="Open workbench"
-            >
-              <Wrench width={28} height={28} strokeWidth={2} />
-            </Button>
-          ) : (
-            <Button
-              size="1"
-              variant="ghost"
-              onClick={() => setWorkbenchVisible(false)}
-              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }}
-              aria-label="Viewer only"
-              title="Viewer only"
-            >
-              <Eye width={28} height={28} strokeWidth={2} />
-            </Button>
-          )}
-          <div ref={svgContainerRef} style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 8, boxSizing: 'border-box' }} />
+  const toolbarNode = workbenchVisible ? (
+    <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+      <Button onClick={doCompile} disabled={busy}>
+        <Play width={18} height={18} style={{ marginRight: 6 }} />
+        {busy ? 'Working…' : 'Run'}
+      </Button>
+      <Button variant="soft" onClick={doDownloadSVG} disabled={!lastSVGRef.current}>
+        <Download width={18} height={18} style={{ marginRight: 6 }} />
+        Export SVG
+      </Button>
+      <Flex align="center" gap="2">
+        <Text size="2">Sketch</Text>
+        <Switch checked={!!sketch} onCheckedChange={setSketch} onClick={() => setTimeout(doRender, 0)} />
+      </Flex>
+      <Flex align="center" gap="2">
+        <Text size="2">Pad</Text>
+        <TextField.Root size="1" type="number" value={pad} onChange={handleNumeric(setPad)} onBlur={doRender} style={{ width: 80 }} />
+      </Flex>
+      <Flex align="center" gap="2">
+        <Text size="2">Scale</Text>
+        <TextField.Root size="1" type="number" step="0.1" value={scale} onChange={handleNumeric(setScale)} onBlur={doRender} style={{ width: 90 }} />
+      </Flex>
+      <Flex align="center" gap="2">
+        <Text size="2">Theme</Text>
+        <TextField.Root size="1" type="number" value={themeID} onChange={handleNumeric(setThemeID)} onBlur={doRender} style={{ width: 90 }} />
+      </Flex>
+      <Flex align="center" gap="2">
+        <Text size="2">Dark Theme</Text>
+        <TextField.Root size="1" type="number" placeholder="(auto)" value={darkThemeID ?? ''} onChange={handleNumeric(setDarkThemeID)} onBlur={doRender} style={{ width: 100 }} />
+      </Flex>
+      {!showEditor && (
+        <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
+      )}
+    </Box>
+  ) : null
+
+  const editorNode = (workbenchVisible && showEditor) ? (
+    <Card>
+      <Box p="4">
+        <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Heading size="6">Editor</Heading>
+          <Button variant="ghost" onClick={() => setShowEditor(false)}>Close</Button>
         </Box>
-
-        {workbenchVisible && (
-          <>
-            {/* Toolbar */}
-            <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Button onClick={doCompile} disabled={busy}>
-                <Play width={18} height={18} style={{ marginRight: 6 }} />
-                {busy ? 'Working…' : 'Run'}
-              </Button>
-              <Button variant="soft" onClick={doDownloadSVG} disabled={!lastSVGRef.current}>
-                <Download width={18} height={18} style={{ marginRight: 6 }} />
-                Export SVG
-              </Button>
-              <Flex align="center" gap="2">
-                <Text size="2">Sketch</Text>
-                <Switch checked={!!sketch} onCheckedChange={setSketch} onClick={() => setTimeout(doRender, 0)} />
-              </Flex>
-              <Flex align="center" gap="2">
-                <Text size="2">Pad</Text>
-                <TextField.Root size="1" type="number" value={pad} onChange={handleNumeric(setPad)} onBlur={doRender} style={{ width: 80 }} />
-              </Flex>
-              <Flex align="center" gap="2">
-                <Text size="2">Scale</Text>
-                <TextField.Root size="1" type="number" step="0.1" value={scale} onChange={handleNumeric(setScale)} onBlur={doRender} style={{ width: 90 }} />
-              </Flex>
-              <Flex align="center" gap="2">
-                <Text size="2">Theme</Text>
-                <TextField.Root size="1" type="number" value={themeID} onChange={handleNumeric(setThemeID)} onBlur={doRender} style={{ width: 90 }} />
-              </Flex>
-              <Flex align="center" gap="2">
-                <Text size="2">Dark Theme</Text>
-                <TextField.Root size="1" type="number" placeholder="(auto)" value={darkThemeID ?? ''} onChange={handleNumeric(setDarkThemeID)} onBlur={doRender} style={{ width: 100 }} />
-              </Flex>
-              {!showEditor && (
-                <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
-              )}
-            </Box>
-
-            {/* Status + Error */}
-            <Box mt="3">
-              <Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>
-            </Box>
-            {error && (
-              <Box mt="2">
-                <Callout.Root color="red">
-                  <Callout.Text>
-                    <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>
-                  </Callout.Text>
-                </Callout.Root>
-              </Box>
-            )}
-
-            {/* Editor */}
-            {showEditor && (
-              <Box mt="6">
-                <Card>
-                  <Box p="4">
-                    <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Heading size="6">Editor</Heading>
-                      <Button variant="ghost" onClick={() => setShowEditor(false)}>Close</Button>
-                    </Box>
-                    <Text as="p" color="gray" size="2">Edit the D2 source and click RUN to re-render.</Text>
-                    <Box mt="3">
-                      <CodeEditor
-                        ref={editorRef}
-                        initialCode={initialCode}
-                        storageKey={`d2:${id}:code`}
-                        height={360}
-                        onChange={() => { /* keep persisted via CodeEditor */ }}
-                      />
-                    </Box>
-                    <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <Button onClick={doCompile} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
-                    </Box>
-                  </Box>
-                </Card>
-              </Box>
-            )}
-          </>
-        )}
+        <Text as="p" color="gray" size="2">Edit the D2 source and click RUN to re-render.</Text>
+        <Box mt="3">
+          <CodeEditor
+            ref={editorRef}
+            initialCode={initialValuesRef.current?.code ?? (initialCode || '')}
+            storageKey={CODE_KEY}
+            height={360}
+            language="text"
+            onChange={(val) => writeCode(val)}
+          />
+        </Box>
+        <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button onClick={doCompile} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
+        </Box>
       </Box>
     </Card>
+  ) : null
+
+  // viewer height mirrors original behavior: taller when workbench hidden
+  const viewerHeight = ui?.viewerHeight ? Number(ui.viewerHeight) : (workbenchVisible ? 420 : 520)
+
+  return (
+    <WorkbenchShell
+      toolbar={toolbarNode}
+      viewer={viewerNode}
+      status={<Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>}
+      error={error ? (<pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>) : null}
+      editor={editorNode}
+      viewerHeight={viewerHeight}
+    />
   )
 })

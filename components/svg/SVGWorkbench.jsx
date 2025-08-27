@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react'
+import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
 import { Box, Card, Heading, Text, Button, Callout } from '@radix-ui/themes'
 import { Wrench, Eye, Download, Play } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
@@ -11,6 +11,7 @@ import { DocsTable as CommonDocsTable } from '@/components/common/DocsTable'
 import { getAssetPath } from '@/lib/paths'
 import { downloadText } from '@/lib/downloads'
 import { WorkbenchShell } from '@/components/common/WorkbenchShell'
+import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
 
 export const SVGWorkbench = forwardRef(function SVGWorkbench(
   {
@@ -135,7 +136,7 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [libsReady])
 
-  useImperativeHandle(ref, () => ({ run: doRun }))
+  useWorkbenchInterface(ref, { run: doRun })
 
   const resetEditorToOriginal = () => {
     const def = initialCode ?? ''

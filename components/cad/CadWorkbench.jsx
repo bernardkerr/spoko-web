@@ -16,6 +16,7 @@ import { useOcWarmupWorker } from '@/components/cad/hooks/useOcWarmupWorker'
 import { DocsPanel } from '@/components/common/DocsPanel'
 import { DocsTable } from '@/components/common/DocsTable'
 import { getAssetPath } from '@/lib/paths'
+import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
 
 export const CadWorkbench = forwardRef(function CadWorkbench(
   {
@@ -347,12 +348,12 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // expose some methods
-  useImperativeHandle(ref, () => ({
+  // Standardized imperative API across workbenches
+  useWorkbenchInterface(ref, {
     run: runBuild,
     fitView: () => viewerRef.current?.fitView?.(),
-    resetCamera: () => viewerRef.current?.reset?.(),
-  }))
+    reset: () => viewerRef.current?.reset?.(),
+  })
 
   const doExportSTEP = async () => {
     try {
