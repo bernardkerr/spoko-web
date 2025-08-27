@@ -9,6 +9,7 @@ import { Mermaid } from '@/components/Mermaid'
 import { Section, Box, Heading, Text } from '@radix-ui/themes'
 import SideImagesDoc from '@/components/templates/SideImagesDoc'
 import FloatingTOC from '@/components/FloatingTOC'
+import { extractAndMaybeRemoveFirstH1FromHtml } from '@/lib/title'
 
 export async function generateStaticParams() {
   const slugs = await getAllMarkdownSlugsFromRoots(['docs-submodules'])
@@ -37,22 +38,20 @@ export default async function DocumentationPage({ params }) {
   // Start from the HTML returned by markdown processor
   let html = doc.content
 
-  // Find the first H1 (if any) to possibly use as title and remove from body
-  const firstH1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)
-  const firstH1Text = firstH1Match ? firstH1Match[1].replace(/<[^>]+>/g, '').trim() : undefined
-  if (firstH1Match) {
-    // Remove only the first H1 from the HTML body
-    html = html.replace(firstH1Match[0], '')
-  }
+  // Use shared utility to dedupe/remove first H1 against frontmatter title
+  const { html: bodyHtml, title: derivedTitle } = extractAndMaybeRemoveFirstH1FromHtml(
+    html,
+    doc.frontmatter.title
+  )
 
-  // Derive page title: prefer frontmatter, then first H1 text, then slug fallback
-  let pageTitle = doc.frontmatter.title || firstH1Text
+  // Derive page title: prefer frontmatter or first H1 text, then slug fallback
+  let pageTitle = derivedTitle
   if (!pageTitle) {
     pageTitle = slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
   }
 
   // Process images in the HTML to use correct paths
-  let processedContent = html
+  let processedContent = bodyHtml
 
   // Handle absolute paths that include docs-test or docs-submodules
   processedContent = processedContent.replace(

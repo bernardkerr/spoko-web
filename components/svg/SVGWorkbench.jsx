@@ -33,7 +33,7 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
   const containerRef = useRef(null)
   const editorRef = useRef(null)
   const cleanupRef = useRef(null)
-  const libsRef = useRef({ SVG: null })
+  const libsRef = useRef({ SVG: null, ELK: null })
 
   const { read, writeCode, writeLastGood, resolveSource } = useLastGoodCode(id, initialCode || '')
   const initialValuesRef = useRef(null)
@@ -48,19 +48,22 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
     if (!showEditor && showDocsHelper) setShowDocsHelper(false)
   }, [showEditor, showDocsHelper])
 
-  // Load svg.js dynamically on client
+  // Load svg.js and elk.js dynamically on client
   useEffect(() => {
     let cancelled = false
     async function loadLibs() {
       try {
-        const { SVG } = await import('@svgdotjs/svg.js')
+        const [{ SVG }, { default: ELK }] = await Promise.all([
+          import('@svgdotjs/svg.js'),
+          import('elkjs/lib/elk.bundled.js'),
+        ])
         if (!cancelled) {
-          libsRef.current = { SVG }
+          libsRef.current = { SVG, ELK }
           setLibsReady(true)
         }
       } catch (e) {
         if (!cancelled) {
-          setError(`Failed to load svg.js: ${e?.message || e}`)
+          setError(`Failed to load libraries: ${e?.message || e}`)
           onError?.(String(e))
         }
       }
@@ -73,8 +76,8 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
 
   async function doRun() {
     if (!containerRef.current) return
-    const { SVG } = libsRef.current
-    if (!SVG) {
+    const { SVG, ELK } = libsRef.current
+    if (!SVG || !ELK) {
       setStatus('Loading libs…')
       return
     }
@@ -96,9 +99,10 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
 
     try {
       const src = resolveSource(() => editorRef.current?.getValue?.()) || ''
-      const wrapped = '"use strict"; return (async (el, SVG, width, height) => {\n' + src + '\n})'
+      const wrapped = '"use strict"; return (async (el, SVG, ELK, elk, width, height) => {\n' + src + '\n})'
       const factory = new Function(wrapped)()
-      const result = await factory(el, SVG, width, height)
+      const elk = new ELK()
+      const result = await factory(el, SVG, ELK, elk, width, height)
       if (typeof result === 'function') {
         cleanupRef.current = result
       }

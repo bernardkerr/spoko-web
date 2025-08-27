@@ -96,6 +96,32 @@ export function DocsTable({ markdownUrl, height }) {
     return () => { cancelled = true }
   }, [markdownUrl])
 
+  const meta = useMemo(() => {
+    // Extract first H1 and the first paragraph before the first table
+    const lines = text.split(/\r?\n/)
+    let title = ''
+    let intro = ''
+    let i = 0
+    // find first H1
+    while (i < lines.length && !lines[i].trim().startsWith('# ')) i++
+    if (i < lines.length && lines[i].startsWith('# ')) {
+      title = lines[i].replace(/^#\s+/, '').trim()
+      i++
+      // skip blank lines
+      while (i < lines.length && lines[i].trim() === '') i++
+      // collect intro until a blank line or a table starts
+      const introLines = []
+      while (i < lines.length) {
+        const ln = lines[i]
+        if (ln.trim() === '' || ln.trim().startsWith('|')) break
+        introLines.push(ln)
+        i++
+      }
+      intro = introLines.join('\n').trim()
+    }
+    return { title, intro }
+  }, [text])
+
   const rows = useMemo(() => {
     const parsed = parseMarkdownTable(text)
     const normalized = normalizeRows(parsed.rows)
@@ -169,9 +195,14 @@ export function DocsTable({ markdownUrl, height }) {
     <Card>
       <Box p="4">
         <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Heading size="6">SVG Doc</Heading>
+          <Heading size="6">{meta.title || 'SVG Doc'}</Heading>
           <Text color="gray" size="2">Source: {markdownUrl}</Text>
         </Box>
+        {meta.intro && (
+          <Box mt="2">
+            <Text as="p" size="2" color="gray">{meta.intro}</Text>
+          </Box>
+        )}
         <Box mt="3">
           <TextField.Root placeholder="Search name / description / signature" value={query} onChange={(e) => setQuery(e.target.value)} />
         </Box>

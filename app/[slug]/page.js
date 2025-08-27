@@ -8,6 +8,7 @@ import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import FloatingTOC from '@/components/FloatingTOC'
+import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
 
 export async function generateStaticParams() {
   const slugs = await getTopLevelContentSlugs()
@@ -43,8 +44,14 @@ export default async function TopLevelContentPage({ params }) {
 
     const { data: frontmatter, content } = matter(fileContents)
 
-    // Derive page title from frontmatter or slug
-    const pageTitle = frontmatter.title || slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    // Remove first H1 from MD/MDX content if it duplicates/equals page title
+    const { source: cleanedSource, title: derivedTitle } = extractAndMaybeRemoveFirstH1FromMdxSource(
+      content,
+      frontmatter.title
+    )
+
+    // Derive page title from frontmatter or first H1 or slug
+    const pageTitle = derivedTitle || slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 
     return (
       <>
@@ -61,7 +68,7 @@ export default async function TopLevelContentPage({ params }) {
             
             <div className="prose dark:prose-invert max-w-none">
               <Mdx
-                source={content}
+                source={cleanedSource}
                 layout={frontmatter.layout}
                 components={{
                   img: (imgProps) => (
