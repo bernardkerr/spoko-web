@@ -9,6 +9,7 @@ import path from 'path'
 import matter from 'gray-matter'
 import FloatingTOC from '@/components/FloatingTOC'
 import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
+import { CONTENT_VERSION } from '@/lib/content-version'
 
 export async function generateStaticParams() {
   const slugs = await getTopLevelContentSlugs()
@@ -56,7 +57,7 @@ export default async function TopLevelContentPage({ params }) {
     return (
       <>
         <Section size="4">
-          <Box className="container">
+          <Box className="container" data-content-version={CONTENT_VERSION}>
             <Box mb="5">
               <Heading size="9">
                 {pageTitle}

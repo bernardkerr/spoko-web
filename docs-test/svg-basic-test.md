@@ -33,7 +33,7 @@ function spin(){ rect.animate(1200).rotate(180).ease('<>').animate(1200).rotate(
 spin()
 ```
 
-## Example C: Orthogonal Flow with ELK.js (5 nodes)
+## Example C: Orthogonal Flow (+ Ports) with ELK.js
 
 ```js svg { "name": "elk-orthogonal", "workbench": false, "viewerHeight": 460 }
 // Orthogonal layout of rectangles using ELK.js with named ports.

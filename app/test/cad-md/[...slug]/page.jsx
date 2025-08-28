@@ -6,6 +6,7 @@ import { getMarkdownFilesFromRoots } from '@/lib/markdown'
 import { Mdx } from '@/lib/mdx'
 import { Section, Box, Heading, Text } from '@radix-ui/themes'
 import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
+import { CONTENT_VERSION } from '@/lib/content-version'
 
 export async function generateStaticParams() {
   const files = await getMarkdownFilesFromRoots(['docs-test'])
@@ -43,7 +44,7 @@ export default async function CadMdDocPage({ params }) {
 
   return (
     <Section size="4">
-      <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
+      <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }} data-content-version={CONTENT_VERSION}>
         <Box mb="5">
           <Heading size="9">{pageTitle}</Heading>
           <Text as="p" color="gray" size="4">

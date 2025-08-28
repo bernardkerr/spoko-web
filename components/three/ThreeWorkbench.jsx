@@ -195,6 +195,7 @@ export const ThreeWorkbench = forwardRef(function ThreeWorkbench(
           />
         </EditorPanel>
       ) : null}
+      toolbarPosition="bottom"
       viewerHeight={viewerHeight}
     />
   )

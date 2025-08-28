@@ -9,6 +9,7 @@ import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
+import { CONTENT_VERSION } from '@/lib/content-version'
 
 export async function generateStaticParams() {
   const slugs = await getAllMarkdownSlugsFromRoots(['docs-submodules'])
@@ -51,7 +52,7 @@ export default async function DocPage({ params }) {
   return (
     <>
       <Section size="4">
-        <Box className="container">
+        <Box className="container" data-content-version={CONTENT_VERSION}>
           <Box mb="5">
             <Heading size="9">{pageTitle}</Heading>
             {frontmatter.description && (

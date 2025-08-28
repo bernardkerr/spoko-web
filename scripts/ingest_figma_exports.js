@@ -94,7 +94,7 @@ function pickMode(collection, preferredName) {
   return { id: entries[0][0], name: entries[0][1] }
 }
 
-function renderCollection(collection, preferredModeName) {
+function renderCollection(collection, preferredModeName, definedThemeVars) {
   const vars = collection.variables || []
   const mode = pickMode(collection, preferredModeName)
   const lines = []
@@ -125,6 +125,7 @@ function renderCollection(collection, preferredModeName) {
     if (cssValue == null || cssValue === 'undefined') continue
     const cssVar = `--${colName}-${varName}`
     lines.push(`  ${cssVar}: ${cssValue};`)
+    if (definedThemeVars && cssVar.startsWith('--theme-')) definedThemeVars.add(cssVar)
   }
 
   return lines
@@ -149,7 +150,7 @@ function humanizeKey(k) {
   return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1)
 }
 
-function renderTokensMap(data, preferredModeName) {
+function renderTokensMap(data, preferredModeName, definedThemeVars) {
   const entries = Object.entries(data)
   if (entries.length === 0) return []
 
@@ -175,9 +176,49 @@ function renderTokensMap(data, preferredModeName) {
     if (cssValue == null || cssValue === 'undefined') continue
     const cssVar = `--${colName}-${varName}`
     lines.push(`  ${cssVar}: ${cssValue};`)
+    if (definedThemeVars && cssVar.startsWith('--theme-')) definedThemeVars.add(cssVar)
   }
 
   return lines
+}
+
+function scanUsedThemeVars(rootDir) {
+  const used = new Set()
+  const exts = new Set(['.css', '.scss', '.sass', '.less', '.js', '.jsx', '.ts', '.tsx', '.md', '.mdx', '.html'])
+  const skip = new Set(['node_modules', '.git', '.next', 'out', 'dist', 'build'])
+  const re = /var\(\s*(--theme-[a-zA-Z0-9_-]+)\b/g
+
+  function walk(dir) {
+    let entries
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const ent of entries) {
+      if (skip.has(ent.name)) continue
+      const full = path.join(dir, ent.name)
+      if (ent.isDirectory()) {
+        walk(full)
+      } else {
+        const ext = path.extname(ent.name)
+        if (!exts.has(ext)) continue
+        let text = ''
+        try {
+          text = fs.readFileSync(full, 'utf8')
+        } catch {
+          continue
+        }
+        let m
+        while ((m = re.exec(text)) !== null) {
+          used.add(m[1])
+        }
+      }
+    }
+  }
+
+  walk(rootDir)
+  return used
 }
 
 function main() {
@@ -192,15 +233,16 @@ function main() {
   const chunks = []
   chunks.push('/* Generated from figma/exports by scripts/ingest_figma_exports.js */')
   chunks.push(':root {')
+  const definedThemeVars = new Set()
 
   for (const file of files) {
     const data = readJson(file)
     if (data && data.variables) {
-      chunks.push(...renderCollection(data, preferredMode))
+      chunks.push(...renderCollection(data, preferredMode, definedThemeVars))
       continue
     }
     if (isTokensMap(data)) {
-      chunks.push(...renderTokensMap(data, preferredMode))
+      chunks.push(...renderTokensMap(data, preferredMode, definedThemeVars))
       continue
     }
     // Unknown format: skip
@@ -212,6 +254,16 @@ function main() {
   ensureDir(path.dirname(OUT_CSS))
   fs.writeFileSync(OUT_CSS, chunks.join('\n') + '\n', 'utf8')
   console.log(`Wrote ${path.relative(ROOT, OUT_CSS)}`)
+
+  // Emit warnings for theme vars used but not defined by tokens
+  const usedThemeVars = scanUsedThemeVars(ROOT)
+  const missing = [...usedThemeVars].filter((v) => !definedThemeVars.has(v)).sort()
+  if (missing.length > 0) {
+    console.warn(`\n[figma:ingest] WARNING: ${missing.length} theme token(s) used but not defined:`)
+    for (const v of missing) {
+      console.warn(`  - ${v} (add to figma exports or provide a fallback in styles/globals.css)`) 
+    }
+  }
 }
 
 main()

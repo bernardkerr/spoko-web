@@ -11,6 +11,7 @@ import { Section, Box, Heading, Text } from '@radix-ui/themes'
 import FloatingTOC from '@/components/FloatingTOC'
 import { Mdx } from '@/lib/mdx'
 import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
+import { CONTENT_VERSION } from '@/lib/content-version'
 
 // Mermaid diagrams are now pre-rendered to inline SVG by lib/markdown.js.
 
@@ -47,7 +48,7 @@ export default async function DocPage({ params }) {
   return (
     <>
       <Section size="4">
-        <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
+        <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }} data-content-version={CONTENT_VERSION}>
           <Box mb="5">
             <Heading size="9">{pageTitle}</Heading>
             {fm && fm.description && (

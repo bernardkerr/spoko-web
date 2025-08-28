@@ -150,7 +150,7 @@
   --theme-colors-semantic-info-alpha-10: #00bcf38b;
   --theme-colors-semantic-info-alpha-11: #00749e;
   --theme-colors-semantic-info-alpha-12: #002540e2;
-  --theme-panel-default: #ffffffcc;
+  --theme-panel-default: #ffffff99;
   --theme-tokens-colors-overlay: #00083046;
   --theme-tokens-colors-text: #1c2024;
   --theme-tokens-colors-surface: #ffffffe5;
@@ -183,9 +183,10 @@
   --theme-tokens-colors-black-contrast: #1c2024;
   --theme-tokens-colors-white-contrast: #ffffff;
   --theme-panel-solid: #ffffff;
-  --theme-panel-translucent: #ffffffcc;
+  --theme-panel-translucent: #ffffff99;
   --theme-tokens-space-menu-item-height-2: 32px;
   --theme-tokens-space-menu-item-height-1: 24px;
+  --theme-tokens-space-navbar-height: 60px;
   --theme-tokens-space-table-cell-min-height-1: 36px;
   --theme-tokens-space-table-cell-min-height-2: 44px;
   --theme-tokens-space-table-cell-min-height-3: 48px;

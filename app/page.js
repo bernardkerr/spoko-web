@@ -9,6 +9,7 @@ import FloatingTOC from '@/components/FloatingTOC'
 import MDXImage from '@/components/MDXImage'
 import FeatureBox from '@/components/FeatureBox'
 import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
+import { CONTENT_VERSION } from '@/lib/content-version'
 
 export default async function Home() {
   // In development, disable caching so markdown edits reflect immediately.
@@ -46,7 +47,7 @@ export default async function Home() {
     return (
       <>
         <Section size="4">
-          <Box className="container">
+          <Box className="container" data-content-version={CONTENT_VERSION}>
             <div className="prose dark:prose-invert max-w-none">
               <Mdx
                 source={content}
@@ -84,7 +85,7 @@ export default async function Home() {
   // Fallback to existing hard-coded content
   return (
     <Section size="4">
-      <Box className="container">
+      <Box className="container" data-content-version={CONTENT_VERSION}>
         {process.env.NODE_ENV !== 'production' && (
           <Text size="1" color="gray" mb="2">[Dev] Fallback homepage JSX</Text>
         )}

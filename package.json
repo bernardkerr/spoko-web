@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/sync-content-images.js && next dev -p 3000",
+    "dev": "node scripts/watch-content-version.js & next dev -p 3000",
+    "watch:content": "node scripts/watch-content-version.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -65,6 +66,7 @@
     "prettier": "^3.0.0",
     "puppeteer": "^24.16.0",
     "remark-frontmatter": "^5.0.0",
-    "serve": "^14.2.1"
+    "serve": "^14.2.1",
+    "chokidar": "^3.6.0"
   }
 }
