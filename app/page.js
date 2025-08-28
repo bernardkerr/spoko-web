@@ -1,7 +1,14 @@
-import ClientHomeContent from '@/components/ClientHomeContent'
-// Note: Using static export. Avoid force-dynamic/noStore to keep compatibility.
+import fs from 'fs'
+import path from 'path'
+import matter from 'gray-matter'
 import { Section, Box, Heading, Text, Button, Flex } from '@radix-ui/themes'
 import NextLink from 'next/link'
+import { Mdx } from '@/lib/mdx'
+import { Mermaid } from '@/components/Mermaid'
+import FloatingTOC from '@/components/FloatingTOC'
+import MDXImage from '@/components/MDXImage'
+import FeatureBox from '@/components/FeatureBox'
+import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
 
 export default async function Home() {
   // In development, disable caching so markdown edits reflect immediately.
@@ -11,17 +18,61 @@ export default async function Home() {
     const { headers } = await import('next/headers')
     headers() // trigger dynamic rendering in dev
   }
+
   try {
-    // Render MDX as first-class module for proper HMR
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[Home] rendering MDX module: Home')
+    // Read home content from content/home.mdx (or .md)
+    const mdxPath = path.join(process.cwd(), 'content', 'home.mdx')
+    const mdPath = path.join(process.cwd(), 'content', 'home.md')
+    let fileContents = null
+    if (fs.existsSync(mdxPath)) {
+      fileContents = fs.readFileSync(mdxPath, 'utf8')
+    } else if (fs.existsSync(mdPath)) {
+      fileContents = fs.readFileSync(mdPath, 'utf8')
     }
+
+    if (!fileContents) {
+      throw new Error('content/home.mdx (or .md) not found')
+    }
+
+    const { data: frontmatter, content } = matter(fileContents)
+
+    // Derive page title from frontmatter or first H1, but keep the H1 in body (no removal)
+    const { title: derivedTitle } = extractAndMaybeRemoveFirstH1FromMdxSource(
+      content,
+      frontmatter.title
+    )
+    const pageTitle = derivedTitle || 'Home'
+
     return (
-      <Section size="4">
-        <Box mx="auto" style={{ maxWidth: 1440, width: '100%' }}>
-          <ClientHomeContent />
-        </Box>
-      </Section>
+      <>
+        <Section size="4">
+          <Box className="container">
+            <div className="prose dark:prose-invert max-w-none">
+              <Mdx
+                source={content}
+                layout={frontmatter.layout}
+                components={{
+                  // Map markdown elements and custom components expected by the home MDX
+                  h1: (props) => <Heading as="h1" size="9" mb="2" {...props} />,
+                  img: (imgProps) => (
+                    <MDXImage {...imgProps} originPath="/" backLabel={pageTitle} />
+                  ),
+                  FeatureBox,
+                  // Expose Radix primitives and NextLink for MDX usage
+                  Heading,
+                  Text,
+                  Box,
+                  Flex,
+                  Button,
+                  NextLink,
+                }}
+              />
+            </div>
+            <Mermaid autoRender={true} />
+          </Box>
+        </Section>
+        <FloatingTOC />
+      </>
     )
   } catch (e) {
     if (process.env.NODE_ENV !== 'production') {
@@ -33,7 +84,7 @@ export default async function Home() {
   // Fallback to existing hard-coded content
   return (
     <Section size="4">
-      <Box mx="auto" style={{ maxWidth: 1440, width: '100%' }}>
+      <Box className="container">
         {process.env.NODE_ENV !== 'production' && (
           <Text size="1" color="gray" mb="2">[Dev] Fallback homepage JSX</Text>
         )}

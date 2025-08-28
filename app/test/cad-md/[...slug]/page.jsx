@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { getMarkdownFilesFromRoots } from '@/lib/markdown'
 import { Mdx } from '@/lib/mdx'
 import { Section, Box, Heading, Text } from '@radix-ui/themes'
+import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
 
 export async function generateStaticParams() {
   const files = await getMarkdownFilesFromRoots(['docs-test'])
@@ -29,10 +30,13 @@ export default async function CadMdDocPage({ params }) {
   // Parse frontmatter and strip it from MDX source
   const { data: fm, content } = matter(md)
 
-  // Derive page title: prefer frontmatter.title, else first H1, else filename
-  const firstH1 = content.match(/^#\s+(.+)$/m)
+  // Remove duplicate first H1 against frontmatter title and derive title
+  const { source: cleanedSource, title: derivedTitle } = extractAndMaybeRemoveFirstH1FromMdxSource(
+    content,
+    fm.title
+  )
   const fallbackTitle = slugParts[slugParts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-  const pageTitle = (fm && fm.title) ? String(fm.title) : (firstH1 ? firstH1[1].trim() : fallbackTitle)
+  const pageTitle = derivedTitle || fallbackTitle
 
   // Determine layout/renderer
   const layout = (fm && (fm.layout || fm.renderer)) || undefined
@@ -47,7 +51,7 @@ export default async function CadMdDocPage({ params }) {
           </Text>
         </Box>
         <article className="prose dark:prose-invert max-w-none">
-          <Mdx source={content} layout={layout} />
+          <Mdx source={cleanedSource} layout={layout} />
         </article>
       </Box>
     </Section>

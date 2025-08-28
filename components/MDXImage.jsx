@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
-import { getAssetPath } from '@/lib/paths'
+import { getImagePath } from '@/lib/paths'
 
 export default function MDXImage(props) {
   const { src = '', alt = '', originPath, backLabel, ...rest } = props
@@ -19,8 +19,8 @@ export default function MDXImage(props) {
     resolved = `/content/${resolved}`
   }
 
-  // Prefix with basePath/assetPrefix if configured
-  const finalSrc = getAssetPath(resolved)
+  // Normalize docs-submodules, docs-test, /images/, and /content/images paths consistently
+  const finalSrc = getImagePath(resolved)
 
   // If originPath is provided, wrap image with link to the viewer
   if (originPath) {
@@ -30,7 +30,7 @@ export default function MDXImage(props) {
         style={{ position: 'relative', display: 'inline-block' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={finalSrc} alt={alt} {...rest} />
-        <div
+        <span
           aria-hidden
           style={{
             position: 'absolute',
@@ -48,10 +48,7 @@ export default function MDXImage(props) {
           className="mdximage-zoom-overlay"
         >
           <Search size={22} />
-        </div>
-        <style jsx>{`
-          a:hover .mdximage-zoom-overlay { opacity: 1; }
-        `}</style>
+        </span>
       </Link>
     )
   }

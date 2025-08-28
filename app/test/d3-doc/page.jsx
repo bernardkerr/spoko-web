@@ -12,7 +12,7 @@ export default function D3DocsPage() {
       <Box mt="3">
         <Card>
           <Box p="4">
-            <DocsTable markdownUrl={getAssetPath('/test/d3-doc/d3-apis.md')} />
+            <DocsTable markdownUrl={getAssetPath('/test/d3-doc/d3-apis.md')} showTitle={false} />
           </Box>
         </Card>
       </Box>

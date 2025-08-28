@@ -10,6 +10,7 @@ import { Mermaid } from '@/components/Mermaid'
 import { Section, Box, Heading, Text } from '@radix-ui/themes'
 import FloatingTOC from '@/components/FloatingTOC'
 import { Mdx } from '@/lib/mdx'
+import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
 
 // Mermaid diagrams are now pre-rendered to inline SVG by lib/markdown.js.
 
@@ -32,10 +33,13 @@ export default async function DocPage({ params }) {
   const raw = fs.readFileSync(file.fullPath, 'utf8')
   const { data: fm, content } = matter(raw)
 
-  // Title from frontmatter, or first H1, or slug fallback
-  const firstH1Match = content.match(/^#\s+(.+)$/m)
+  // Remove first H1 if it duplicates/equals page title and derive title
+  const { source: cleanedSource, title: derivedTitle } = extractAndMaybeRemoveFirstH1FromMdxSource(
+    content,
+    fm.title
+  )
   const fallbackTitle = slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-  const pageTitle = (fm && fm.title) ? String(fm.title) : (firstH1Match ? firstH1Match[1].trim() : fallbackTitle)
+  const pageTitle = derivedTitle || fallbackTitle
 
   // Determine layout
   const layout = (fm && (fm.layout || fm.renderer)) || undefined
@@ -52,7 +56,7 @@ export default async function DocPage({ params }) {
           </Box>
 
           <article className="prose dark:prose-invert max-w-none">
-            <Mdx source={content} layout={layout} />
+            <Mdx source={cleanedSource} layout={layout} />
           </article>
           <Mermaid autoRender={true} />
         </Box>

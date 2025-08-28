@@ -74,7 +74,7 @@ function normalizeRows(rows) {
   }))
 }
 
-export function DocsTable({ markdownUrl, height }) {
+export function DocsTable({ markdownUrl, height, showTitle = true }) {
   const [text, setText] = useState('')
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
@@ -169,7 +169,9 @@ export function DocsTable({ markdownUrl, height }) {
     <Card>
       <Box p="4">
         <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Heading size="6">D3 Doc</Heading>
+          {showTitle && (
+            <Heading size="6">D3 Doc</Heading>
+          )}
           <Text color="gray" size="2">Source: {markdownUrl}</Text>
         </Box>
         <Box mt="3">

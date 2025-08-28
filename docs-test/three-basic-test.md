@@ -60,38 +60,50 @@ return {
   async setup({ THREE, add, materials, themeColors }) {
     const count = 5000
     const positions = new Float32Array(count * 3)
-    const colors = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
       const ix = i * 3
       positions[ix + 0] = (Math.random() - 0.5) * 10
       positions[ix + 1] = (Math.random() - 0.5) * 10
       positions[ix + 2] = (Math.random() - 0.5) * 10
-      // simple color ramp from accent to white
-      colors[ix + 0] = 0.2 + 0.8 * Math.random()
-      colors[ix + 1] = 0.2 + 0.8 * Math.random()
-      colors[ix + 2] = 0.2 + 0.8 * Math.random()
     }
     const geo = new THREE.BufferGeometry()
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-    const mat = new THREE.PointsMaterial({ size: 0.05, vertexColors: true })
+    const mat = new THREE.PointsMaterial({ size: 0.05, color: 0x000000, vertexColors: false })
     const pts = new THREE.Points(geo, mat)
     add(pts)
     this.points = pts
+    // Store base (home) positions for a gentle spring-back force
+    this.base = positions.slice()
     this.t = 0
   },
   update({ dt }) {
     this.t += dt
     const geo = this.points.geometry
     const pos = geo.getAttribute('position')
+    const base = this.base
+    const spring = 0.02 // gentle spring factor towards base
     for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i)
-      const y = pos.getY(i)
-      const z = pos.getZ(i)
-      // ripple noise
+      let x = pos.getX(i)
+      let y = pos.getY(i)
+      let z = pos.getZ(i)
+
+      // gentle spring toward original base position to keep points in view
+      const bi = i * 3
+      const bx = base[bi + 0]
+      const by = base[bi + 1]
+      const bz = base[bi + 2]
+      x += (bx - x) * spring
+      y += (by - y) * spring
+      z += (bz - z) * spring
+
+      // ripple noise around current radius
       const r = Math.sqrt(x*x + y*y + z*z)
       const off = Math.sin(r * 1.2 - this.t * 2.0) * 0.03
-      pos.setXYZ(i, x + off * (x / (r + 0.0001)), y + off * (y / (r + 0.0001)), z + off * (z / (r + 0.0001)))
+      x += off * (x / (r + 0.0001))
+      y += off * (y / (r + 0.0001))
+      z += off * (z / (r + 0.0001))
+
+      pos.setXYZ(i, x, y, z)
     }
     pos.needsUpdate = true
   },

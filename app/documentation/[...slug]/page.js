@@ -1,15 +1,14 @@
 import { notFound } from 'next/navigation'
-import {
-  getMarkdownContentFromRoots,
-  getAllMarkdownSlugsFromRoots,
-  getMarkdownFrontmatterFromRoots,
-} from '@/lib/markdown'
-import { getImagePath } from '@/lib/paths'
-import { Mermaid } from '@/components/Mermaid'
+import { getAllMarkdownSlugsFromRoots } from '@/lib/markdown'
 import { Section, Box, Heading, Text } from '@radix-ui/themes'
-import SideImagesDoc from '@/components/templates/SideImagesDoc'
+import { Mdx } from '@/lib/mdx'
+import MDXImage from '@/components/MDXImage'
+import { Mermaid } from '@/components/Mermaid'
 import FloatingTOC from '@/components/FloatingTOC'
-import { extractAndMaybeRemoveFirstH1FromHtml } from '@/lib/title'
+import { extractAndMaybeRemoveFirstH1FromMdxSource } from '@/lib/title'
+import fs from 'fs'
+import path from 'path'
+import matter from 'gray-matter'
 
 export async function generateStaticParams() {
   const slugs = await getAllMarkdownSlugsFromRoots(['docs-submodules'])
@@ -27,84 +26,56 @@ export default async function DocumentationPage({ params }) {
     unstable_noStore()
   }
 
-  // Peek at frontmatter to decide renderer/layout early
-  const fm = await getMarkdownFrontmatterFromRoots(slug, ['docs-submodules'])
-
-  const doc = await getMarkdownContentFromRoots(slug, ['docs-submodules'])
-  if (!doc) {
+  // Resolve file inside docs-submodules/, support both .mdx and .md
+  const mdxPath = path.join(process.cwd(), 'docs-submodules', `${slug}.mdx`)
+  const mdPath = path.join(process.cwd(), 'docs-submodules', `${slug}.md`)
+  let filePath = ''
+  if (fs.existsSync(mdxPath)) filePath = mdxPath
+  else if (fs.existsSync(mdPath)) filePath = mdPath
+  else {
     notFound()
   }
 
-  // Start from the HTML returned by markdown processor
-  let html = doc.content
+  const fileContents = fs.readFileSync(filePath, 'utf8')
+  const { data: frontmatter, content } = matter(fileContents)
 
-  // Use shared utility to dedupe/remove first H1 against frontmatter title
-  const { html: bodyHtml, title: derivedTitle } = extractAndMaybeRemoveFirstH1FromHtml(
-    html,
-    doc.frontmatter.title
+  // Remove first H1 if it duplicates/equal the title
+  const { source: cleanedSource, title: derivedTitle } = extractAndMaybeRemoveFirstH1FromMdxSource(
+    content,
+    frontmatter.title
   )
 
-  // Derive page title: prefer frontmatter or first H1 text, then slug fallback
-  let pageTitle = derivedTitle
-  if (!pageTitle) {
-    pageTitle = slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-  }
-
-  // Process images in the HTML to use correct paths
-  let processedContent = bodyHtml
-
-  // Handle absolute paths that include docs-test or docs-submodules
-  processedContent = processedContent.replace(
-    /src="([^"]*\/(docs-test|docs-submodules)\/[^\"]*)"/g,
-    (match, src) => `src="${getImagePath(src)}"`
-  )
-
-  // Handle absolute paths starting with /images/
-  processedContent = processedContent.replace(
-    /src="(\/images\/[^"]*)"/g,
-    (match, src) => `src="${getImagePath(src)}"`
-  )
-
-  // Handle relative paths from markdown (e.g., images/diagram.png)
-  processedContent = processedContent.replace(
-    /src=\"((?!http|\/)images\/[^"]*)\"/g,
-    (match, src) => `src=\"${getImagePath(src)}\"`
-  )
-
-  // If sideImages renderer/layout is specified, use alternate template
-  const wantsSideImages =
-    (fm && fm.frontmatter && (fm.frontmatter.renderer === 'sideImages' || fm.frontmatter.layout === 'sideImages')) ||
-    (doc.frontmatter && (doc.frontmatter.renderer === 'sideImages' || doc.frontmatter.layout === 'sideImages'))
-
-  if (wantsSideImages) {
-    const originPath = `/documentation/${slug}`
-    return (
-      <SideImagesDoc
-        title={pageTitle}
-        description={doc.frontmatter.description}
-        html={processedContent}
-        originPath={originPath}
-      />
-    )
-  }
+  // Derive page title
+  const pageTitle = derivedTitle || slug.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 
   return (
     <>
       <Section size="4">
-        <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
+        <Box className="container">
           <Box mb="5">
             <Heading size="9">{pageTitle}</Heading>
-            {doc.frontmatter.description && (
+            {frontmatter.description && (
               <Text as="p" color="gray" size="4">
-                {doc.frontmatter.description}
+                {frontmatter.description}
               </Text>
             )}
           </Box>
 
-          <article
-            className="prose dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: processedContent }}
-          />
+          <div className="prose dark:prose-invert max-w-none">
+            <Mdx
+              source={cleanedSource}
+              layout={frontmatter.layout || frontmatter.renderer}
+              components={{
+                img: (imgProps) => (
+                  <MDXImage
+                    {...imgProps}
+                    originPath={`/documentation/${slug}`}
+                    backLabel={pageTitle}
+                  />
+                ),
+              }}
+            />
+          </div>
           <Mermaid autoRender={true} />
         </Box>
       </Section>

@@ -13,7 +13,7 @@ export default function SideImagesDoc({ title, description, html, originPath }) 
   return (
     <>
       <Section size="4">
-        <Box mx="auto" style={{ maxWidth: 1200, width: '100%' }}>
+        <Box className="container">
           <Box mb="5">
             <Heading size="9">{title}</Heading>
             {description && (

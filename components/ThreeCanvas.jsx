@@ -35,6 +35,7 @@ function ProgramHost({ program, themeColors }) {
   const clockRef = useRef(new Clock())
   const texLoaderRef = useRef(null)
   const handlersRef = useRef({})
+  const setupCompleteRef = useRef(false)
 
   const ctx = useMemo(() => {
     const add = (obj) => scene.add(obj)
@@ -66,9 +67,11 @@ function ProgramHost({ program, themeColors }) {
 
   useEffect(() => {
     let disposed = false
+    setupCompleteRef.current = false
     ;(async () => {
       try {
         await program?.setup?.(ctx)
+        if (!disposed) setupCompleteRef.current = true
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('[ThreeCanvas] program.setup error', e)
@@ -77,6 +80,7 @@ function ProgramHost({ program, themeColors }) {
     return () => {
       if (disposed) return
       disposed = true
+      setupCompleteRef.current = false
       try {
         program?.dispose?.(ctx)
       } catch (e) {
@@ -87,6 +91,7 @@ function ProgramHost({ program, themeColors }) {
   }, [program, ctx])
 
   useFrame(() => {
+    if (!setupCompleteRef.current) return
     try {
       const dt = clockRef.current.getDelta()
       program?.update?.({ ...ctx, dt, elapsed: clockRef.current.elapsedTime })
@@ -351,24 +356,10 @@ function ThreeCanvasImpl({
     console.debug('[ThreeCanvas] themeColors', themeColors)
   }, [themeColors])
 
-  // Memoize camera and gl options so Canvas doesn't recreate renderer/context
+  // Memoize camera options so Canvas doesn't recreate renderer/context
   const cameraOptions = useMemo(() => ({ position: [5, 5, 5], fov: 60 }), [])
-  const glAttributes = useMemo(
-    () => ({
-      // Relaxed, compatible defaults to improve first-load context creation reliability
-      antialias: false,
-      alpha: true,
-      powerPreference: 'high-performance',
-      failIfMajorPerformanceCaveat: false,
-      depth: true,
-      stencil: false,
-      preserveDrawingBuffer: false,
-      desynchronized: true,
-    }),
-    []
-  )
   // Note: We previously experimented with an explicit WebGL context factory.
-  // We're reverting to passing attributes directly to Canvas for now to match prior behavior.
+  // Revert to R3F defaults which are highly compatible.
   const canvasStyle = useMemo(() => ({ width: '100%', height: '100%' }), [])
 
   const handleError = (error) => {
@@ -412,15 +403,14 @@ function ThreeCanvasImpl({
   return (
     <div 
       className={`three-canvas ${fullscreen ? 'three-fullscreen' : ''} ${className}`}
-      style={{ width: '100%', height: fullscreen ? '100%' : '400px', position: 'relative' }}
+      style={{ width: '100%', height: '100%', position: 'relative' }}
       ref={containerRef}
     >
       <Canvas
         key={mountId}
         camera={cameraOptions}
-        // Pass attributes directly; avoids custom context factory during diagnostics
-        gl={glAttributes}
-        dpr={[1, 2]}
+        // Use a safe, low DPR to reduce GPU memory pressure during initialization
+        dpr={1}
         onPointerEnter={(e) => e.stopPropagation()}
         onPointerLeave={(e) => e.stopPropagation()}
         onError={handleError}

@@ -393,3 +393,8 @@ body {
   flex-direction: column;
   gap: var(--theme-spacing-4);
 }
+
+/* MDXImage overlay hover (moved from styled-jsx to avoid invalid nesting) */
+a:hover .mdximage-zoom-overlay {
+  opacity: 1;
+}

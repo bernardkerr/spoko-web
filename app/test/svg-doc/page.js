@@ -12,7 +12,7 @@ export default function SVGDocsPage() {
       <Box mt="3">
         <Card>
           <Box p="4">
-            <DocsTable markdownUrl={getAssetPath('/test/svg-doc/svg-apis.md')} />
+            <DocsTable markdownUrl={getAssetPath('/test/svg-doc/svg-apis.md')} showTitle={false} />
           </Box>
         </Card>
       </Box>
