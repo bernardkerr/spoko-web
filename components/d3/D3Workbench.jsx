@@ -34,11 +34,22 @@ export const D3Workbench = forwardRef(function D3Workbench(
   const [busy, setBusy] = useState(false)
   const [showDocsHelper, setShowDocsHelper] = useState(false)
   const [libsReady, setLibsReady] = useState(false)
+  const [bgMode, setBgMode] = useState('auto') // auto | white | black | light | dark
 
   const containerRef = useRef(null)
   const editorRef = useRef(null)
   const cleanupRef = useRef(null)
   const libsRef = useRef({ d3: null, ELK: null })
+
+  const bgColor = useMemo(() => {
+    switch (bgMode) {
+      case 'white': return '#ffffff'
+      case 'black': return '#000000'
+      case 'light': return '#f8fafc'
+      case 'dark': return '#0f172a'
+      default: return null
+    }
+  }, [bgMode])
 
   // Persistence like CAD workbench
   const { read, writeCode, writeLastGood, resolveSource } = useLastGoodCode('d3', id, initialCode || '')
@@ -179,7 +190,18 @@ export const D3Workbench = forwardRef(function D3Workbench(
             onOpen={() => setWorkbenchVisible(true)}
             onClose={() => setWorkbenchVisible(false)}
           />
-          <div ref={containerRef} style={{ width: '100%', height: '100%', padding: 8, boxSizing: 'border-box' }} />
+          {workbenchVisible && (
+            <Box style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6, zIndex: 3 }}>
+              <Button size="1" variant="surface" onClick={() => {
+                const order = ['auto','white','black','light','dark']
+                const i = order.indexOf(bgMode)
+                setBgMode(order[(i >= 0 ? i + 1 : 0) % order.length])
+              }} title={`Background: ${bgMode}`}>
+                BG: {bgMode}
+              </Button>
+            </Box>
+          )}
+          <div ref={containerRef} style={{ width: '100%', height: '100%', padding: 8, boxSizing: 'border-box', ...(bgColor ? { backgroundColor: bgColor } : {}) }} />
         </div>
       )}
       toolbar={workbenchVisible ? (
@@ -228,7 +250,8 @@ export const D3Workbench = forwardRef(function D3Workbench(
           <CommonDocsTable markdownUrl={getAssetPath('/test/d3-doc/d3-apis.md')} />
         </DocsPanel>
       ) : null}
+      toolbarPosition="bottom"
       viewerHeight={viewerHeight}
     />
   )
-})
+  })

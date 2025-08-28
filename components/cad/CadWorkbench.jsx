@@ -496,36 +496,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       <Box p="4" style={{ position: 'relative' }}>
 
         {workbenchVisible && (
-          <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Toolbar
-              spinMode={spinMode}
-              frameMode={frameMode}
-              shadingMode={shadingMode}
-              originVisible={originVisible}
-              onCycleSpin={onCycleSpin}
-              onToggleFrame={onToggleFrame}
-              onToggleShading={onToggleShading}
-              onToggleOrigin={onToggleOrigin}
-              styleMode={styleMode}
-              onCycleStyle={onCycleStyle}
-              backgroundMode={backgroundMode}
-              onCycleBackground={onCycleBackground}
-              outlineThreshold={outlineThreshold}
-              onCycleOutlineThreshold={onCycleOutlineThreshold}
-              outlineScale={outlineScale}
-              onCycleOutlineScale={onCycleOutlineScale}
-              edgesMode={edgesMode}
-              onCycleEdges={onCycleEdges}
-              outlineColorMode={outlineColorMode}
-              onCycleOutlineColor={onCycleOutlineColor}
-              edgesLineWidth={edgesLineWidth}
-              onCycleEdgesLineWidth={onCycleEdgesLineWidth}
-              ambientLevel={ambientLevel}
-              directionalLevel={directionalLevel}
-              onCycleAmbientLevel={onCycleAmbientLevel}
-              onCycleDirectionalLevel={onCycleDirectionalLevel}
-            />
-          </Box>
+          <></>
         )}
 
         <Box className="viewer-shell" style={{ position: 'relative', width: '100%', height: (ui?.viewerHeight ? Number(ui.viewerHeight) : (workbenchVisible ? 420 : 520)), minHeight: 280, borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden', background: '#ffffff' }}>
@@ -534,7 +505,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
               size="1"
               variant="ghost"
               onClick={() => setWorkbenchVisible(true)}
-              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }}
+              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 10 }}
               aria-label="Open workbench"
               title="Open workbench"
             >
@@ -545,12 +516,44 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
               size="1"
               variant="ghost"
               onClick={() => setWorkbenchVisible(false)}
-              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 3 }}
+              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 10 }}
               aria-label="Viewer only"
               title="Viewer only"
             >
               <Eye width={28} height={28} strokeWidth={2} />
             </Button>
+          )}
+          {workbenchVisible && (
+            <Box style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', zIndex: 3 }}>
+              <Toolbar
+                spinMode={spinMode}
+                frameMode={frameMode}
+                shadingMode={shadingMode}
+                originVisible={originVisible}
+                onCycleSpin={onCycleSpin}
+                onToggleFrame={onToggleFrame}
+                onToggleShading={onToggleShading}
+                onToggleOrigin={onToggleOrigin}
+                styleMode={styleMode}
+                onCycleStyle={onCycleStyle}
+                backgroundMode={backgroundMode}
+                onCycleBackground={onCycleBackground}
+                outlineThreshold={outlineThreshold}
+                onCycleOutlineThreshold={onCycleOutlineThreshold}
+                outlineScale={outlineScale}
+                onCycleOutlineScale={onCycleOutlineScale}
+                edgesMode={edgesMode}
+                onCycleEdges={onCycleEdges}
+                outlineColorMode={outlineColorMode}
+                onCycleOutlineColor={onCycleOutlineColor}
+                edgesLineWidth={edgesLineWidth}
+                onCycleEdgesLineWidth={onCycleEdgesLineWidth}
+                ambientLevel={ambientLevel}
+                directionalLevel={directionalLevel}
+                onCycleAmbientLevel={onCycleAmbientLevel}
+                onCycleDirectionalLevel={onCycleDirectionalLevel}
+              />
+            </Box>
           )}
           <ThreeCadViewer
             ref={viewerRef}

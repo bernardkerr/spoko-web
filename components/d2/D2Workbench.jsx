@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
-import { Box, Text, Button, Flex, TextField, Switch } from '@radix-ui/themes'
+import { Box, Text, Button, Flex, TextField } from '@radix-ui/themes'
 import { Download, Play } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
@@ -258,6 +258,18 @@ export const D2Workbench = forwardRef(function D2Workbench(
         onOpen={() => setWorkbenchVisible(true)}
         onClose={() => setWorkbenchVisible(false)}
       />
+      {workbenchVisible && (
+        <Box style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6, zIndex: 3 }}>
+          <Button
+            size="1"
+            variant="surface"
+            onClick={() => { setSketch(s => !s); setTimeout(doRender, 0) }}
+            title={`Sketch: ${sketch ? 'on' : 'off'}`}
+          >
+            {sketch ? 'Sketch: on' : 'Sketch: off'}
+          </Button>
+        </Box>
+      )}
       <div ref={svgContainerRef} style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 8, boxSizing: 'border-box' }} />
     </div>
   )
@@ -272,10 +284,6 @@ export const D2Workbench = forwardRef(function D2Workbench(
         <Download width={18} height={18} style={{ marginRight: 6 }} />
         Export SVG
       </Button>
-      <Flex align="center" gap="2">
-        <Text size="2">Sketch</Text>
-        <Switch checked={!!sketch} onCheckedChange={setSketch} onClick={() => setTimeout(doRender, 0)} />
-      </Flex>
       <Flex align="center" gap="2">
         <Text size="2">Pad</Text>
         <TextField.Root size="1" type="number" value={pad} onChange={handleNumeric(setPad)} onBlur={doRender} style={{ width: 80 }} />
@@ -323,9 +331,10 @@ export const D2Workbench = forwardRef(function D2Workbench(
     <WorkbenchShell
       toolbar={toolbarNode}
       viewer={viewerNode}
-      status={<Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>}
-      error={error ? (<pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>) : null}
+      status={workbenchVisible ? (<Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>) : null}
+      error={workbenchVisible && error ? (<pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>) : null}
       editor={editorNode}
+      toolbarPosition="bottom"
       viewerHeight={viewerHeight}
     />
   )
