@@ -558,7 +558,6 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
           )}
           toolbar={!isModelMode ? (
             <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Button onClick={runBuild} disabled={busy}>{!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}</Button>
               <Button variant="soft" onClick={doExportSTEP}>Export STEP</Button>
               <Button variant="soft" onClick={doExportSTL}>Export STL</Button>
               <Button variant="soft" onClick={doExportGLB}>Export GLB</Button>

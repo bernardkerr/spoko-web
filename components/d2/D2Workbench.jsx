@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
 import { Box, Text, Button, Flex, TextField } from '@radix-ui/themes'
-import { Download, Play } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
 import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
@@ -278,10 +278,6 @@ export const D2Workbench = forwardRef(function D2Workbench(
       // Custom toolbar actions
       toolbar={(
         <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Button onClick={doCompile} disabled={busy}>
-            <Play width={18} height={18} style={{ marginRight: 6 }} />
-            {busy ? 'Working…' : 'Run'}
-          </Button>
           <Button variant="soft" onClick={doDownloadSVG} disabled={!lastSVGRef.current}>
             <Download width={18} height={18} style={{ marginRight: 6 }} />
             Export SVG

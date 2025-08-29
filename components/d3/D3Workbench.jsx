@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
 import { Box, Button } from '@radix-ui/themes'
-import { Download, Play } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
 // Docs helper: use shared panel + common table
@@ -185,30 +185,9 @@ export const D3Workbench = forwardRef(function D3Workbench(
           <div ref={containerRef} style={{ width: '100%', height: '100%', padding: 8, boxSizing: 'border-box', ...(bgColor ? { backgroundColor: bgColor } : {}) }} />
         </div>
       )}
-      // Overlay controls rendered only when workbench is visible
-      overlayTopLeft={(
-        <Box style={{ display: 'flex', gap: 6 }}>
-          <Button
-            size="1"
-            variant="surface"
-            onClick={() => {
-              const order = ['auto','white','black','light','dark']
-              const i = order.indexOf(bgMode)
-              setBgMode(order[(i >= 0 ? i + 1 : 0) % order.length])
-            }}
-            title={`Background: ${bgMode}`}
-          >
-            BG: {bgMode}
-          </Button>
-        </Box>
-      )}
       // Custom toolbar actions
       toolbar={(
         <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Button onClick={doRun} disabled={busy || !libsReady}>
-            <Play width={18} height={18} style={{ marginRight: 6 }} />
-            {busy ? 'Working…' : 'Run'}
-          </Button>
           <Button variant="soft" onClick={doDownloadSVG}>
             <Download width={18} height={18} style={{ marginRight: 6 }} />
             Export SVG

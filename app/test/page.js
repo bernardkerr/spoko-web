@@ -86,6 +86,38 @@ export default function TestPage() {
 
         <Separator my="5" size="4" />
 
+        {/* Processing.js */}
+        <Box mt="6" mb="3">
+          <Heading size="6">Processing.js</Heading>
+        </Box>
+        <Grid columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
+          <DocCard>
+            <Heading size="4" mb="1">Processing Playground</Heading>
+            <Text color="gray" size="2" mb="3">Interactive Processing.js workbench for live sketch coding.</Text>
+            <Button asChild>
+              <NextLink href="/test/processing">Open Processing</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">Processing Examples</Heading>
+            <Text color="gray" size="2" mb="3">Curated examples rendered as live Processing workbenches.</Text>
+            <Button asChild>
+              <NextLink href="/test/processing-examples">Open Examples</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">Processing Docs Helper</Heading>
+            <Text color="gray" size="2" mb="3">Quick API reference used by the Processing editor.</Text>
+            <Button asChild>
+              <NextLink href="/test/processing-doc">Open Processing Docs</NextLink>
+            </Button>
+          </DocCard>
+        </Grid>
+
+        <Separator my="5" size="4" />
+
         {/* D3 */}
         <Box mt="6" mb="3">
           <Heading size="6">D3</Heading>

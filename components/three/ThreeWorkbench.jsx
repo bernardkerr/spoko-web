@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
 import { Box, Text, Button } from '@radix-ui/themes'
-import { Play } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
 import Workbench from '@/components/common/workbench/Workbench'
@@ -165,15 +164,7 @@ export const ThreeWorkbench = forwardRef(function ThreeWorkbench(
           </Button>
         </Box>
       )}
-      // Bottom toolbar
-      toolbar={(
-        <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Button onClick={doRun} disabled={busy}>
-            <Play width={18} height={18} style={{ marginRight: 6 }} />
-            {busy ? 'Working…' : 'Run'}
-          </Button>
-        </Box>
-      )}
+      // No viewer toolbar Run; Run is available in editor actions only
       // Editor content and defaults
       editor={(
         <CodeEditor

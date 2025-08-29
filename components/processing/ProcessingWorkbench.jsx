@@ -1,24 +1,44 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
-import { Box, Button } from '@radix-ui/themes'
-import { Download } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
-// Docs helper: use shared panel + common table
 import { DocsPanel } from '@/components/common/DocsPanel'
 import { DocsTable as CommonDocsTable } from '@/components/common/DocsTable'
 import { getAssetPath } from '@/lib/paths'
-import { downloadText } from '@/lib/downloads'
 import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
 import Workbench from '@/components/common/workbench/Workbench'
 
-export const SVGWorkbench = forwardRef(function SVGWorkbench(
+export const ProcessingWorkbench = forwardRef(function ProcessingWorkbench(
   {
-    id = 'svgwb',
-    initialCode = `// SVG.js quickstart\n// You can use SVG() from svg.js here.\n// 'el' is your container, width/height are provided.\n// Theme vars available: var(--accent-9), var(--gray-11), etc.\nconst draw = SVG().addTo(el).size('100%', '100%').viewbox(0,0,width,height)\n\n// Background panel\ndraw.rect(width, height).fill('var(--color-panel-solid)').stroke({ width: 1, color: 'var(--gray-a6)' })\n\n// Bars animation\nconst data = [4, 8, 15, 16, 23, 42]\nconst pad = 20\nconst w = (width - pad*2) / data.length\nconst max = Math.max(...data)\n
-const g = draw.group()\n
-for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i] / max)\n  const x = pad + i * w + 4\n  const y = height - pad - h\n  const r = g.rect(w - 8, 0).move(x, height - pad).fill('var(--accent-9)')\n  r.animate(900, 0, 'now').size(w - 8, h).move(x, y)\n}\n`,
+    id = 'processingwb',
+    initialCode = `// Processing.js quickstart (JS mode)
+// You can use the Processing.js API with a sketch function.
+// We'll create a canvas sized to the viewer and run: new Processing(canvas, sketch)
+// Theme vars available: var(--accent-9), var(--gray-11), etc.
+
+function sketch(p) {
+  p.setup = function() {
+    p.size(width, height)
+    p.background(255)
+    p.noStroke()
+  }
+  p.draw = function() {
+    p.fill(0, 0, 0, 10)
+    p.rect(0, 0, width, height)
+    const r = Math.min(width, height) * 0.35
+    const cx = width/2, cy = height/2
+    const t = p.frameCount * 0.02
+    const x = cx + Math.cos(t) * r
+    const y = cy + Math.sin(t) * r
+    p.fill(30, 144, 255) // dodger blue
+    p.ellipse(x, y, 24, 24)
+  }
+}
+
+// Return the sketch function so the workbench can run it.
+return sketch
+`,
     autoRun = true,
     showEditorDefault = true,
     ui,
@@ -44,47 +64,42 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
   }, [bgMode])
 
   const containerRef = useRef(null)
+  const canvasRef = useRef(null)
   const editorRef = useRef(null)
   const cleanupRef = useRef(null)
-  const libsRef = useRef({ SVG: null, ELK: null })
+  const processingRef = useRef(null)
 
-  const { read, writeCode, writeLastGood, resolveSource } = useLastGoodCode('svg', id, initialCode || '')
+  const { read, writeCode, writeLastGood, resolveSource } = useLastGoodCode('processing', id, initialCode || '')
   const initialValuesRef = useRef(null)
-  useEffect(() => {
-    initialValuesRef.current = read()
-  }, [read])
+  useEffect(() => { initialValuesRef.current = read() }, [read])
 
   const handleEditorChange = (val) => { writeCode(val) }
 
-  // Load svg.js and elk.js dynamically on client
+  // Load Processing.js dynamically on client (from CDN) if not already present
   useEffect(() => {
+    if (typeof window === 'undefined') return
     let cancelled = false
-    async function loadLibs() {
+    async function ensureProcessing() {
       try {
-        const [{ SVG }, { default: ELK }] = await Promise.all([
-          import('@svgdotjs/svg.js'),
-          import('elkjs/lib/elk.bundled.js'),
-        ])
-        if (!cancelled) {
-          libsRef.current = { SVG, ELK }
-          setLibsReady(true)
-        }
+        if (window.Processing) { setLibsReady(true); return }
+        const script = document.createElement('script')
+        script.src = 'https://unpkg.com/processing-js@1.6.6/processing.min.js'
+        script.async = true
+        script.onload = () => { if (!cancelled) setLibsReady(!!window.Processing) }
+        script.onerror = () => { if (!cancelled) { setLibsReady(false); setError('Failed to load Processing.js'); onError?.('Failed to load Processing.js') } }
+        document.head.appendChild(script)
       } catch (e) {
-        if (!cancelled) {
-          setError(`Failed to load libraries: ${e?.message || e}`)
-          onError?.(String(e))
-        }
+        if (!cancelled) { setError(String(e)); onError?.(String(e)) }
       }
     }
-    loadLibs()
+    ensureProcessing()
     return () => { cancelled = true }
   }, [onError])
 
   async function doRun() {
     if (!containerRef.current) return
-    const { SVG, ELK } = libsRef.current
-    if (!SVG || !ELK) {
-      setStatus('Loading libs…')
+    if (!window.Processing) {
+      setStatus('Loading Processing.js…')
       return
     }
     setBusy(true)
@@ -93,27 +108,50 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
     onStatus?.('Running…')
 
     // Cleanup previous run
-    try { if (typeof cleanupRef.current === 'function') cleanupRef.current() } catch {}
+    try {
+      if (typeof cleanupRef.current === 'function') cleanupRef.current()
+    } catch {}
     cleanupRef.current = null
 
-    // Prepare container
+    // Dispose prior Processing instance
+    try {
+      if (processingRef.current && processingRef.current.exit) {
+        processingRef.current.exit()
+      }
+    } catch {}
+    processingRef.current = null
+
+    // Prepare container and canvas
     const el = containerRef.current
     el.innerHTML = ''
-    // Ensure layout is flushed before running user code (helps animations start reliably)
-    await new Promise(requestAnimationFrame)
+    // force layout before measuring
     await new Promise(requestAnimationFrame)
     const rect = el.getBoundingClientRect()
     const width = Math.max(100, Math.floor(rect.width))
     const height = Math.max(100, Math.floor(rect.height))
 
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    canvas.style.width = '100%'
+    canvas.style.height = '100%'
+    el.appendChild(canvas)
+    canvasRef.current = canvas
+
     try {
       const src = resolveSource(() => editorRef.current?.getValue?.()) || ''
-      const wrapped = '"use strict"; return (async (el, SVG, ELK, elk, width, height) => {\nawait new Promise(requestAnimationFrame)\n' + src + '\n})'
+      // Build an async factory returning a sketch function (p => { ... }) or a function that returns one
+      const wrapped = `"use strict"; return (async (el, Processing, width, height) => {\n${src}\n})`
       const factory = new Function(wrapped)()
-      const elk = new ELK()
-      const result = await factory(el, SVG, ELK, elk, width, height)
-      if (typeof result === 'function') {
-        cleanupRef.current = result
+      const result = await factory(el, window.Processing, width, height)
+      const sketch = (typeof result === 'function') ? result : null
+      if (!sketch) throw new Error('Sketch function not returned. Return a function sketch(p) { … } from your code.')
+      const instance = new window.Processing(canvas, sketch)
+      processingRef.current = instance
+      // Allow cleanup on next run
+      cleanupRef.current = () => {
+        try { instance.exit?.() } catch {}
+        try { if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas) } catch {}
       }
       writeLastGood(src)
       setStatus('Done')
@@ -128,8 +166,7 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
     }
   }
 
-  // Auto-run only when libraries are ready
-
+  // Auto-run when ready
   useEffect(() => {
     if (autoRun && libsReady) { doRun() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,75 +188,49 @@ for (let i = 0; i < data.length; i++) {\n  const h = (height - pad*2) * (data[i]
     }
   }
 
-  const doDownloadSVG = () => {
-    const el = containerRef.current
-    if (!el) return
-    const svg = el.querySelector('svg')
-    if (!svg) return
-    const base = (ui?.exportName || ui?.name || id || 'svg')
-      .toString().trim().replace(/\s+/g, '-').replace(/[^\w.-]+/g, '_') || 'svg'
-    downloadText(`${base}.svg`, svg.outerHTML, 'image/svg+xml')
-  }
-
   return (
     <Workbench
       toolbarPosition="bottom"
-      // Height behavior: fixed if ui.viewerHeight is provided; otherwise 420 when visible, 520 when hidden
       viewerHeight={ui?.viewerHeight ? Number(ui.viewerHeight) : undefined}
-      // Visibility persistence per-workbench
       defaultWorkbenchVisible={!!ui?.workbench}
-      persistVisibilityKey={`svg:${id}:wb`}
+      persistVisibilityKey={`processing:${id}:wb`}
       status={status}
       error={error}
-      // Viewer content
       viewer={(
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
           <div
             ref={containerRef}
-            className="wb-svg-container"
+            className="wb-processing-container"
             style={{ width: '100%', height: '100%', padding: 0, boxSizing: 'border-box', ...(bgColor ? { backgroundColor: bgColor } : {}) }}
           />
         </div>
       )}
-      // Custom toolbar actions
-      toolbar={(
-        <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Button variant="soft" onClick={doDownloadSVG}>
-            <Download width={18} height={18} style={{ marginRight: 6 }} />
-            Export SVG
-          </Button>
-        </Box>
-      )}
-      // Editor content
       editor={(
         <CodeEditor
           ref={editorRef}
           initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
-          storageKey={`svg:${id}:code`}
+          storageKey={`processing:${id}:code`}
           height={360}
           language="javascript"
           onChange={handleEditorChange}
         />
       )}
       editorTitle="Editor"
-      editorSubtext="Write SVG.js + ELKJS code and click RUN."
+      editorSubtext="Write Processing.js sketch code. Return a function sketch(p) { … } that defines setup()/draw()."
       showDefaultEditorActions
       onRun={doRun}
       runDisabled={!libsReady}
       running={busy}
       runLabel={busy ? 'Working…' : 'Run'}
       defaultEditorOpen={!!showEditorDefault}
-      // Docs helper managed by Workbench (open state persisted automatically)
       docsAside={(
-        <DocsPanel title="SVG.js Docs" source="svg-apis.md" height={360}>
-          <CommonDocsTable markdownUrl={getAssetPath('/test/svg-doc/svg-apis.md')} />
+        <DocsPanel title="Processing.js Docs" source="processing-apis.md" height={360}>
+          <CommonDocsTable markdownUrl={getAssetPath('/test/processing-doc/processing-apis.md')} />
         </DocsPanel>
       )}
-      docsHelperLabelClosed="SVG Doc"
-      docsHelperLabelOpen="Hide SVG Doc"
-      // Error boundary for editor
+      docsHelperLabelClosed="Processing Doc"
+      docsHelperLabelOpen="Hide Processing Doc"
       wrapEditorWithErrorBoundary
-      // Resets: use our handlers
       onResetToLast={resetEditorToLastRunning}
       onResetToOriginal={resetEditorToOriginal}
     />

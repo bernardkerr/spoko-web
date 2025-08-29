@@ -7,6 +7,7 @@ const D2Block = dynamic(() => import('@/components/d2/D2Block'), { ssr: false })
 const D3Block = dynamic(() => import('@/components/d3/D3Block'), { ssr: false })
 const SVGBlock = dynamic(() => import('@/components/svg/SVGBlock'), { ssr: false })
 const ThreeBlock = dynamic(() => import('@/components/three/ThreeBlock'), { ssr: false })
+const ProcessingBlock = dynamic(() => import('@/components/processing/ProcessingBlock'), { ssr: false })
 
 export default function ClientMdxCodeRenderer(props) {
   const { className, children, metastring, ...rest } = props || {}
@@ -33,6 +34,28 @@ export default function ClientMdxCodeRenderer(props) {
     const kvRe = /(\w+)=(("[^"]*")|('[^']*')|([^\s]+))/g
     let mm
     while ((mm = kvRe.exec(tail))) {
+      const k = mm[1]
+      let v = mm[3] || mm[4] || mm[5] || ''
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+        v = v.slice(1, -1)
+      }
+      out[k] = v
+    }
+    return out
+  }
+
+  // Helper: parse parameters for Processing fences; supports JSON object or key=value pairs
+  function parseProcessingParams(meta) {
+    if (!meta || typeof meta !== 'string') return {}
+    const trimmed = meta.trim()
+    const jsonMatch = trimmed.match(/^\{[\s\S]*\}$/)
+    if (jsonMatch) {
+      try { return JSON.parse(jsonMatch[0]) } catch {}
+    }
+    const out = {}
+    const kvRe = /(\w+)=(("[^"]*")|('[^']*')|([^\s]+))/g
+    let mm
+    while ((mm = kvRe.exec(trimmed))) {
       const k = mm[1]
       let v = mm[3] || mm[4] || mm[5] || ''
       if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
@@ -194,6 +217,18 @@ export default function ClientMdxCodeRenderer(props) {
     if (lang === 'js' && typeof metastring === 'string' && /(?:^|\s)three(?:\s|$)/i.test(metastring)) {
       const params = parseThreeParams(metastring.replace(/(?:^|\s)three(?:\s|$)/i, '').trim())
       return <ThreeBlock code={code} params={params} />
+    }
+
+    // New: ```processing {...}
+    if (lang === 'processing') {
+      const params = parseProcessingParams(metastring)
+      return <ProcessingBlock code={code} params={params} />
+    }
+
+    // New: ```js processing {...}
+    if (lang === 'js' && typeof metastring === 'string' && /(?:^|\s)processing(?:\s|$)/i.test(metastring)) {
+      const params = parseProcessingParams(metastring.replace(/(?:^|\s)processing(?:\s|$)/i, '').trim())
+      return <ProcessingBlock code={code} params={params} />
     }
   } catch (e) {
     // Swallow and fall back to raw code on any unexpected error
