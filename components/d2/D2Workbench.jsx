@@ -5,11 +5,9 @@ import { Box, Text, Button, Flex, TextField } from '@radix-ui/themes'
 import { Download, Play } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
-import { WorkbenchShell } from '@/components/common/WorkbenchShell'
 import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
 import { downloadText } from '@/lib/downloads'
-import { ViewerChrome } from '@/components/common/ViewerChrome'
-import { EditorPanel } from '@/components/common/EditorPanel'
+import Workbench from '@/components/common/workbench/Workbench'
 import { D2 } from '@terrastruct/d2'
 
 // Try to turn D2 compile/render errors (which can be JSON arrays) into readable text
@@ -39,8 +37,6 @@ export const D2Workbench = forwardRef(function D2Workbench(
   },
   ref
 ) {
-  const [workbenchVisible, setWorkbenchVisible] = useState(!!ui?.workbench ?? true)
-  const [showEditor, setShowEditor] = useState(!!showEditorDefault)
   const [status, setStatus] = useState('Ready')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -250,16 +246,25 @@ export const D2Workbench = forwardRef(function D2Workbench(
   }
 
   const handleNumeric = (setter) => (e) => setter(e?.target?.value)
-
-  const viewerNode = (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <ViewerChrome
-        visible={workbenchVisible}
-        onOpen={() => setWorkbenchVisible(true)}
-        onClose={() => setWorkbenchVisible(false)}
-      />
-      {workbenchVisible && (
-        <Box style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6, zIndex: 3 }}>
+  return (
+    <Workbench
+      toolbarPosition="bottom"
+      // Height: rely on Workbench defaults unless explicitly provided via UI
+      viewerHeight={ui?.viewerHeight ? Number(ui.viewerHeight) : undefined}
+      // Visibility persistence per-workbench
+      defaultWorkbenchVisible={!!ui?.workbench}
+      persistVisibilityKey={`d2:${id}:wb`}
+      status={status}
+      error={error}
+      // Viewer content
+      viewer={(
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <div ref={svgContainerRef} style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 8, boxSizing: 'border-box' }} />
+        </div>
+      )}
+      // Overlay controls rendered only when workbench is visible
+      overlayTopLeft={(
+        <Box style={{ display: 'flex', gap: 6 }}>
           <Button
             size="1"
             variant="surface"
@@ -270,72 +275,55 @@ export const D2Workbench = forwardRef(function D2Workbench(
           </Button>
         </Box>
       )}
-      <div ref={svgContainerRef} style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 8, boxSizing: 'border-box' }} />
-    </div>
-  )
-
-  const toolbarNode = workbenchVisible ? (
-    <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-      <Button onClick={doCompile} disabled={busy}>
-        <Play width={18} height={18} style={{ marginRight: 6 }} />
-        {busy ? 'Working…' : 'Run'}
-      </Button>
-      <Button variant="soft" onClick={doDownloadSVG} disabled={!lastSVGRef.current}>
-        <Download width={18} height={18} style={{ marginRight: 6 }} />
-        Export SVG
-      </Button>
-      <Flex align="center" gap="2">
-        <Text size="2">Pad</Text>
-        <TextField.Root size="1" type="number" value={pad} onChange={handleNumeric(setPad)} onBlur={doRender} style={{ width: 80 }} />
-      </Flex>
-      <Flex align="center" gap="2">
-        <Text size="2">Scale</Text>
-        <TextField.Root size="1" type="number" step="0.1" value={scale} onChange={handleNumeric(setScale)} onBlur={doRender} style={{ width: 90 }} />
-      </Flex>
-      <Flex align="center" gap="2">
-        <Text size="2">Theme</Text>
-        <TextField.Root size="1" type="number" value={themeID} onChange={handleNumeric(setThemeID)} onBlur={doRender} style={{ width: 90 }} />
-      </Flex>
-      <Flex align="center" gap="2">
-        <Text size="2">Dark Theme</Text>
-        <TextField.Root size="1" type="number" placeholder="(auto)" value={darkThemeID ?? ''} onChange={handleNumeric(setDarkThemeID)} onBlur={doRender} style={{ width: 100 }} />
-      </Flex>
-      {!showEditor && (
-        <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
+      // Custom toolbar actions
+      toolbar={(
+        <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Button onClick={doCompile} disabled={busy}>
+            <Play width={18} height={18} style={{ marginRight: 6 }} />
+            {busy ? 'Working…' : 'Run'}
+          </Button>
+          <Button variant="soft" onClick={doDownloadSVG} disabled={!lastSVGRef.current}>
+            <Download width={18} height={18} style={{ marginRight: 6 }} />
+            Export SVG
+          </Button>
+          <Flex align="center" gap="2">
+            <Text size="2">Pad</Text>
+            <TextField.Root size="1" type="number" value={pad} onChange={handleNumeric(setPad)} onBlur={doRender} style={{ width: 80 }} />
+          </Flex>
+          <Flex align="center" gap="2">
+            <Text size="2">Scale</Text>
+            <TextField.Root size="1" type="number" step="0.1" value={scale} onChange={handleNumeric(setScale)} onBlur={doRender} style={{ width: 90 }} />
+          </Flex>
+          <Flex align="center" gap="2">
+            <Text size="2">Theme</Text>
+            <TextField.Root size="1" type="number" value={themeID} onChange={handleNumeric(setThemeID)} onBlur={doRender} style={{ width: 90 }} />
+          </Flex>
+          <Flex align="center" gap="2">
+            <Text size="2">Dark Theme</Text>
+            <TextField.Root size="1" type="number" placeholder="(auto)" value={darkThemeID ?? ''} onChange={handleNumeric(setDarkThemeID)} onBlur={doRender} style={{ width: 100 }} />
+          </Flex>
+        </Box>
       )}
-    </Box>
-  ) : null
-
-  const editorNode = (workbenchVisible && showEditor) ? (
-    <EditorPanel
-      title="Editor"
-      onClose={() => setShowEditor(false)}
-      description={<Text as="span" color="gray" size="2">Edit the D2 source and click RUN to re-render.</Text>}
-      actions={<Button onClick={doCompile} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>}
-    >
-      <CodeEditor
-        ref={editorRef}
-        initialCode={initialValuesRef.current?.code ?? (initialCode || '')}
-        storageKey={CODE_KEY}
-        height={360}
-        language="text"
-        onChange={(val) => writeCode(val)}
-      />
-    </EditorPanel>
-  ) : null
-
-  // viewer height mirrors original behavior: taller when workbench hidden
-  const viewerHeight = ui?.viewerHeight ? Number(ui.viewerHeight) : (workbenchVisible ? 420 : 520)
-
-  return (
-    <WorkbenchShell
-      toolbar={toolbarNode}
-      viewer={viewerNode}
-      status={workbenchVisible ? (<Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>) : null}
-      error={workbenchVisible && error ? (<pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>) : null}
-      editor={editorNode}
-      toolbarPosition="bottom"
-      viewerHeight={viewerHeight}
+      // Editor content
+      editor={(
+        <CodeEditor
+          ref={editorRef}
+          initialCode={initialValuesRef.current?.code ?? (initialCode || '')}
+          storageKey={CODE_KEY}
+          height={360}
+          language="text"
+          onChange={(val) => writeCode(val)}
+        />
+      )}
+      editorTitle="Editor"
+      editorSubtext="Edit the D2 source and click RUN to re-render."
+      showDefaultEditorActions
+      onRun={doCompile}
+      running={busy}
+      runLabel={busy ? 'Working…' : 'Run'}
+      defaultEditorOpen={!!showEditorDefault}
+      // Error boundary for editor
+      wrapEditorWithErrorBoundary
     />
   )
 })

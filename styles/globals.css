@@ -385,6 +385,17 @@ body {
   margin: 16px auto; /* center */
 }
 
+/* Opt-out: any media inside .not-prose should follow its container without prose constraints */
+.not-prose img,
+.not-prose video,
+.not-prose svg,
+.not-prose canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+}
+
 /* Optional size helpers (opt-in via class="sm|md|lg|full") */
 .prose img.sm { max-width: 360px; }
 .prose img.md { max-width: 600px; }

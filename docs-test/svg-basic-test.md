@@ -7,7 +7,7 @@ This page embeds interactive SVG.js examples using fenced code blocks. The workb
 
 ## Example A: Basic Shapes
 
-```svg { "workbench": false, "viewerHeight": 420 }
+```svg { "workbench": false }
 // Basic shapes and text
 const draw = SVG().addTo(el).size('100%', '100%').viewbox(0,0,width,height)
 

@@ -9,7 +9,7 @@ Notes:
 
 ## Example A: Animated Bars (Workbench)
 
-```js d3 {"name":"Animated Bars","workbench": true, "viewerHeight": 380}
+```js d3 {"name":"Animated Bars","workbench": false, "viewerHeight": 380}
 const svg = d3.select(el).append('svg')
   .attr('viewBox', [0,0,width,height])
   .style('display','block')
@@ -138,7 +138,7 @@ return () => { running = false }
 
 ## Example D: Expandable SVG Node
 
-```js d3 {"name":"Expandable Node","workbench": true, "viewerHeight": 340}
+```js d3 {"name":"Expandable Node","workbench": false, "viewerHeight": 340}
 const svg = d3.select(el).append('svg')
   .attr('viewBox', [0,0,width,height])
   .style('display','block')
@@ -393,7 +393,7 @@ updateSelection()
 
 ## Example E: Force-Directed Graph (Workbench)
 
-```js d3 {"name":"Force Graph","workbench": true, "viewerHeight": 420}
+```js d3 {"name":"Force Graph","workbench": false, "viewerHeight": 420}
 // Force-directed graph with dragging and an "Add Node" button.
 // Available: el, d3, width, height
 

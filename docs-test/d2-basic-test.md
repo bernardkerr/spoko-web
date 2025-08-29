@@ -4,7 +4,7 @@ This page demonstrates using D2 code blocks inside pure Markdown, rendered via t
 
 ## Example A: Simple Flow (Workbench)
 
-```d2 {"name":"Simple Flow", "workbench": true}
+```d2 {"name":"Simple Flow", "workbench": false}
 x: Start
 y: Process
 z: End

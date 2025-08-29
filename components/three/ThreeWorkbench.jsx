@@ -5,10 +5,8 @@ import { Box, Text, Button } from '@radix-ui/themes'
 import { Play } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
-import { WorkbenchShell } from '@/components/common/WorkbenchShell'
+import Workbench from '@/components/common/workbench/Workbench'
 import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
-import { ViewerChrome } from '@/components/common/ViewerChrome'
-import { EditorPanel } from '@/components/common/EditorPanel'
 import { ThreeCanvas } from '@/components/ThreeCanvas'
 
 export const ThreeWorkbench = forwardRef(function ThreeWorkbench(
@@ -23,8 +21,8 @@ export const ThreeWorkbench = forwardRef(function ThreeWorkbench(
   },
   ref
 ) {
-  const [workbenchVisible, setWorkbenchVisible] = useState(() => !!ui?.workbench)
-  const [showEditor, setShowEditor] = useState(!!showEditorDefault)
+  // Mirror Workbench visibility if needed for side effects (not required for rendering)
+  const [wbVisible, setWbVisible] = useState(undefined)
   const [status, setStatus] = useState('Ready')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -52,7 +50,8 @@ export const ThreeWorkbench = forwardRef(function ThreeWorkbench(
 
   const handleEditorChange = (val) => { writeCode(val) }
 
-  const viewerHeight = useMemo(() => (ui?.viewerHeight ? Number(ui.viewerHeight) : (workbenchVisible ? 420 : 520)), [ui?.viewerHeight, workbenchVisible])
+  // Workbench will handle height defaults; allow explicit override via ui.viewerHeight
+  const explicitViewerHeight = useMemo(() => (ui?.viewerHeight ? Number(ui.viewerHeight) : undefined), [ui?.viewerHeight])
 
   async function doRun() {
     if (!containerRef.current) return
@@ -119,14 +118,19 @@ export const ThreeWorkbench = forwardRef(function ThreeWorkbench(
   }
 
   return (
-    <WorkbenchShell
+    <Workbench
+      toolbarPosition="bottom"
+      // Height: rely on Workbench defaults unless explicitly provided
+      viewerHeight={explicitViewerHeight}
+      // Visibility persistence per-workbench
+      defaultWorkbenchVisible={!!ui?.workbench}
+      onWorkbenchVisibleChange={setWbVisible}
+      persistVisibilityKey={`three:${id}:wb`}
+      status={status}
+      error={error}
+      // Viewer content
       viewer={(
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-          <ViewerChrome
-            visible={workbenchVisible}
-            onOpen={() => setWorkbenchVisible(true)}
-            onClose={() => setWorkbenchVisible(false)}
-          />
           <div ref={containerRef} style={{ width: '100%', height: '100%', padding: 8, boxSizing: 'border-box' }}>
             <ThreeCanvas
               spinning={sceneProps.spinning}
@@ -139,64 +143,57 @@ export const ThreeWorkbench = forwardRef(function ThreeWorkbench(
               backgroundColor={bgColor}
             />
           </div>
-          {/* Overlay viewer controls (top-left) */}
-          <Box style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6, zIndex: 3 }}>
-            <Button size="1" variant="surface" onClick={() => {
-              const order = ['auto','white','black','light','dark']
-              const i = order.indexOf(bgMode)
-              setBgMode(order[(i >= 0 ? i + 1 : 0) % order.length])
-            }} title={`Background: ${bgMode}`}>
-              BG: {bgMode}
-            </Button>
-            <Button size="1" variant="surface" onClick={() => {
-              const levels = [0.5, 1.0, 1.5, 2.0]
-              const cur = Number(lightIntensity) || 1
-              const idx = levels.findIndex(v => Math.abs(v - cur) < 1e-6)
-              setLightIntensity(levels[(idx >= 0 ? idx + 1 : 0) % levels.length])
-            }} title={`Light: ${lightIntensity.toFixed(1)}x`}>
-              Light: {lightIntensity.toFixed(1)}x
-            </Button>
-          </Box>
         </div>
       )}
-      toolbar={workbenchVisible ? (
+      // Overlay viewer controls (top-left)
+      overlayTopLeft={(
+        <Box style={{ display: 'flex', gap: 6 }}>
+          <Button size="1" variant="surface" onClick={() => {
+            const order = ['auto','white','black','light','dark']
+            const i = order.indexOf(bgMode)
+            setBgMode(order[(i >= 0 ? i + 1 : 0) % order.length])
+          }} title={`Background: ${bgMode}`}>
+            BG: {bgMode}
+          </Button>
+          <Button size="1" variant="surface" onClick={() => {
+            const levels = [0.5, 1.0, 1.5, 2.0]
+            const cur = Number(lightIntensity) || 1
+            const idx = levels.findIndex(v => Math.abs(v - cur) < 1e-6)
+            setLightIntensity(levels[(idx >= 0 ? idx + 1 : 0) % levels.length])
+          }} title={`Light: ${lightIntensity.toFixed(1)}x`}>
+            Light: {lightIntensity.toFixed(1)}x
+          </Button>
+        </Box>
+      )}
+      // Bottom toolbar
+      toolbar={(
         <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <Button onClick={doRun} disabled={busy}>
             <Play width={18} height={18} style={{ marginRight: 6 }} />
             {busy ? 'Working…' : 'Run'}
           </Button>
-          {!showEditor && (
-            <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
-          )}
         </Box>
-      ) : null}
-      status={workbenchVisible ? (<Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>) : null}
-      error={workbenchVisible && error ? (<pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>) : null}
-      editor={workbenchVisible && showEditor ? (
-        <EditorPanel
-          title="Editor"
-          onClose={() => setShowEditor(false)}
-          description={<Text as="span" color="gray" size="2">Return props (legacy) or a program object with setup/update/dispose. Click RUN.</Text>}
-          actions={(
-            <>
-              <Button onClick={doRun} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
-              <Button variant="soft" onClick={resetEditorToLastRunning}>Reset to Last Running</Button>
-              <Button variant="soft" onClick={resetEditorToOriginal}>Reset to Original</Button>
-            </>
-          )}
-        >
-          <CodeEditor
-            ref={editorRef}
-            initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
-            storageKey={`three:${id}:code`}
-            height={360}
-            language="javascript"
-            onChange={handleEditorChange}
-          />
-        </EditorPanel>
-      ) : null}
-      toolbarPosition="bottom"
-      viewerHeight={viewerHeight}
+      )}
+      // Editor content and defaults
+      editor={(
+        <CodeEditor
+          ref={editorRef}
+          initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
+          storageKey={`three:${id}:code`}
+          height={360}
+          language="javascript"
+          onChange={handleEditorChange}
+        />
+      )}
+      editorTitle="Editor"
+      editorSubtext={<Text as="span" color="gray" size="2">Return props (legacy) or a program object with setup/update/dispose. Click RUN.</Text>}
+      showDefaultEditorActions
+      onRun={doRun}
+      running={busy}
+      runLabel={busy ? 'Working…' : 'Run'}
+      onResetToLast={resetEditorToLastRunning}
+      onResetToOriginal={resetEditorToOriginal}
+      defaultEditorOpen={!!showEditorDefault}
     />
   )
 })

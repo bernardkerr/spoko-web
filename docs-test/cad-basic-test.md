@@ -4,7 +4,7 @@ This page demonstrates using cadjs code blocks inside pure Markdown.
 
 ## Example A: Simple Box
 
-```js cad {"name":"SimpleBox", "workbench": true}
+```js cad {"name":"SimpleBox", "workbench": false}
 export function buildModel(oc) {
   // ocjs Hello World pattern: constructor overload with dimensions
   const box = new oc.BRepPrimAPI_MakeBox_3(new oc.gp_Pnt_3(-10, -7.5, -5), 20, 15, 10)
@@ -44,7 +44,7 @@ export function buildModel(oc) {
 
 ## Example E: More complex OC example
 
-```js cad {"name":"MoreComplexExample", "workbench": true}
+```js cad {"name":"MoreComplexExample", "workbench": false}
 // Function to build the frame model using OpenCascade.js
 function buildModel(oc) {
 const width = 100;

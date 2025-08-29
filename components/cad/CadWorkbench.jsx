@@ -1,15 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { Box, Card, Heading, Text, Button, Callout } from '@radix-ui/themes'
-import { Wrench, Eye } from 'lucide-react'
+import { useState, useRef, useEffect, forwardRef } from 'react'
+import { Box, Card, Button } from '@radix-ui/themes'
 import * as THREE from 'three'
 import { ThreeCadViewer } from '@/components/cad/ThreeCadViewer'
 import { Toolbar } from '@/components/cad/Toolbar'
 import { CodeEditor } from '@/components/cad/CodeEditor'
 // Worker-based pipeline: build+mesh off main thread
 import { callOcWorker, isOcWorkerReady, waitForOcWorkerReady, onOcWorkerReady } from '@/components/cad/workers/ocWorkerClient'
-import { exportSTL, exportGLTF, downloadBlob, saveBlobWithPicker } from '@/components/cad/Exporters'
+import { exportSTL, exportGLTF, saveBlobWithPicker } from '@/components/cad/Exporters'
 // import { useOcModuleCache } from '@/components/cad/hooks/useOcModuleCache'
 import { useLastGoodCode } from '@/components/cad/hooks/useLastGoodCode'
 import { useOcWarmupWorker } from '@/components/cad/hooks/useOcWarmupWorker'
@@ -17,6 +16,7 @@ import { DocsPanel } from '@/components/common/DocsPanel'
 import { DocsTable } from '@/components/common/DocsTable'
 import { getAssetPath } from '@/lib/paths'
 import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
+import Workbench from '@/components/common/workbench/Workbench'
 
 export const CadWorkbench = forwardRef(function CadWorkbench(
   {
@@ -36,7 +36,8 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   // Workbench vs. viewer-only mode
   const modelPath = ui?.model && typeof ui.model === 'string' ? ui.model.trim() : ''
   const isModelMode = !!modelPath
-  const [workbenchVisible, setWorkbenchVisible] = useState(() => isModelMode ? false : !!ui?.workbench)
+  // Mirror Workbench visibility so CAD can adjust viewer settings and editor/docs outside Workbench
+  const [wbVisible, setWbVisible] = useState(undefined)
 
   const [spinMode, setSpinMode] = useState(() => {
     const im = initialViewer?.spinMode
@@ -82,7 +83,8 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
 
   // When entering viewer-only mode, force conservative settings
   useEffect(() => {
-    if (!workbenchVisible) {
+    if (wbVisible === undefined) return
+    if (!wbVisible) {
       // save previous state once when switching off
       prevViewerStateRef.current = {
         spinMode,
@@ -102,12 +104,11 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
       setOriginVisible(!!p.originVisible)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workbenchVisible])
+  }, [wbVisible])
 
   const [status, setStatus] = useState('Ready')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [showEditor, setShowEditor] = useState(!!showEditorDefault)
   const [showDocsHelper, setShowDocsHelper] = useState(false)
 
   const viewerRef = useRef(null)
@@ -323,10 +324,7 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
     writeCode(val)
   }
 
-  // Auto-close docs helper when editor closes
-  useEffect(() => {
-    if (!showEditor && showDocsHelper) setShowDocsHelper(false)
-  }, [showEditor, showDocsHelper])
+  // Docs open/close handled by Workbench (we keep controlled value for DocsPanel onClose)
 
   // auto run once: wait for worker ready to avoid long first-run wait perception
   useEffect(() => {
@@ -494,159 +492,115 @@ export const CadWorkbench = forwardRef(function CadWorkbench(
   return (
     <Card variant="ghost">
       <Box p="4" style={{ position: 'relative' }}>
-
-        {workbenchVisible && (
-          <></>
-        )}
-
-        <Box className="viewer-shell" style={{ position: 'relative', width: '100%', height: (ui?.viewerHeight ? Number(ui.viewerHeight) : (workbenchVisible ? 420 : 520)), minHeight: 280, borderRadius: 8, border: '1px solid var(--gray-a6)', overflow: 'hidden', background: '#ffffff' }}>
-          {!workbenchVisible ? (
-            <Button
-              size="1"
-              variant="ghost"
-              onClick={() => setWorkbenchVisible(true)}
-              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 10 }}
-              aria-label="Open workbench"
-              title="Open workbench"
-            >
-              <Wrench width={28} height={28} strokeWidth={2} />
-            </Button>
-          ) : (
-            <Button
-              size="1"
-              variant="ghost"
-              onClick={() => setWorkbenchVisible(false)}
-              style={{ position: 'absolute', top: 8, right: 8, opacity: 0.9, padding: 6, minWidth: 0, zIndex: 10 }}
-              aria-label="Viewer only"
-              title="Viewer only"
-            >
-              <Eye width={28} height={28} strokeWidth={2} />
-            </Button>
+        <Workbench
+          toolbarPosition="bottom"
+          // Height: rely on Workbench defaults unless explicitly provided via UI
+          viewerHeight={ui?.viewerHeight ? Number(ui.viewerHeight) : undefined}
+          // Delegate visibility control to Workbench; persist per workbench id
+          defaultWorkbenchVisible={isModelMode ? false : !!ui?.workbench}
+          onWorkbenchVisibleChange={setWbVisible}
+          persistVisibilityKey={`cad:${id}:wb`}
+          // Centralized default viewer actions + API
+          showDefaultViewerActions={!isModelMode}
+          viewerApi={{
+            fitView: () => viewerRef.current?.fitView?.(),
+            reset: () => viewerRef.current?.reset?.(),
+          }}
+          status={!isModelMode ? status : undefined}
+          error={!isModelMode ? error : null}
+          viewer={(
+            <ThreeCadViewer
+              ref={viewerRef}
+              spinMode={spinMode}
+              frameMode={frameMode}
+              shadingMode={shadingMode}
+              originVisible={originVisible}
+              styleMode={styleMode}
+              backgroundMode={backgroundMode}
+              outlineThreshold={outlineThreshold}
+              outlineScale={outlineScale}
+              edgesMode={edgesMode}
+              outlineColorMode={outlineColorMode}
+              edgesLineWidth={edgesLineWidth}
+              ambientLevel={ambientLevel}
+              directionalLevel={directionalLevel}
+            />
           )}
-          {workbenchVisible && (
-            <Box style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', zIndex: 3 }}>
-              <Toolbar
-                spinMode={spinMode}
-                frameMode={frameMode}
-                shadingMode={shadingMode}
-                originVisible={originVisible}
-                onCycleSpin={onCycleSpin}
-                onToggleFrame={onToggleFrame}
-                onToggleShading={onToggleShading}
-                onToggleOrigin={onToggleOrigin}
-                styleMode={styleMode}
-                onCycleStyle={onCycleStyle}
-                backgroundMode={backgroundMode}
-                onCycleBackground={onCycleBackground}
-                outlineThreshold={outlineThreshold}
-                onCycleOutlineThreshold={onCycleOutlineThreshold}
-                outlineScale={outlineScale}
-                onCycleOutlineScale={onCycleOutlineScale}
-                edgesMode={edgesMode}
-                onCycleEdges={onCycleEdges}
-                outlineColorMode={outlineColorMode}
-                onCycleOutlineColor={onCycleOutlineColor}
-                edgesLineWidth={edgesLineWidth}
-                onCycleEdgesLineWidth={onCycleEdgesLineWidth}
-                ambientLevel={ambientLevel}
-                directionalLevel={directionalLevel}
-                onCycleAmbientLevel={onCycleAmbientLevel}
-                onCycleDirectionalLevel={onCycleDirectionalLevel}
-              />
+          overlayTopLeft={(
+            <Toolbar
+              spinMode={spinMode}
+              frameMode={frameMode}
+              shadingMode={shadingMode}
+              originVisible={originVisible}
+              onCycleSpin={onCycleSpin}
+              onToggleFrame={onToggleFrame}
+              onToggleShading={onToggleShading}
+              onToggleOrigin={onToggleOrigin}
+              styleMode={styleMode}
+              onCycleStyle={onCycleStyle}
+              backgroundMode={backgroundMode}
+              onCycleBackground={onCycleBackground}
+              outlineThreshold={outlineThreshold}
+              onCycleOutlineThreshold={onCycleOutlineThreshold}
+              outlineScale={outlineScale}
+              onCycleOutlineScale={onCycleOutlineScale}
+              edgesMode={edgesMode}
+              onCycleEdges={onCycleEdges}
+              outlineColorMode={outlineColorMode}
+              onCycleOutlineColor={onCycleOutlineColor}
+              edgesLineWidth={edgesLineWidth}
+              onCycleEdgesLineWidth={onCycleEdgesLineWidth}
+              ambientLevel={ambientLevel}
+              directionalLevel={directionalLevel}
+              onCycleAmbientLevel={onCycleAmbientLevel}
+              onCycleDirectionalLevel={onCycleDirectionalLevel}
+            />
+          )}
+          toolbar={!isModelMode ? (
+            <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button onClick={runBuild} disabled={busy}>{!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}</Button>
+              <Button variant="soft" onClick={doExportSTEP}>Export STEP</Button>
+              <Button variant="soft" onClick={doExportSTL}>Export STL</Button>
+              <Button variant="soft" onClick={doExportGLB}>Export GLB</Button>
             </Box>
-          )}
-          <ThreeCadViewer
-            ref={viewerRef}
-            spinMode={spinMode}
-            frameMode={frameMode}
-            shadingMode={shadingMode}
-            originVisible={originVisible}
-            styleMode={styleMode}
-            backgroundMode={backgroundMode}
-            outlineThreshold={outlineThreshold}
-            outlineScale={outlineScale}
-            edgesMode={edgesMode}
-            outlineColorMode={outlineColorMode}
-            edgesLineWidth={edgesLineWidth}
-            ambientLevel={ambientLevel}
-            directionalLevel={directionalLevel}
-          />
-        </Box>
-
-        {workbenchVisible && (
-          <>
-
-            {!isModelMode && (
-              <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                <Button variant="surface" onClick={() => viewerRef.current?.fitView?.()}>Fit View</Button>
-                <Button variant="surface" onClick={() => viewerRef.current?.reset?.()}>Reset</Button>
-                <Button onClick={runBuild} disabled={busy}>{!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}</Button>
-                <Button variant="soft" onClick={doExportSTEP}>Export STEP</Button>
-                <Button variant="soft" onClick={doExportSTL}>Export STL</Button>
-                <Button variant="soft" onClick={doExportGLB}>Export GLB</Button>
-                {!showEditor && (
-                  <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
-                )}
-              </Box>
-            )}
-
-            {!isModelMode && (
-              <>
-                <Box mt="3">
-                  <Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>
-                </Box>
-                {error && (
-                  <Box mt="2">
-                    <Callout.Root color="red">
-                      <Callout.Text>{error}</Callout.Text>
-                    </Callout.Root>
-                  </Box>
-                )}
-              </>
-            )}
-
-            {showEditor && !isModelMode && (
-              <Box mt="6">
-                <Card>
-                  <Box p="4">
-                    <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Heading size="6">Editor</Heading>
-                      <Button variant="ghost" onClick={() => setShowEditor(false)}>Close</Button>
-                    </Box>
-                    <Text as="p" color="gray" size="2">Edit the buildModel(oc) function and RUN to rebuild.</Text>
-                    <Box mt="3">
-                      <CodeEditor
-                        ref={editorRef}
-                        initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
-                        storageKey={`cad:${id}:code`}
-                        height={360}
-                        onChange={handleEditorChange}
-                      />
-                    </Box>
-                    <Box mt="3" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <Button onClick={runBuild} disabled={busy}>{!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}</Button>
-                      <Button variant="soft" onClick={resetEditorToLastRunning}>Reset to Last Running</Button>
-                      <Button variant="soft" onClick={resetEditorToOriginal}>Reset to Original</Button>
-                      <Button variant="surface" onClick={() => setShowDocsHelper(v => !v)}>{showDocsHelper ? 'Hide Docs Helper' : 'Docs Helper'}</Button>
-                    </Box>
-                    {showDocsHelper && (
-                      <Box mt="3">
-                        <DocsPanel
-                          title="OCJS Docs Helper"
-                          source={getAssetPath('/test/cad-doc/oc-apis.md')}
-                          height={360}
-                          onClose={() => setShowDocsHelper(false)}
-                        >
-                          <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} variant="cad" showSearch />
-                        </DocsPanel>
-                      </Box>
-                    )}
-                  </Box>
-                </Card>
-              </Box>
-            )}
-          </>
-        )}
+          ) : null}
+          editor={!isModelMode ? (
+            <CodeEditor
+              ref={editorRef}
+              initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
+              storageKey={`cad:${id}:code`}
+              height={360}
+              onChange={handleEditorChange}
+            />
+          ) : undefined}
+          editorTitle="Editor"
+          editorSubtext={!isModelMode ? 'Edit the buildModel(oc) function and RUN to rebuild.' : undefined}
+          // Let Workbench render default editor action buttons
+          showDefaultEditorActions={!isModelMode}
+          onRun={runBuild}
+          runDisabled={!ocReady}
+          running={busy}
+          runLabel={!ocReady ? 'Initializing…' : (busy ? 'Working…' : 'Run')}
+          onResetToLast={resetEditorToLastRunning}
+          onResetToOriginal={resetEditorToOriginal}
+          // Docs helper managed by Workbench; we control open state for panel close
+          docsAside={!isModelMode ? (
+            <DocsPanel
+              title="OCJS Docs Helper"
+              source={getAssetPath('/test/cad-doc/oc-apis.md')}
+              height={360}
+              onClose={() => setShowDocsHelper(false)}
+            >
+              <DocsTable markdownUrl={getAssetPath('/test/cad-doc/oc-apis.md')} variant="cad" showSearch />
+            </DocsPanel>
+          ) : undefined}
+          docsOpen={showDocsHelper}
+          onDocsOpenChange={setShowDocsHelper}
+          // Optional: catch editor crashes
+          wrapEditorWithErrorBoundary
+          // Let Workbench own editor state + persistence
+          defaultEditorOpen={!!showEditorDefault}
+        />
       </Box>
     </Card>
   )

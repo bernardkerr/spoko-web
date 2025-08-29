@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
-import { Box, Text, Button } from '@radix-ui/themes'
+import { Box, Button } from '@radix-ui/themes'
 import { Download, Play } from 'lucide-react'
 import { CodeEditor } from '@/components/common/CodeEditor'
 import { useLastGoodCode } from '@/components/common/hooks/useLastGoodCode'
@@ -10,10 +10,8 @@ import { DocsPanel } from '@/components/common/DocsPanel'
 import { DocsTable as CommonDocsTable } from '@/components/common/DocsTable'
 import { getAssetPath } from '@/lib/paths'
 import { downloadText } from '@/lib/downloads'
-import { WorkbenchShell } from '@/components/common/WorkbenchShell'
 import { useWorkbenchInterface } from '@/components/common/hooks/useWorkbenchInterface'
-import { ViewerChrome } from '@/components/common/ViewerChrome'
-import { EditorPanel } from '@/components/common/EditorPanel'
+import Workbench from '@/components/common/workbench/Workbench'
 
 export const D3Workbench = forwardRef(function D3Workbench(
   {
@@ -27,12 +25,9 @@ export const D3Workbench = forwardRef(function D3Workbench(
   },
   ref
 ) {
-  const [workbenchVisible, setWorkbenchVisible] = useState(() => !!ui?.workbench)
-  const [showEditor, setShowEditor] = useState(!!showEditorDefault)
   const [status, setStatus] = useState('Ready')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [showDocsHelper, setShowDocsHelper] = useState(false)
   const [libsReady, setLibsReady] = useState(false)
   const [bgMode, setBgMode] = useState('auto') // auto | white | black | light | dark
 
@@ -62,11 +57,6 @@ export const D3Workbench = forwardRef(function D3Workbench(
     writeCode(val)
   }
 
-  // Auto-close docs helper when editor closes
-  useEffect(() => {
-    if (!showEditor && showDocsHelper) setShowDocsHelper(false)
-  }, [showEditor, showDocsHelper])
-
   // Load d3 and elk dynamically on client
   useEffect(() => {
     let cancelled = false
@@ -90,8 +80,6 @@ export const D3Workbench = forwardRef(function D3Workbench(
     loadLibs()
     return () => { cancelled = true }
   }, [onError])
-
-  const viewerHeight = useMemo(() => (ui?.viewerHeight ? Number(ui.viewerHeight) : (workbenchVisible ? 420 : 520)), [ui?.viewerHeight, workbenchVisible])
 
   async function doRun() {
     if (!containerRef.current) return
@@ -182,31 +170,42 @@ export const D3Workbench = forwardRef(function D3Workbench(
   }
 
   return (
-    <WorkbenchShell
+    <Workbench
+      toolbarPosition="bottom"
+      // Height: rely on Workbench defaults unless explicitly provided via UI
+      viewerHeight={ui?.viewerHeight ? Number(ui.viewerHeight) : undefined}
+      // Visibility persistence per-workbench
+      defaultWorkbenchVisible={!!ui?.workbench}
+      persistVisibilityKey={`d3:${id}:wb`}
+      status={status}
+      error={error}
+      // Viewer content
       viewer={(
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-          <ViewerChrome
-            visible={workbenchVisible}
-            onOpen={() => setWorkbenchVisible(true)}
-            onClose={() => setWorkbenchVisible(false)}
-          />
-          {workbenchVisible && (
-            <Box style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6, zIndex: 3 }}>
-              <Button size="1" variant="surface" onClick={() => {
-                const order = ['auto','white','black','light','dark']
-                const i = order.indexOf(bgMode)
-                setBgMode(order[(i >= 0 ? i + 1 : 0) % order.length])
-              }} title={`Background: ${bgMode}`}>
-                BG: {bgMode}
-              </Button>
-            </Box>
-          )}
           <div ref={containerRef} style={{ width: '100%', height: '100%', padding: 8, boxSizing: 'border-box', ...(bgColor ? { backgroundColor: bgColor } : {}) }} />
         </div>
       )}
-      toolbar={workbenchVisible ? (
+      // Overlay controls rendered only when workbench is visible
+      overlayTopLeft={(
+        <Box style={{ display: 'flex', gap: 6 }}>
+          <Button
+            size="1"
+            variant="surface"
+            onClick={() => {
+              const order = ['auto','white','black','light','dark']
+              const i = order.indexOf(bgMode)
+              setBgMode(order[(i >= 0 ? i + 1 : 0) % order.length])
+            }}
+            title={`Background: ${bgMode}`}
+          >
+            BG: {bgMode}
+          </Button>
+        </Box>
+      )}
+      // Custom toolbar actions
+      toolbar={(
         <Box style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Button onClick={doRun} disabled={busy}>
+          <Button onClick={doRun} disabled={busy || !libsReady}>
             <Play width={18} height={18} style={{ marginRight: 6 }} />
             {busy ? 'Working…' : 'Run'}
           </Button>
@@ -214,44 +213,40 @@ export const D3Workbench = forwardRef(function D3Workbench(
             <Download width={18} height={18} style={{ marginRight: 6 }} />
             Export SVG
           </Button>
-          {!showEditor && (
-            <Button variant="solid" onClick={() => setShowEditor(true)}>Open Editor</Button>
-          )}
         </Box>
-      ) : null}
-      status={workbenchVisible ? (<Text size="2" color={error ? 'red' : 'gray'}>Status: {status}</Text>) : null}
-      error={workbenchVisible && error ? (<pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{error}</pre>) : null}
-      editor={workbenchVisible && showEditor ? (
-        <EditorPanel
-          title="Editor"
-          onClose={() => setShowEditor(false)}
-          description={<Text as="span" color="gray" size="2">Write D3 + ELKJS code and click RUN.</Text>}
-          actions={(
-            <>
-              <Button onClick={doRun} disabled={busy}>{busy ? 'Working…' : 'Run'}</Button>
-              <Button variant="soft" onClick={resetEditorToLastRunning}>Reset to Last Running</Button>
-              <Button variant="soft" onClick={resetEditorToOriginal}>Reset to Original</Button>
-              <Button variant="surface" onClick={() => setShowDocsHelper(v => !v)}>{showDocsHelper ? 'Hide D3 Doc' : 'D3 Doc'}</Button>
-            </>
-          )}
-        >
-          <CodeEditor
-            ref={editorRef}
-            initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
-            storageKey={`d3:${id}:code`}
-            height={360}
-            language="javascript"
-            onChange={handleEditorChange}
-          />
-        </EditorPanel>
-      ) : null}
-      docs={workbenchVisible && showDocsHelper ? (
-        <DocsPanel title="D3 Docs" source="d3-apis.md" height={360} onClose={() => setShowDocsHelper(false)}>
+      )}
+      // Editor content
+      editor={(
+        <CodeEditor
+          ref={editorRef}
+          initialCode={initialValuesRef.current?.code ?? initialCode ?? ''}
+          storageKey={`d3:${id}:code`}
+          height={360}
+          language="javascript"
+          onChange={handleEditorChange}
+        />
+      )}
+      editorTitle="Editor"
+      editorSubtext="Write D3 + ELKJS code and click RUN."
+      showDefaultEditorActions
+      onRun={doRun}
+      runDisabled={!libsReady}
+      running={busy}
+      runLabel={busy ? 'Working…' : 'Run'}
+      defaultEditorOpen={!!showEditorDefault}
+      // Docs helper managed by Workbench; we control open state for panel close
+      docsAside={(
+        <DocsPanel title="D3 Docs" source="d3-apis.md" height={360}>
           <CommonDocsTable markdownUrl={getAssetPath('/test/d3-doc/d3-apis.md')} />
         </DocsPanel>
-      ) : null}
-      toolbarPosition="bottom"
-      viewerHeight={viewerHeight}
+      )}
+      docsHelperLabelClosed="D3 Doc"
+      docsHelperLabelOpen="Hide D3 Doc"
+      // Error boundary for editor
+      wrapEditorWithErrorBoundary
+      // Resets: use our handlers
+      onResetToLast={resetEditorToLastRunning}
+      onResetToOriginal={resetEditorToOriginal}
     />
   )
   })
