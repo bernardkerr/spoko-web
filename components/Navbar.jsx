@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { ThemeToggle } from './ThemeToggle'
-import Image from 'next/image'
 import { getTopLevelContentFiles } from '@/lib/markdown'
 
 export async function Navbar() {
@@ -12,12 +11,12 @@ export async function Navbar() {
       <div className="container navbar-inner">
         <div className="navbar-brand">
           <Link href="/" style={{ display: 'flex', alignItems: 'center', marginRight: 24 }}>
-            <Image
+            <img
+              className="navbar-logo"
               src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/assets/spoko-logo-outline.svg`}
               alt="Spoko Logo"
-              width={96}
-              height={36}
-              priority
+              decoding="async"
+              loading="eager"
             />
           </Link>
           <nav className="navbar-links">
