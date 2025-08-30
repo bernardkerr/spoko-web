@@ -325,6 +325,12 @@ body {
   align-items: center;
   margin-right: 24px;
 }
+.navbar-logo {
+  /* Ensure logo renders at its intrinsic SVG size */
+  max-width: none;
+  height: auto;
+  display: block;
+}
 .navbar-links {
   display: flex;
   align-items: center;
