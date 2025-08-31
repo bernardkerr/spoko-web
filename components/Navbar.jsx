@@ -28,7 +28,7 @@ export async function Navbar() {
             ))}
             
             {/* Static navigation items */}
-            <Link href="/documentation">Documentation</Link>
+            <Link href="/docs">Documentation</Link>
             <Link href="/test">Test</Link>
           </nav>
         </div>
