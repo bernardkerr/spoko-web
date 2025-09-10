@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Moon, Sun } from 'lucide-react'
-import { IconButton } from '@radix-ui/themes'
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState('light')
@@ -33,16 +32,18 @@ export function ThemeToggle() {
   }
 
   return (
-    <IconButton
-      variant="ghost"
+    <button
+      type="button"
+      className="themetoggle"
       onClick={toggleTheme}
       aria-label="Toggle theme"
+      title="Toggle theme"
     >
       {theme === 'light' ? (
-        <Moon className="h-4 w-4" />
+        <Moon size={18} />
       ) : (
-        <Sun className="h-4 w-4" />
+        <Sun size={18} />
       )}
-    </IconButton>
+    </button>
   )
 }

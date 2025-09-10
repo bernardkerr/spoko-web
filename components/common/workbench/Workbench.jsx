@@ -367,7 +367,8 @@ export default function Workbench({
           minHeight: 280,
           borderRadius: 8,
           border: '1px solid var(--gray-a6)',
-          overflow: 'hidden',
+          overflow: 'visible',
+          boxSizing: 'border-box',
           background: '#ffffff',
         }}
       >
