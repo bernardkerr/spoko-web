@@ -309,6 +309,28 @@ html {
   background-color: var(--gray-12);
 }
 
+/* Floating TOC: remove any accidental underline/bottom highlight on items */
+.floating-toc .rt-Text,
+.floating-toc .rt-Text:hover,
+.floating-toc .rt-Text:focus {
+  text-decoration: none !important;
+  box-shadow: none !important;
+  border-bottom: 0 !important;
+  background-image: none !important;
+}
+
+/* Floating TOC: hide Radix ScrollArea scrollbar by default (remove bottom highlight)
+   and only reveal on hover or when mobile TOC is open */
+.floating-toc .rt-ScrollAreaScrollbar { display: none !important; }
+.floating-toc .rt-ScrollAreaThumb { display: none !important; }
+/* Hide native scrollbars in the TOC viewport; scrolling still works */
+.floating-toc .rt-ScrollAreaViewport { scrollbar-width: none; }
+.floating-toc .rt-ScrollAreaViewport::-webkit-scrollbar { width: 0; height: 0; }
+/* Prevent horizontal scroll and hide horizontal scrollbar/corner entirely */
+.floating-toc .rt-ScrollAreaViewport { overflow-x: hidden !important; }
+.floating-toc .rt-ScrollAreaScrollbar[data-orientation="horizontal"] { display: none !important; }
+.floating-toc .rt-ScrollAreaCorner { display: none !important; }
+
 /* Hide floating TOC entirely on mobile/tablet */
 @media (max-width: 1023.98px) {
   .floating-toc,

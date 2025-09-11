@@ -237,7 +237,7 @@ export default function FloatingTOC({ minHeadings = 3 }) {
           <Text size="2" weight="medium" color="gray" mb="3" as="div">
             Contents
           </Text>
-          <ScrollArea style={{ maxHeight: '60vh' }}>
+          <ScrollArea type="hover" style={{ maxHeight: '60vh' }}>
             <Box as="nav">
               {headings.map((heading) => (
                 <Box
@@ -256,10 +256,14 @@ export default function FloatingTOC({ minHeadings = 3 }) {
                       width: '100%',
                       textAlign: 'left',
                       border: 'none',
+                      borderBottom: 'none',
                       background: 'none',
                       padding: '4px 8px',
                       borderRadius: 'var(--radius-2)',
                       cursor: 'pointer',
+                      boxShadow: 'none',
+                      outline: 'none',
+                      textDecoration: 'none',
                       color: activeId === heading.id 
                         ? 'var(--accent-11)' 
                         : 'var(--gray-12)',

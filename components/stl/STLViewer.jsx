@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState, forwardRef } from 'react'
-import { Box, Card, IconButton, Text } from '@radix-ui/themes'
+import { Box, Card, IconButton, Text, Button } from '@radix-ui/themes'
 import { Wrench, Download } from 'lucide-react'
+import * as THREE from 'three'
 import { ThreeCadViewer } from '@/components/cad/ThreeCadViewer'
 import { Toolbar } from '@/components/cad/Toolbar'
 import { getAssetPath } from '@/lib/paths'
@@ -40,6 +41,8 @@ export const STLViewer = forwardRef(function STLViewer(
     directionalLevel = 2.0,
     // Behavior
     autoFitOnLoad = true,
+    recenter = true,
+    recenterThreshold = 0.10,
     name, // optional display/export base name
   },
   ref
@@ -66,6 +69,11 @@ export const STLViewer = forwardRef(function STLViewer(
   const [vEdgesLineWidth, setVEdgesLineWidth] = useState(edgesLineWidth)
   const [vAmbientLevel, setVAmbientLevel] = useState(ambientLevel)
   const [vDirectionalLevel, setVDirectionalLevel] = useState(directionalLevel)
+  // Recenter support
+  const [recenterEnabled, setRecenterEnabled] = useState(!!recenter)
+  const offsetRef = useRef({ x: 0, y: 0, z: 0 })
+  const originalGeomRef = useRef(null)
+  const centeredGeomRef = useRef(null)
 
   // Resolve URL respecting basePath for local models
   const resolvedUrl = useMemo(() => {
@@ -92,7 +100,34 @@ export const STLViewer = forwardRef(function STLViewer(
         if (cancelled) return
         geometry.computeBoundingBox()
         geometry.computeBoundingSphere()
-        viewerRef.current?.setGeometry?.(geometry)
+
+        // Compute center of bounding box
+        const bb = geometry.boundingBox
+        const cx = (bb.min.x + bb.max.x) / 2
+        const cy = (bb.min.y + bb.max.y) / 2
+        const cz = (bb.min.z + bb.max.z) / 2
+        offsetRef.current = { x: cx, y: cy, z: cz }
+
+        // Prepare centered clone (do not mutate original)
+        const centered = geometry.clone()
+        centered.translate(-cx, -cy, -cz)
+        centered.computeBoundingBox()
+        centered.computeBoundingSphere()
+
+        originalGeomRef.current = geometry
+        centeredGeomRef.current = centered
+
+        // Decide initial recentering based on threshold (10% default)
+        const size = geometry.boundingBox.getSize(new THREE.Vector3())
+        const maxDim = Math.max(size.x, size.y, size.z) || 1
+        const offsetLen = Math.sqrt(cx*cx + cy*cy + cz*cz)
+        const ratio = offsetLen / maxDim
+        const threshold = Math.max(0, Number(recenterThreshold) || 0)
+        const enableByThreshold = (!!recenter) && (ratio > threshold)
+        // Update state to reflect decision
+        setRecenterEnabled(enableByThreshold)
+        const chosen = enableByThreshold ? centered : geometry
+        viewerRef.current?.setGeometry?.(chosen)
         if (autoFitOnLoad) viewerRef.current?.fitView?.()
       } catch (e) {
         setError(e?.message || String(e))
@@ -103,6 +138,17 @@ export const STLViewer = forwardRef(function STLViewer(
     load()
     return () => { cancelled = true }
   }, [resolvedUrl, autoFitOnLoad])
+
+  // Toggle recenter: swap geometry between original and centered
+  const toggleRecenter = () => {
+    const next = !recenterEnabled
+    setRecenterEnabled(next)
+    const geo = next ? (centeredGeomRef.current || originalGeomRef.current) : (originalGeomRef.current || centeredGeomRef.current)
+    if (geo) {
+      viewerRef.current?.setGeometry?.(geo)
+      viewerRef.current?.fitView?.()
+    }
+  }
 
   const onCycleAmbientLevel = () => {
     const levels = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
@@ -235,38 +281,62 @@ export const STLViewer = forwardRef(function STLViewer(
             edgesLineWidth={vEdgesLineWidth}
             ambientLevel={vAmbientLevel}
             directionalLevel={vDirectionalLevel}
+            // Axes are parented to the model group; when centered, move axes locally to the original origin
+            originOffset={{
+              x: recenterEnabled ? -(offsetRef.current.x || 0) : 0,
+              y: recenterEnabled ? -(offsetRef.current.y || 0) : 0,
+              z: recenterEnabled ? -(offsetRef.current.z || 0) : 0,
+            }}
           />
           {/* Overlay: CAD toolbar when View is toggled on */}
           {viewTools && (
-            <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 9 }}>
-              <Toolbar
-                spinMode={vSpinMode}
-                frameMode={vFrameMode}
-                shadingMode={vShadingMode}
-                originVisible={vOriginVisible}
-                onCycleSpin={onCycleSpin}
-                onToggleFrame={onToggleFrame}
-                onToggleShading={onToggleShading}
-                onToggleOrigin={onToggleOrigin}
-                styleMode={vStyleMode}
-                onCycleStyle={onCycleStyle}
-                backgroundMode={vBackgroundMode}
-                onCycleBackground={onCycleBackground}
-                outlineThreshold={vOutlineThreshold}
-                onCycleOutlineThreshold={onCycleOutlineThreshold}
-                outlineScale={vOutlineScale}
-                onCycleOutlineScale={onCycleOutlineScale}
-                edgesMode={vEdgesMode}
-                onCycleEdges={onCycleEdges}
-                outlineColorMode={vOutlineColorMode}
-                onCycleOutlineColor={onCycleOutlineColor}
-                edgesLineWidth={vEdgesLineWidth}
-                onCycleEdgesLineWidth={onCycleEdgesLineWidth}
-                ambientLevel={vAmbientLevel}
-                directionalLevel={vDirectionalLevel}
-                onCycleAmbientLevel={onCycleAmbientLevel}
-                onCycleDirectionalLevel={onCycleDirectionalLevel}
-              />
+            <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 9, paddingRight: 96 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', maxWidth: 'calc(100% - 96px)' }}>
+                <Toolbar
+                  spinMode={vSpinMode}
+                  frameMode={vFrameMode}
+                  shadingMode={vShadingMode}
+                  originVisible={vOriginVisible}
+                  onCycleSpin={onCycleSpin}
+                  onToggleFrame={onToggleFrame}
+                  onToggleShading={onToggleShading}
+                  onToggleOrigin={onToggleOrigin}
+                  styleMode={vStyleMode}
+                  onCycleStyle={onCycleStyle}
+                  backgroundMode={vBackgroundMode}
+                  onCycleBackground={onCycleBackground}
+                  outlineThreshold={vOutlineThreshold}
+                  onCycleOutlineThreshold={onCycleOutlineThreshold}
+                  outlineScale={vOutlineScale}
+                  onCycleOutlineScale={onCycleOutlineScale}
+                  edgesMode={vEdgesMode}
+                  onCycleEdges={onCycleEdges}
+                  outlineColorMode={vOutlineColorMode}
+                  onCycleOutlineColor={onCycleOutlineColor}
+                  edgesLineWidth={vEdgesLineWidth}
+                  onCycleEdgesLineWidth={onCycleEdgesLineWidth}
+                  ambientLevel={vAmbientLevel}
+                  directionalLevel={vDirectionalLevel}
+                  onCycleAmbientLevel={onCycleAmbientLevel}
+                  onCycleDirectionalLevel={onCycleDirectionalLevel}
+                  leading={(
+                    <Button variant="solid" size="2" onClick={toggleRecenter} style={{ whiteSpace: 'nowrap' }}>
+                      CENTER: {recenterEnabled ? 'ON' : 'OFF'}
+                    </Button>
+                  )}
+                />
+              </div>
+              <Box mt="1" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', maxWidth: 'calc(100% - 96px)' }}>
+                <Text size="2" color="gray">
+                  Offset: (
+                  {offsetRef.current.x.toFixed ? offsetRef.current.x.toFixed(2) : String(offsetRef.current.x)},
+                  {' '}
+                  {offsetRef.current.y.toFixed ? offsetRef.current.y.toFixed(2) : String(offsetRef.current.y)},
+                  {' '}
+                  {offsetRef.current.z.toFixed ? offsetRef.current.z.toFixed(2) : String(offsetRef.current.z)}
+                  )
+                </Text>
+              </Box>
             </div>
           )}
         </div>
