@@ -1,0 +1,11 @@
+{
+  "$id": "spoke://docs/root",
+  "title": "Store Root",
+  "$type": "spoke/object",
+  "name": "Root",
+  "children": [
+    "spoke://docs/robot-wheeled",
+    "spoke://docs/robot-humanoid"
+  ],
+  "meta": { "origin": "site" }
+}

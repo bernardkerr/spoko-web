@@ -24,6 +24,38 @@ export default function TestPage() {
           <Text as="p" color="gray" size="4">These pages highlight the capabilities of the site.</Text>
         </Box>
 
+        {/* Designer */}
+        <Box mt="6" mb="3">
+          <Heading size="6">Designer</Heading>
+        </Box>
+        <Grid data-toc-exclude columns={{ initial: '1', sm: '2', lg: '3', xl: '5' }} gap="4">
+          <DocCard>
+            <Heading size="4" mb="1">Store</Heading>
+            <Text color="gray" size="2" mb="3">Explore the client-side store, seed, and resolver utilities behind the Designer playground.</Text>
+            <Button asChild>
+              <NextLink href="/test/designer/store">Open Store</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">Editor</Heading>
+            <Text color="gray" size="2" mb="3">Object Explorer and JSON editor split view using the Designer store.</Text>
+            <Button asChild>
+              <NextLink href="/test/designer/editor">Open Editor</NextLink>
+            </Button>
+          </DocCard>
+
+          <DocCard>
+            <Heading size="4" mb="1">Ace Check</Heading>
+            <Text color="gray" size="2" mb="3">Probe react-ace compatibility under React 19 + Next 15 within this app.</Text>
+            <Button asChild>
+              <NextLink href="/test/designer/ace-check">Open Ace Check</NextLink>
+            </Button>
+          </DocCard>
+        </Grid>
+
+        <Separator my="5" size="4" />
+
         {/* CAD */}
         <Box mt="6" mb="3">
           <Heading size="6">CAD</Heading>
@@ -223,6 +255,8 @@ export default function TestPage() {
         </Grid>
 
         <Separator my="5" size="4" />
+
+        
 
         {/* Misc */}
         <Box mt="6" mb="3">
