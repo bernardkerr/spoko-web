@@ -20,19 +20,15 @@ description: Demonstrates embedding the lightweight STL viewer inside markdown u
     />
   </div>
 
-  <p>
-    Modern robotics teams iterate rapidly on chassis and actuator designs, and having an
-    embedded STL preview beside the documentation helps reviewers reason about clearances
-    and mounting points without context switching. The compact viewer loads quickly,
-    supports responsive orbit controls, and respects the site theme for visual consistency.
-  </p>
+  Modern robotics teams iterate rapidly on chassis and actuator designs, and having an
+  embedded STL preview beside the documentation helps reviewers reason about clearances
+  and mounting points without context switching. The compact viewer loads quickly,
+  supports responsive orbit controls, and respects the site theme for visual consistency.
 
-  <p>
-    CAD models often evolve across sprints, so keeping lightweight assets in docs reduces
-    friction for non-CAD contributors. Authors can link to the heavier STEP sources when
-    needed while using the STL for fast page loads. The inline viewer also makes it easy
-    to call out specific assembly steps or tolerance considerations directly in the text.
-  </p>
+  CAD models often evolve across sprints, so keeping lightweight assets in docs reduces
+  friction for non-CAD contributors. Authors can link to the heavier STEP sources when
+  needed while using the STL for fast page loads. The inline viewer also makes it easy
+  to call out specific assembly steps or tolerance considerations directly in the text.
 </div>
 
 ## Heavy Model

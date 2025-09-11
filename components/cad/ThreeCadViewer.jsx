@@ -66,6 +66,23 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     return box
   }
 
+  // Compute a camera distance so the model's bounding SPHERE fills ~fillFrac of the viewport.
+  // Using a sphere makes the fit invariant to rotation/spin.
+  const computeFitDistance = (box, camera, fillFrac = 0.75) => {
+    const size = box.getSize(new THREE.Vector3())
+    const diag = Math.max(0.0001, size.length())
+    const R = diag / 2 // sphere radius
+    const vFov = (camera.fov * Math.PI) / 180
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect)
+    const frac = Math.max(0.1, Math.min(0.95, fillFrac))
+    // For sphere diameter 2R to fit within frac*height or frac*width at depth d:
+    // height = 2 d tan(vFov/2); width = 2 d tan(hFov/2)
+    // => d >= R / (frac * tan(fov/2)) for each axis.
+    const dV = R / (frac * Math.tan(vFov / 2))
+    const dH = R / (frac * Math.tan(hFov / 2))
+    return Math.max(dV, dH) * 1.05 // small padding
+  }
+
   // helper to apply shading to current model group
   const applyShading = (mode) => {
     const group = modelGroupRef.current
@@ -607,11 +624,11 @@ useEffect(() => {
       const controls = controlsRef.current
       if (camera && controls) {
         controls.target.copy(center)
-        const distance = size * 2.2 / Math.tan((camera.fov * Math.PI) / 360)
+        const distance = computeFitDistance(box, camera, 0.75)
         const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize()
         camera.position.copy(dir.multiplyScalar(distance).add(controls.target))
-        camera.near = size / 100
-        camera.far = size * 10
+        camera.near = Math.max(0.01, Math.min(camera.near, size / 100))
+        camera.far = Math.max(camera.far, size * 10)
         camera.updateProjectionMatrix()
         controls.update()
       }
@@ -637,11 +654,11 @@ useEffect(() => {
       const controls = controlsRef.current
       if (camera && controls) {
         controls.target.copy(center)
-        const distance = size * 2.4 / Math.tan((camera.fov * Math.PI) / 360)
+        const distance = computeFitDistance(box, camera, 0.75)
         const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize()
         camera.position.copy(dir.multiplyScalar(distance).add(controls.target))
-        camera.near = size / 100
-        camera.far = size * 10
+        camera.near = Math.max(0.01, Math.min(camera.near, size / 100))
+        camera.far = Math.max(camera.far, size * 10)
         camera.updateProjectionMatrix()
         controls.update()
       }
