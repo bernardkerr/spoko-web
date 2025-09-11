@@ -242,7 +242,7 @@ export const STLViewer = forwardRef(function STLViewer(
 
   return (
     <Card variant="ghost" className="stlviewer-card">
-      <Box p="3" style={{ position: 'relative' }}>
+      <Box p="0" style={{ position: 'relative' }}>
         {/* Missing src message */}
         {noSrc && (
           <Box mb="2"><Text color="red">STLViewer: missing src</Text></Box>
