@@ -13,12 +13,41 @@ export default function FloatingTOC({ minHeadings = 3 }) {
     // Extract headings from the page
     const extractHeadings = () => {
       const headingElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
-      const headingData = Array.from(headingElements).map((heading) => ({
-        id: heading.id,
-        text: heading.textContent,
-        level: parseInt(heading.tagName.charAt(1)),
-        element: heading
-      })).filter(heading => heading.id) // Only include headings with IDs
+      const used = new Set()
+      const slugify = (str) => {
+        return (str || '')
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+      }
+      const ensureId = (el) => {
+        if (el.id) { used.add(el.id); return el.id }
+        const base = slugify(el.textContent)
+        let candidate = base || 'section'
+        let i = 1
+        while (used.has(candidate) || document.getElementById(candidate)) {
+          i += 1
+          candidate = `${base || 'section'}-${i}`
+        }
+        el.id = candidate
+        used.add(candidate)
+        return candidate
+      }
+      const headingData = Array.from(headingElements)
+        // Exclude headings that live inside containers explicitly marked to be ignored by TOC
+        .filter((el) => !el.closest('[data-toc-exclude]'))
+        .map((heading) => {
+          const id = ensureId(heading)
+          return {
+            id,
+            text: heading.textContent,
+            level: parseInt(heading.tagName.charAt(1)),
+            element: heading
+          }
+        })
+        .filter(heading => heading.id)
 
       setHeadings(headingData)
       setIsVisible(headingData.length >= minHeadings)
@@ -71,6 +100,17 @@ export default function FloatingTOC({ minHeadings = 3 }) {
     }
   }, [])
 
+  // When the mobile hamburger requests the TOC, ensure we switch to 'top'
+  useEffect(() => {
+    const onMobileTocOpen = () => setPosition('top')
+    try {
+      window.addEventListener('mobile-toc-open', onMobileTocOpen)
+    } catch {}
+    return () => {
+      try { window.removeEventListener('mobile-toc-open', onMobileTocOpen) } catch {}
+    }
+  }, [])
+
   useEffect(() => {
     try {
       localStorage.setItem('floatingTOCPosition', position)
@@ -87,6 +127,10 @@ export default function FloatingTOC({ minHeadings = 3 }) {
         block: 'start'
       })
     }
+    // Notify listeners (MobileTOC) to close the overlay on selection
+    try {
+      window.dispatchEvent(new Event('floating-toc-select'))
+    } catch {}
   }
 
   const cyclePosition = () => {
@@ -193,7 +237,7 @@ export default function FloatingTOC({ minHeadings = 3 }) {
           <Text size="2" weight="medium" color="gray" mb="3" as="div">
             Contents
           </Text>
-          <ScrollArea style={{ maxHeight: '60vh' }}>
+          <ScrollArea type="hover" style={{ maxHeight: '60vh' }}>
             <Box as="nav">
               {headings.map((heading) => (
                 <Box
@@ -212,13 +256,17 @@ export default function FloatingTOC({ minHeadings = 3 }) {
                       width: '100%',
                       textAlign: 'left',
                       border: 'none',
+                      borderBottom: 'none',
                       background: 'none',
                       padding: '4px 8px',
                       borderRadius: 'var(--radius-2)',
                       cursor: 'pointer',
+                      boxShadow: 'none',
+                      outline: 'none',
+                      textDecoration: 'none',
                       color: activeId === heading.id 
                         ? 'var(--accent-11)' 
-                        : 'var(--gray-11)',
+                        : 'var(--gray-12)',
                       backgroundColor: activeId === heading.id 
                         ? 'var(--accent-3)' 
                         : 'transparent',
@@ -226,7 +274,7 @@ export default function FloatingTOC({ minHeadings = 3 }) {
                     }}
                     onMouseEnter={(e) => {
                       if (activeId !== heading.id) {
-                        e.target.style.backgroundColor = 'var(--gray-3)'
+                        e.target.style.backgroundColor = 'var(--gray-4)'
                       }
                     }}
                     onMouseLeave={(e) => {

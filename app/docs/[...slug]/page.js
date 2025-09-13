@@ -62,11 +62,8 @@ export default async function DocPage({ params }) {
     )
   }
 
-  // In development, disable caching so markdown edits reflect immediately
-  if (process.env.NODE_ENV !== 'production') {
-    const { unstable_noStore } = await import('next/cache')
-    unstable_noStore()
-  }
+  // Note: Do not use unstable_noStore here because this route is static-only (dynamic = 'error').
+  // Live reload is handled via CONTENT_VERSION/HMR in development.
 
   // Resolve file inside docs-submodules/, support both .mdx and .md
   const mdxPath = path.join(process.cwd(), 'docs-submodules', `${slug}.mdx`)

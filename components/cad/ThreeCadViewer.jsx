@@ -14,7 +14,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 // frameMode: 'HIDE' | 'LIGHT' | 'DARK'
 // shadingMode: 'GRAY' | 'WHITE' | 'BLACK' | 'OFF'
 export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
-  { spinEnabled = true, spinMode = 'auto', frameMode = 'HIDE', shadingMode = 'GRAY', originVisible = false, resize, styleMode = 'BASIC', backgroundMode = 'WHITE', outlineThreshold = 45, outlineScale = 1.02, edgesMode = 'AUTO', outlineColorMode = 'AUTO', edgesLineWidth = 2, ambientLevel = 2.0, directionalLevel = 2.0 },
+  { spinEnabled = true, spinMode = 'auto', frameMode = 'HIDE', shadingMode = 'GRAY', originVisible = false, resize, styleMode = 'BASIC', backgroundMode = 'WHITE', outlineThreshold = 45, outlineScale = 1.02, edgesMode = 'AUTO', outlineColorMode = 'AUTO', edgesLineWidth = 2, ambientLevel = 2.0, directionalLevel = 2.0, originOffset = { x: 0, y: 0, z: 0 } },
   ref
 ) {
   const containerRef = useRef(null)
@@ -43,6 +43,45 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
   const smaaPassRef = useRef(null)   // SMAA pass
   const lineResolutionRef = useRef(new THREE.Vector2(1, 1)) // for LineMaterial
   const bgRef = useRef({})           // background resources for cleanup
+
+  // Compute bounding box for the base model meshes only (exclude adorners and axes)
+  const getModelBounds = () => {
+    const group = modelGroupRef.current
+    if (!group) return new THREE.Box3()
+    const wireG = wireframeRef.current
+    const edgesG = edgesRef.current
+    const outlineG = outlineRef.current
+    const axesG = axesRef.current
+    const box = new THREE.Box3()
+    group.traverse((obj) => {
+      if (!obj.isMesh) return
+      // Exclude adorners and axes by checking ancestry
+      let p = obj.parent
+      while (p) {
+        if (p === wireG || p === edgesG || p === outlineG || p === axesG) return
+        p = p.parent
+      }
+      box.expandByObject(obj)
+    })
+    return box
+  }
+
+  // Compute a camera distance so the model's bounding SPHERE fills ~fillFrac of the viewport.
+  // Using a sphere makes the fit invariant to rotation/spin.
+  const computeFitDistance = (box, camera, fillFrac = 0.75) => {
+    const size = box.getSize(new THREE.Vector3())
+    const diag = Math.max(0.0001, size.length())
+    const R = diag / 2 // sphere radius
+    const vFov = (camera.fov * Math.PI) / 180
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect)
+    const frac = Math.max(0.1, Math.min(0.95, fillFrac))
+    // For sphere diameter 2R to fit within frac*height or frac*width at depth d:
+    // height = 2 d tan(vFov/2); width = 2 d tan(hFov/2)
+    // => d >= R / (frac * tan(fov/2)) for each axis.
+    const dV = R / (frac * Math.tan(vFov / 2))
+    const dH = R / (frac * Math.tan(hFov / 2))
+    return Math.max(dV, dH) * 1.05 // small padding
+  }
 
   // helper to apply shading to current model group
   const applyShading = (mode) => {
@@ -167,12 +206,6 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
 
     // lights created per-style in applyStyle
 
-    // origin axes helper
-    const axes = new THREE.AxesHelper(20)
-    axes.visible = !!originVisible
-    scene.add(axes)
-    axesRef.current = axes
-
     // groups
     const modelGroup = new THREE.Group()
     const wireGroup = new THREE.Group()
@@ -209,6 +242,18 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
     wireframeRef.current = wireGroup
     edgesRef.current = edgesGroup
     outlineRef.current = outlineGroup
+
+    // Origin axes helper attached to model group so it inherits transforms
+    // Use unit length; we'll scale to desired world lengths per axis
+    const axes = new THREE.AxesHelper(1)
+    axes.visible = !!originVisible
+    modelGroup.add(axes)
+    // Initialize position from originOffset (model-local)
+    if (originOffset) {
+      const o = originOffset || { x: 0, y: 0, z: 0 }
+      axes.position.set(Number(o.x) || 0, Number(o.y) || 0, Number(o.z) || 0)
+    }
+    axesRef.current = axes
 
     // build initial adorners for placeholder
     rebuildAdorners()
@@ -313,8 +358,6 @@ export const ThreeCadViewer = forwardRef(function ThreeCadViewer(
       if (spinRef.current && modelGroupRef.current) {
         const dTheta = 0.01
         modelGroupRef.current.rotation.y += dTheta
-        // spin origin axes helper with the model
-        if (axesRef.current) axesRef.current.rotation.y += dTheta
       }
       controls.update()
       const composer = composerRef.current
@@ -409,6 +452,14 @@ useEffect(() => {
   useEffect(() => {
     if (axesRef.current) axesRef.current.visible = !!originVisible
   }, [originVisible])
+
+  // respond to originOffset (world position for axes)
+  useEffect(() => {
+    const axes = axesRef.current
+    if (!axes) return
+    const o = originOffset || { x: 0, y: 0, z: 0 }
+    axes.position.set(Number(o.x) || 0, Number(o.y) || 0, Number(o.z) || 0)
+  }, [originOffset])
 
   // respond to shading mode
   useEffect(() => {
@@ -559,19 +610,25 @@ useEffect(() => {
       // rebuild edges/silhouette adorners using current controls
       rebuildAdorners()
 
-      // fit view
-      const box = new THREE.Box3().setFromObject(group)
-      const size = box.getSize(new THREE.Vector3()).length()
+      // fit view (exclude adorners and axes)
+      const box = getModelBounds()
+      const sizeVec = box.getSize(new THREE.Vector3())
+      const size = sizeVec.length()
       const center = box.getCenter(new THREE.Vector3())
+      // Scale axes uniformly to 120% of the max bbox dimension
+      if (axesRef.current) {
+        const L = Math.max(0.001, sizeVec.x, sizeVec.y, sizeVec.z)
+        axesRef.current.scale.setScalar(L * 1.2)
+      }
       const camera = cameraRef.current
       const controls = controlsRef.current
       if (camera && controls) {
         controls.target.copy(center)
-        const distance = size * 1.5 / Math.tan((camera.fov * Math.PI) / 360)
+        const distance = computeFitDistance(box, camera, 0.75)
         const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize()
         camera.position.copy(dir.multiplyScalar(distance).add(controls.target))
-        camera.near = size / 100
-        camera.far = size * 10
+        camera.near = Math.max(0.01, Math.min(camera.near, size / 100))
+        camera.far = Math.max(camera.far, size * 10)
         camera.updateProjectionMatrix()
         controls.update()
       }
@@ -583,18 +640,25 @@ useEffect(() => {
     fitView: () => {
       const group = modelGroupRef.current
       if (!group) return
-      const box = new THREE.Box3().setFromObject(group)
-      const size = box.getSize(new THREE.Vector3()).length()
+      // Use model-only bounds (exclude adorners and axes)
+      const box = getModelBounds()
+      const sizeVec = box.getSize(new THREE.Vector3())
+      const size = sizeVec.length()
       const center = box.getCenter(new THREE.Vector3())
+      // Uniform axes length = 1.2 × max bbox dimension
+      if (axesRef.current) {
+        const L = Math.max(0.001, sizeVec.x, sizeVec.y, sizeVec.z)
+        axesRef.current.scale.setScalar(L * 1.2)
+      }
       const camera = cameraRef.current
       const controls = controlsRef.current
       if (camera && controls) {
         controls.target.copy(center)
-        const distance = size * 1.2 / Math.tan((camera.fov * Math.PI) / 360)
+        const distance = computeFitDistance(box, camera, 0.75)
         const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize()
         camera.position.copy(dir.multiplyScalar(distance).add(controls.target))
-        camera.near = size / 100
-        camera.far = size * 10
+        camera.near = Math.max(0.01, Math.min(camera.near, size / 100))
+        camera.far = Math.max(camera.far, size * 10)
         camera.updateProjectionMatrix()
         controls.update()
       }
@@ -828,9 +892,7 @@ useEffect(() => {
     const size = box.getSize(new THREE.Vector3())
     const center = box.getCenter(new THREE.Vector3())
     const span = Math.max(1, Math.max(size.x, size.z))
-    // Prefer floor unit size if available; else match model span
     const target = (typeof r.floorSize === 'number' && r.floorSize > 0) ? r.floorSize : span
-    // Base GridHelper was created with size 200; scale uniformly to reach target size
     const scale = target / 200
     grid.scale.setScalar(scale)
     // Prefer aligning grid just above the background ground plane when present

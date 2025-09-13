@@ -29,9 +29,12 @@ export function Toolbar({
   directionalLevel,
   onCycleAmbientLevel,
   onCycleDirectionalLevel,
+  leading,
+  children,
 }) {
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+      {leading}
       <Button onClick={onCycleAmbientLevel}>
         AMB: {ambientLevel === 0 ? 'OFF' : ambientLevel.toFixed(1)}
       </Button>
@@ -76,6 +79,7 @@ export function Toolbar({
       <Button onClick={onToggleShading}>
         SHADING: {shadingMode}
       </Button>
+      {children}
       <Button onClick={onToggleOrigin}>
         ORIGIN: {originVisible ? 'ON' : 'OFF'}
       </Button>
