@@ -2,3 +2,6 @@
 	path = docs-submodules/spoke-body
 	url = git@github.com:SpokeRobotics/spoke-body.git
 	branch = main
+[submodule "docs-submodules/spoke-electronics"]
+	path = docs-submodules/spoke-electronics
+	url = git@github.com:SpokeRobotics/spoke-electronics.git
